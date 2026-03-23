@@ -26,7 +26,7 @@ public sealed class SsrfSocketsHttpHanderFactory
             connectionStrategy: ConnectionStrategy.None,
             additionalNetworks: null,
             connectTimeout: null,
-            allowHttp: false,
+            allowInsecureProtocols: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxyUri: null,
@@ -46,7 +46,7 @@ public sealed class SsrfSocketsHttpHanderFactory
             connectionStrategy: connectionStrategy,
             additionalNetworks: null,
             connectTimeout: null,
-            allowHttp: false,
+            allowInsecureProtocols: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxyUri: null,
@@ -65,7 +65,7 @@ public sealed class SsrfSocketsHttpHanderFactory
         return Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalNetworks: null,
-            allowHttp: false,
+            allowInsecureProtocols: false,
             connectTimeout: connectTimeout,
             allowAutoRedirect: false,
             automaticDecompression: null,
@@ -87,7 +87,7 @@ public sealed class SsrfSocketsHttpHanderFactory
             additionalNetworks: additionalNetworks,
             connectTimeout: null,
             allowAutoRedirect: false,
-            allowHttp: false,
+            allowInsecureProtocols: false,
             automaticDecompression: null,
             proxyUri: null,
             checkCertificateRevocationList: true);
@@ -106,7 +106,7 @@ public sealed class SsrfSocketsHttpHanderFactory
             connectionStrategy: ConnectionStrategy.None,
             additionalNetworks: null,
             connectTimeout: null,
-            allowHttp: allowHttp,
+            allowInsecureProtocols: allowHttp,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxyUri: null,
@@ -127,7 +127,7 @@ public sealed class SsrfSocketsHttpHanderFactory
             connectionStrategy: connectionStrategy,
             additionalNetworks: null,
             connectTimeout: connectTimeout,
-            allowHttp: false,
+            allowInsecureProtocols: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxyUri: null,
@@ -148,7 +148,7 @@ public sealed class SsrfSocketsHttpHanderFactory
             connectionStrategy: ConnectionStrategy.None,
             additionalNetworks: additionalNetworks,
             connectTimeout: connectTimeout,
-            allowHttp: false,
+            allowInsecureProtocols: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxyUri: null,
@@ -168,7 +168,7 @@ public sealed class SsrfSocketsHttpHanderFactory
         return Create(
             connectionStrategy: connectionStrategy,
             additionalNetworks: additionalNetworks,
-            allowHttp: false,
+            allowInsecureProtocols: false,
             connectTimeout: null,
             allowAutoRedirect: false,
             automaticDecompression: null,
@@ -191,7 +191,7 @@ public sealed class SsrfSocketsHttpHanderFactory
             connectionStrategy: connectionStrategy,
             additionalNetworks: additionalNetworks,
             connectTimeout: connectTimeout,
-            allowHttp: false,
+            allowInsecureProtocols: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxyUri: null,
@@ -206,7 +206,7 @@ public sealed class SsrfSocketsHttpHanderFactory
     /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
     /// <param name="additionalNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
     /// <param name="connectTimeout">The connect timeout, in seconds. Defaults to 30 seconds if not specified.</param>
-    /// <param name="allowHttp">Flag indicating whether http URIs will be allowed or rejected.</param>
+    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
     /// <param name="allowAutoRedirect">Flag indicating whether to allow auto-redirects. Setting this to <see langword="true"/> can introduce security vulnerabilities and should only be enabled if necessary.</param>
     /// <param name="automaticDecompression">The type of decompression to use for automatic decompression of HTTP content. If <see langword="null"/>, defaults to <see cref="DecompressionMethods.All"/>.</param>
     /// <param name="proxyUri">An optional proxy <see cref="Uri"/>.</param>
@@ -216,7 +216,7 @@ public sealed class SsrfSocketsHttpHanderFactory
         ConnectionStrategy connectionStrategy,
         ICollection<IPNetwork>? additionalNetworks,
         TimeSpan? connectTimeout,
-        bool allowHttp,
+        bool allowInsecureProtocols,
         bool allowAutoRedirect,
         DecompressionMethods? automaticDecompression,
         Uri? proxyUri,
@@ -253,7 +253,7 @@ public sealed class SsrfSocketsHttpHanderFactory
 
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
 
-                if (Ssrf.IsUnsafeUri(requestedUri, allowHttp))
+                if (Ssrf.IsUnsafeUri(requestedUri, allowInsecureProtocols))
                 {
                     throw new HttpRequestException($"Connection to {requestedUri} blocked as the uri is considered unsafe.");
                 }
@@ -352,4 +352,3 @@ public enum ConnectionStrategy
     /// </summary>
     Random = 4
 }
-

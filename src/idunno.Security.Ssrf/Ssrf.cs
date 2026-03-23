@@ -82,7 +82,7 @@ public static class Ssrf
     {
         ArgumentNullException.ThrowIfNull(uri);
 
-        return IsUnsafeUri(uri: uri, allowHttp: false);
+        return IsUnsafeUri(uri: uri, allowInsecureProtocols: false);
     }
 
 
@@ -91,10 +91,10 @@ public static class Ssrf
     /// based on its host name type, whether it is absolute, loopback, UNC, and its scheme.
     /// </summary>
     /// <param name="uri">The <see cref="Uri"/> to evaluate.</param>
-    /// <param name="allowHttp">Flag indicating whether http URIs will be allowed or rejected.</param>
+    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
     /// <returns><see langword="true"/> if the <paramref name="uri" /> is potentially unsafe; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
-    public static bool IsUnsafeUri(Uri uri, bool allowHttp)
+    public static bool IsUnsafeUri(Uri uri, bool allowInsecureProtocols)
     {
         ArgumentNullException.ThrowIfNull(uri);
 
@@ -112,11 +112,11 @@ public static class Ssrf
             return true;
         }
 
-        if (allowHttp && Uri.UriSchemeHttp.Equals(uri.Scheme, StringComparison.OrdinalIgnoreCase))
+        if (allowInsecureProtocols && Uri.UriSchemeHttp.Equals(uri.Scheme, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
-        else if (allowHttp && Uri.UriSchemeWs.Equals(uri.Scheme, StringComparison.OrdinalIgnoreCase))
+        else if (allowInsecureProtocols && Uri.UriSchemeWs.Equals(uri.Scheme, StringComparison.OrdinalIgnoreCase))
         {
             return false;
         }
