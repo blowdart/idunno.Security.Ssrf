@@ -13,22 +13,24 @@ Console.OutputEncoding = Encoding.UTF8;
 #pragma warning disable CA1303 // Do not pass literals as localized parameters
 
 Console.WriteLine();
-Console.WriteLine("WebSocket Client Tests");
-//await TestWithClientWebSocket("wss://echo.websocket.org").ConfigureAwait(false);
+Console.WriteLine("ClientWebSocket Tests");
+await TestWithClientWebSocket("wss://echo.websocket.org").ConfigureAwait(false);
 await TestWithClientWebSocket("ws://echo.websocket.org").ConfigureAwait(false);
-//await TestWithClientWebSocket("wss://good.ssrf.fail").ConfigureAwait(false);
-//await TestWithClientWebSocket("wss://mixed.ssrf.fail").ConfigureAwait(false);
-//await TestWithClientWebSocket("wss://bad.ssrf.fail").ConfigureAwait(false);
+await TestWithClientWebSocket("wss://good.ssrf.fail").ConfigureAwait(false);
+await TestWithClientWebSocket("wss://mixed.ssrf.fail").ConfigureAwait(false);
+await TestWithClientWebSocket("wss://bad.ssrf.fail").ConfigureAwait(false);
 
 Console.WriteLine();
 Console.WriteLine("AllowInsecureProtocols=true");
 Console.WriteLine("---------------------------");
-//await TestWithClientWebSocket("ws://echo.websocket.org", allowInsecureProtocols: true).ConfigureAwait(false);
-//await TestWithClientWebSocket("ws://good.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-//await TestWithClientWebSocket("ws://mixed.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-//await TestWithClientWebSocket("ws://bad.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
+await TestWithClientWebSocket("ws://echo.websocket.org", allowInsecureProtocols: true).ConfigureAwait(false);
+await TestWithClientWebSocket("ws://good.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
+await TestWithClientWebSocket("ws://mixed.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
+await TestWithClientWebSocket("ws://bad.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
 
-
+Console.WriteLine();
+Console.WriteLine("HttpClient Tests");
+Console.WriteLine("----------------");
 await TestWithHttpClient("http://private10_8.ipv4.ssrf.fail").ConfigureAwait(false);
 await TestWithHttpClient("http://private172_16_12.ipv4.ssrf.fail").ConfigureAwait(false);
 await TestWithHttpClient("http://private192_168_16.ipv4.ssrf.fail").ConfigureAwait(false);
@@ -105,6 +107,18 @@ static async Task TestWithHttpClient(string uri, bool allowInsecureProtocols = t
         {
             _ = await httpClient.GetAsync(new Uri(uri)).ConfigureAwait(false);
         }
+        catch (SsrfException ex)
+        {
+            if (ex.InnerException is null)
+            {
+                errorMessage = $"{ex.GetType().Name}: {ex.Uri} {ex.Message}";
+            }
+            else
+            {
+                errorMessage = $"{ex.InnerException.GetType().Name}: {ex.InnerException.Message}";
+            }
+            exceptionThrown = true;
+        }
         catch (HttpRequestException ex)
         {
             if (ex.InnerException is null)
@@ -113,7 +127,14 @@ static async Task TestWithHttpClient(string uri, bool allowInsecureProtocols = t
             }
             else
             {
-                errorMessage = $"{ex.InnerException.GetType().Name}: {ex.InnerException.Message}";
+                if (ex.InnerException is SsrfException ssrfException)
+                {
+                    errorMessage = $"{ssrfException.GetType().Name}: {ssrfException.Message} ({ssrfException.Uri})";
+                }
+                else
+                {
+                    errorMessage = $"{ex.InnerException.GetType().Name}: {ex.InnerException.Message}";
+                }
             }
             exceptionThrown = true;
         }
@@ -161,6 +182,18 @@ static async Task TestWithClientWebSocket(string uri, bool allowInsecureProtocol
 
             await clientWebSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, null, CancellationToken.None);
         }
+        catch (SsrfException ex)
+        {
+            if (ex.InnerException is null)
+            {
+                errorMessage = $"{ex.GetType().Name}: {ex.Uri} {ex.Message}";
+            }
+            else
+            {
+                errorMessage = $"{ex.InnerException.GetType().Name}: {ex.InnerException.Message}";
+            }
+            exceptionThrown = true;
+        }
         catch (HttpRequestException ex)
         {
             if (ex.InnerException is null)
@@ -187,22 +220,15 @@ static async Task TestWithClientWebSocket(string uri, bool allowInsecureProtocol
         }
         catch (WebSocketException ex)
         {
-            if (ex.Message.Equals("Unable to connect to the remote server"))
+            if (ex.InnerException is null)
             {
-                // Ignore this, because there's no web sockets server running at the test URLs. We're just interested in whether the connection attempt was blocked or not.
+                errorMessage = $"{ex.GetType().Name}: {ex.Message}";
             }
             else
             {
-                if (ex.InnerException is null)
-                {
-                    errorMessage = $"{ex.GetType().Name}: {ex.Message}";
-                }
-                else
-                {
-                    errorMessage = $"{ex.InnerException.GetType().Name}: {ex.InnerException.Message}";
-                }
-                exceptionThrown = true;
+                errorMessage = $"{ex.InnerException.GetType().Name}: {ex.InnerException.Message}";
             }
+            exceptionThrown = true;
         }
     }
 

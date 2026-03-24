@@ -255,7 +255,7 @@ public sealed class SsrfSocketsHttpHanderFactory
 
                 if (Ssrf.IsUnsafeUri(requestedUri, allowInsecureProtocols))
                 {
-                    throw new HttpRequestException($"Connection to {requestedUri} blocked as the uri is considered unsafe.");
+                    throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
                 }
 
                 if (IPAddress.TryParse(context.DnsEndPoint.Host, out IPAddress? parsedAddress))
@@ -309,7 +309,7 @@ public sealed class SsrfSocketsHttpHanderFactory
                     throw new SocketException((int)SocketError.HostUnreachable);
                 }
 
-                throw new HttpRequestException($"Connection to {context.DnsEndPoint.Host} blocked as all resolved addresses are unsafe.");
+                throw new SsrfException(requestedUri, $"Connection blocked as all resolved addresses are unsafe.");
             }
         };
 
