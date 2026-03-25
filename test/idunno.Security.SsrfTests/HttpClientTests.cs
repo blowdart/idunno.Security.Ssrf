@@ -17,7 +17,14 @@ public class HttpClientTests
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create());
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
-        Assert.IsType<SsrfException>(ex.InnerException);
+
+        Exception? innermostException = ex;
+        while (innermostException.InnerException is not null)
+        {
+            innermostException = innermostException.InnerException;
+        }
+
+        Assert.IsType<SsrfException>(innermostException);
         Assert.Equal(hostName, ((SsrfException)ex.InnerException!).Uri!.ToString());
     }
 
