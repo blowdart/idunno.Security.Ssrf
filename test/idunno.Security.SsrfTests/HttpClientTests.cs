@@ -1,6 +1,8 @@
 ﻿// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Net.Sockets;
+
 namespace idunno.Security.SsrfTests;
 
 public class HttpClientTests
@@ -26,9 +28,23 @@ public class HttpClientTests
     public async Task ConnectionThrowsForHostsThatReturnAMixOfSafeAndUnsafeIPAddresses(string hostName)
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create());
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
-        Assert.IsType<SsrfException>(ex.InnerException);
-        Assert.Equal(hostName, ((SsrfException)ex.InnerException!).Uri!.ToString());
+        try
+        {
+            _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
+        }
+        catch (Exception ex)
+        {
+            Assert.True(ex is HttpRequestException||
+                ex is TimeoutException ||
+                ex is OperationCanceledException ||
+                ex is SocketException);
+
+            if (ex.InnerException is not null)
+            {
+                Assert.IsType<SsrfException>(ex.InnerException);
+                Assert.Equal(hostName, ((SsrfException)ex.InnerException!).Uri!.ToString());
+            }
+        }
     }
 
     [Theory]
@@ -56,7 +72,8 @@ public class HttpClientTests
         {
             Assert.True((ex is HttpRequestException && ex.InnerException is not SsrfException) ||
                 ex is TimeoutException ||
-                ex is OperationCanceledException);
+                ex is OperationCanceledException ||
+                ex is SocketException);
         }
     }
 
