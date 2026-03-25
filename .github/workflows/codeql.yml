@@ -1,0 +1,74 @@
+name: CodeQL Scan
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      -  version/*
+    paths-ignore:
+      - '.github/**'
+  pull_request:
+    # The branches below must be a subset of the branches above
+    branches:
+      - main
+      -  version/*
+  schedule:
+    - cron: '25 4 * * 2'
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_GENERATE_ASPNET_CERTIFICATE: false
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+
+jobs:
+  analyze:
+    name: Analyze
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'csharp' ]
+        # CodeQL supports [ 'cpp', 'csharp', 'go', 'java', 'javascript', 'python', 'ruby' ]
+        # Learn more about CodeQL language support at https://git.io/codeql-language-support
+
+    steps:
+    - name: Harden Runner
+      uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+      with:
+        egress-policy: audit
+
+    - name: 'Checkout repository'
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+        persist-credentials: false
+
+    - name: 'Setup .NET SDK'
+      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+      with:
+        dotnet-version: | 
+          10.0.x
+
+    # Initializes the CodeQL tools for scanning.
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@0d579ffd059c29b07949a3cce3983f0780820c98 # v4.32.6
+      with:
+        languages: ${{ matrix.language }}
+
+    # We can't use autobuild because we want to restrict the build to just src folder solutions
+    # and avoid triggering deterministic builds and git commit based versioning
+    # (as GitHub workflows shallow clone by default, and that breaks the versioning.)
+    - name: Build source
+      run: dotnet build --configuration CodeQL /p:UseSharedCompilation=false /t:rebuild
+
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@0d579ffd059c29b07949a3cce3983f0780820c98 # v4.32.6
