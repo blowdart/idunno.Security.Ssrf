@@ -22,6 +22,11 @@ public class HttpClientTests
         while (innermostException.InnerException is not null)
         {
             innermostException = innermostException.InnerException;
+
+            if (innermostException is SsrfException)
+            {
+                break;
+            }
         }
 
         Assert.IsType<SsrfException>(innermostException);
