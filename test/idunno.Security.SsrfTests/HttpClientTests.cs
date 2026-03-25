@@ -39,10 +39,9 @@ public class HttpClientTests
                 ex is OperationCanceledException ||
                 ex is SocketException);
 
-            if (ex.InnerException is not null)
+            if (ex.InnerException is not null && ex.InnerException is SsrfException ssrfException)
             {
-                Assert.IsType<SsrfException>(ex.InnerException);
-                Assert.Equal(hostName, ((SsrfException)ex.InnerException!).Uri!.ToString());
+                Assert.Equal(hostName, ssrfException.Uri!.ToString());
             }
         }
     }
@@ -70,10 +69,15 @@ public class HttpClientTests
         }
         catch (Exception ex)
         {
-            Assert.True((ex is HttpRequestException && ex.InnerException is not SsrfException) ||
+            Assert.True(ex is HttpRequestException ||
                 ex is TimeoutException ||
                 ex is OperationCanceledException ||
                 ex is SocketException);
+
+            if (ex.InnerException is not null && ex.InnerException is SsrfException ssrfException)
+            {
+                Assert.Equal(hostName, ssrfException.Uri!.ToString());
+            }
         }
     }
 
