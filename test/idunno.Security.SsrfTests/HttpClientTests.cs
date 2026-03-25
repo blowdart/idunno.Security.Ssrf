@@ -51,10 +51,19 @@ public class HttpClientTests
                 ex is OperationCanceledException ||
                 ex is SocketException);
 
-            if (ex.InnerException is not null && ex.InnerException is SsrfException ssrfException)
+            Exception? innermostException = ex;
+            while (innermostException.InnerException is not null)
             {
-                Assert.Equal(hostName, ssrfException.Uri!.ToString());
+                innermostException = innermostException.InnerException;
+
+                if (innermostException is SsrfException)
+                {
+                    break;
+                }
             }
+
+            Assert.IsType<SsrfException>(innermostException);
+            Assert.Equal(hostName, ((SsrfException)ex.InnerException!).Uri!.ToString());
         }
     }
 
@@ -86,10 +95,20 @@ public class HttpClientTests
                 ex is OperationCanceledException ||
                 ex is SocketException);
 
-            if (ex.InnerException is not null && ex.InnerException is SsrfException ssrfException)
+            Exception? innermostException = ex;
+            while (innermostException.InnerException is not null)
             {
-                Assert.Equal(hostName, ssrfException.Uri!.ToString());
+                innermostException = innermostException.InnerException;
+
+                if (innermostException is SsrfException)
+                {
+                    break;
+                }
             }
+
+            // Shouldn't throw an SsrfException because we're allow mixed results, where the IP addresses returned for the host include both safe and unsafe addresses.
+            // The connection will end up failing anyway due to a certificate validation if the SSRF handler hasn't gotten in the way.
+            Assert.IsNotType<SsrfException>(innermostException);
         }
     }
 
@@ -110,8 +129,19 @@ public class HttpClientTests
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create());
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
-        Assert.IsType<SsrfException>(ex.InnerException);
-        Assert.Equal(hostName, ((SsrfException)ex.InnerException!).Uri!.ToString());
+        Exception? innermostException = ex;
+        while (innermostException.InnerException is not null)
+        {
+            innermostException = innermostException.InnerException;
+
+            if (innermostException is SsrfException)
+            {
+                break;
+            }
+        }
+
+        Assert.IsType<SsrfException>(innermostException);
+        Assert.Equal(hostName, ((SsrfException)innermostException).Uri!.ToString());
     }
 
     [Theory]
