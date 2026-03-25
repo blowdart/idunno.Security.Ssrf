@@ -79,4 +79,10 @@ public class IsUnsafeUriTests
         Assert.True(Ssrf.IsUnsafeUri(new Uri(relativeUri, UriKind.Relative), allowInsecureProtocols: true));
     }
 
+    [Fact]
+    public void ThrowsArgumentNullExceptionIfUriIsNull()
+    {
+        Assert.Throws<ArgumentNullException>(() => Ssrf.IsUnsafeUri(null!));
+    }
+
 }

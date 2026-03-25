@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Net;
+using System.Text.Json.Serialization;
 
 namespace idunno.Security.SsrfTests;
 
@@ -34,9 +35,31 @@ public class IsUnsafeIpAddressTests
     }
 
 
-    // TODO: Test IPs in predefined networks
-
-
+    [Theory]
+    [InlineData("10.0.0.1")]
+    [InlineData("172.16.0.1")]
+    [InlineData("192.168.0.1")]
+    [InlineData("127.0.0.1")]
+    [InlineData("169.254.0.1")]
+    [InlineData("100.64.0.0")]
+    [InlineData("0.0.0.1")]
+    [InlineData("198.18.0.1")]
+    [InlineData("192.0.2.1")]
+    [InlineData("198.51.100.1")]
+    [InlineData("203.0.113.0")]
+    [InlineData("192.0.0.0")]
+    [InlineData("224.0.0.1")]
+    [InlineData("240.0.0.0")]
+    [InlineData("169.254.169.254")]
+    [InlineData("fe80::1")]
+    [InlineData("fc00::1")]
+    [InlineData("fec0::1")]
+    [InlineData("2001::1")]
+    [InlineData("2001:db8::1")]
+    public void ReturnsTrueForIpAdressesInThePredefinedNetworks(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
 
     [Fact]
     public void ReturnsTrueForLoopbackIpAddresses()
@@ -198,5 +221,11 @@ public class IsUnsafeIpAddressTests
     {
         IPAddress ipAddress = IPAddress.Parse(ipAddressAsString);
         Assert.True(Ssrf.IsUnsafeIpAddress(ipAddress));
+    }
+
+    [Fact]
+    public void ThrowsArgumentNullExceptionIfIpAddressIsNull()
+    {
+        Assert.Throws<ArgumentNullException>(() => Ssrf.IsUnsafeIpAddress(null!));
     }
 }
