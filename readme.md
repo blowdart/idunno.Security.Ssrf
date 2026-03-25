@@ -4,11 +4,11 @@ A .NET 8, 9 and 10 library to help mitigate Server Side Request Forgery (SSRF) v
 
 [if you want me to wear 37 pieces of flair, like your pretty boy over there, Brian, why don't you just make the minimum 37 pieces of flair?]: #
 
-[![GitHub License](https://img.shields.io/github/license/blowdart/idunno.Security.Ssrf)](https://github.com/blowdart/idunno.Security.Ssrf/blob/main/LICENSE)
-[![Last Commit](https://img.shields.io/github/last-commit/blowdart/idunno.Security.Ssrf)](https://github.com/blowdart/idunno.Security.Ssrf/commits/main/)
-<!--[![GitHub Tag](https://img.shields.io/github/v/tag/blowdart/idunno.Security.Ssrf)](https://github.com/blowdart/idunno.Security.Ssrf/tags)
-[![NuGet Version](https://img.shields.io/nuget/vpre/idunno.Security.Ssrf)](https://www.nuget.org/packages/idunno.Security.Ssrf/)
-[![NuGet Downloads](https://img.shields.io/nuget/dt/idunno.Security.Ssrf)](https://www.nuget.org/packages/idunno.Security.Ssrf/)
+[![GitHub License](https://img.shields.io/github/license/blowdart/idunnoSecuritySsrf)](https://github.com/blowdart/idunno.Security.Ssrf/blob/main/LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/blowdart/idunnoSecuritySsrf)](https://github.com/blowdart/idunnoSecuritySsrf/commits/main/)
+<!--[![GitHub Tag](https://img.shields.io/github/v/tag/blowdart/idunnoSecuritySsrf)](https://github.com/blowdart/idunnoSecuritySsrf/tags)
+[![NuGet Version](https://img.shields.io/nuget/vpre/idunnoSecuritySsrf)](https://www.nuget.org/packages/idunno.Security.Ssrf/)
+[![NuGet Downloads](https://img.shields.io/nuget/dt/idunnoSecuritySsrf)](https://www.nuget.org/packages/idunno.Security.Ssrf/)
 
 -->
 ## Getting Started
@@ -32,7 +32,7 @@ using (var webSocket = new ClientWebSock())
 using (var httpClient = new HttpClient(idunno.Security.SsrfSocketsHttpHanderFactory.Create()))
 {
     await _client.ConnectAsync(
-        uri: jetStreamUri,
+        uri: "wss://echo.websocket.org",
         invoker: httpClient);
 }
 ```
@@ -77,13 +77,10 @@ outgoing request is made..
 * Supports both IPv4 and IPv6 addresses, including loopback, link-local, and private address ranges.
 * Allows for extra IP ranges to be added to the default block list.
 
-<!--
 ## Current Build Status
 
-[![Build Status](https://github.com/blowdart/idunno.Bluesky/actions/workflows/ci-build.yml/badge.svg?branch=main)](https://github.com/blowdart/idunno.Bluesky/actions/workflows/ci-build.yml)
-[![CodeQL Scan](https://github.com/blowdart/idunno.Bluesky/actions/workflows/codeql-analysis.yml/badge.svg?branch=main)](https://github.com/blowdart/idunno.Bluesky/actions/workflows/codeql-analysis.yml)
-[![Dependency Review](https://github.com/blowdart/idunno.Bluesky/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/blowdart/idunno.Bluesky/actions/workflows/dependency-review.yml)
--->
+[![Build Status](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/ci-build.yml/badge.svg?branch=main)](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/ci-build.yml)
+[![CodeQL Scan](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/codeql-analysis.yml)
 
 ## License
 

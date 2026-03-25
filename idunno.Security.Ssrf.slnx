@@ -17,6 +17,7 @@
     <File Path=".github/workflows/ci-build.yml" />
     <File Path=".github/workflows/codeql.yml" />
     <File Path=".github/workflows/dependency-review.yml" />
+    <File Path=".github/workflows/prerelease-build.yml" />
   </Folder>
   <Folder Name="/demo/">
     <Project Path="demo/ConsoleDemo/ConsoleDemo.csproj">
