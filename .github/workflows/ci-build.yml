@@ -1,0 +1,114 @@
+﻿name: CI Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - 'main'
+      - 'version/*'
+    paths-ignore:
+      - 'docs/**'
+      - '.github/**'
+  pull_request:
+    branches:
+      - 'main'
+      - 'version/*'
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_GENERATE_ASPNET_CERTIFICATE: false
+  DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
+  COVERAGE_REPORT: ${{ github.workspace}}/coveragereport
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ubuntu-latest
+    environment: cibuild
+    permissions:
+      contents: read
+      issues: read
+      pull-requests: write
+      checks: write
+    steps:
+    - name: 'Harden Runner'
+      uses: step-security/harden-runner@fa2e9d605c4eeb9fcad4c99c224cee0c6c7f3594 # v2.16.0
+      with:
+        egress-policy: audit
+
+    - name: 'Checkout'
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
+        persist-credentials: false
+ 
+    - name: 'Setup .NET SDK'
+      uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+      with:
+        dotnet-version: | 
+          8.0.x
+          9.0.x
+          10.0.x
+
+    - name: 'Report SDK versions'
+      run : dotnet --info
+
+    - name: 'Build'
+      id: build
+      run: dotnet build --configuration Debug
+
+    - name: Upload Build Artifacts
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      with:
+        name: build-artifacts
+        path: |
+          src/**/idunno.*.nupkg
+          src/**/idunno.*.dll
+          src/**/idunno.*.deps.json
+          src/**/idunno.*.xml
+        retention-days: 5
+
+    - name: 'Test'
+      id: test
+      run: dotnet test --no-build --restore --collect:"XPlat Code Coverage" --logger junit --settings .runsettings
+
+    - name: Publish Test Results
+      uses: EnricoMi/publish-unit-test-result-action@c950f6fb443cb5af20a377fd0dfaa78838901040 # v2.23.0
+      if: always()
+      with:
+        files: "test/**/TestResults.xml"
+
+    - name: Upload Test Artifacts
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      with:
+        name: test-results
+        path: "test/**/TestResults.xml"
+        retention-days: 5
+
+    - name: 'Generate Full Code Coverage Reports'
+      uses: danielpalme/ReportGenerator-GitHub-Action@cf6fe1b38ed5becc89ffe056c1f240825993be5b # 5.5.4
+      with:
+        reports: "test/**/coverage.cobertura.xml"
+        targetdir: "${{ env.COVERAGE_REPORT }}"
+        reporttypes: "Cobertura,MarkdownSummaryGithub" 
+        verbosity: "Info" 
+        title: "Code Coverage" 
+        tag: "${{ github.run_number }}_${{ github.run_id }}"
+        toolpath: "reportgeneratortool"
+        license: ${{ secrets.REPORT_GENERATOR_LICENSE }}
+
+    - name: Append coverage report to build summary
+      shell: bash
+      run: cat ${COVERAGE_REPORT}/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload Code Coverage Results
+      uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+      with:
+        name: coverage-results
+        path: | 
+          ${{ env.COVERAGE_REPORT }}
+          test/**/coverage.cobertura.xml
+        retention-days: 5
+

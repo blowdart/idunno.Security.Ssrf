@@ -4,6 +4,18 @@
     <BuildType Name="Debug" />
     <BuildType Name="Release" />
   </Configurations>
+  <Folder Name="/.github/">
+    <File Path=".github/CODEOWNERS" />
+    <File Path=".github/copilot-instructions.md" />
+    <File Path=".github/dependabot.yml" />
+  </Folder>
+  <Folder Name="/.github/prompts/">
+    <File Path=".github/prompts/docs.prompt.md" />
+  </Folder>
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/actions-security-analysis.yml" />
+    <File Path=".github/workflows/ci-build.yml" />
+  </Folder>
   <Folder Name="/demo/">
     <Project Path="demo/ConsoleDemo/ConsoleDemo.csproj">
       <BuildType Solution="CodeQL|*" Project="Debug" />
