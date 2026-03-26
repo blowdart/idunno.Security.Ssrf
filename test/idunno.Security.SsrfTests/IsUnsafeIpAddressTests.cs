@@ -55,7 +55,7 @@ public class IsUnsafeIpAddressTests
     [InlineData("fec0::1")]
     [InlineData("2001::1")]
     [InlineData("2001:db8::1")]
-    public void ReturnsTrueForIpAdressesInThePredefinedNetworks(string ipAddressAsString)
+    public void ReturnsTrueForIpAddressesInThePredefinedNetworks(string ipAddressAsString)
     {
         Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
     }
@@ -208,8 +208,7 @@ public class IsUnsafeIpAddressTests
     [InlineData("ff05:0:0:0:0:0:ee10:1f")]
     public void ReturnsTrueForKnownIpv6MulticastAddresses(string ipAddressAsString)
     {
-        IPAddress ipAddress = IPAddress.Parse(ipAddressAsString);
-        Assert.True(Ssrf.IsUnsafeIpAddress(ipAddress));
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
     }
 
     [Theory]
@@ -218,8 +217,7 @@ public class IsUnsafeIpAddressTests
     [InlineData("fe80::1")] // Link-local unicast address
     public void ReturnsTrueForKnownIpv6KnownLocalAddresses(string ipAddressAsString)
     {
-        IPAddress ipAddress = IPAddress.Parse(ipAddressAsString);
-        Assert.True(Ssrf.IsUnsafeIpAddress(ipAddress));
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
     }
 
     [Fact]
