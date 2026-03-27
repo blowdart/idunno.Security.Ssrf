@@ -456,14 +456,18 @@ public sealed class SsrfSocketsHttpHanderFactory
                         try
                         {
                             await socket.ConnectAsync(new IPEndPoint(address, context.DnsEndPoint.Port), cancellationToken).ConfigureAwait(false);
+                            return new NetworkStream(socket, ownsSocket: true);
                         }
                         catch (SocketException)
                         {
                             socket.Dispose();
                             continue;
                         }
-
-                        return new NetworkStream(socket, ownsSocket: true);
+                        catch
+                        {
+                            socket.Dispose();
+                            throw;
+                        }
                     }
 
                     throw new SocketException((int)SocketError.HostUnreachable);

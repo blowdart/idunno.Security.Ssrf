@@ -14,7 +14,7 @@
   </ItemGroup>
   
   <PropertyGroup>
-    <IsTrimmable>false</IsTrimmable>
+    <IsTrimmable>true</IsTrimmable>
   </PropertyGroup>
 
   <PropertyGroup>

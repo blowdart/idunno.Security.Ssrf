@@ -5,16 +5,109 @@ using System.Net;
 
 namespace idunno.Security.SsrfTests;
 
-public class IsUnsafeIpAddressTests
+public class IsUnsafeTests
 {
+    [Fact]
+    public async Task ThrowsArgumentNullExceptionIfUriIsNull()
+    {
+        await Assert.ThrowsAsync<ArgumentNullException>(async () => await Ssrf.IsUnsafe(null!, cancellationToken: TestContext.Current.CancellationToken));
+    }
+
     [Theory]
+    [InlineData("https://example.com")]
+    [InlineData("https://www.example.com")]
+    [InlineData("https://104.18.26.120")]
+    [InlineData("https://104.18.27.120")]
+    [InlineData("https://[2620:1ec:bdf::69]")]
+    [InlineData("https://[2620:1ec:46::69]")]
+    [InlineData("wss://example.com")]
+    [InlineData("wss://www.example.com")]
+    [InlineData("wss://104.18.26.120")]
+    [InlineData("wss://104.18.27.120")]
+    [InlineData("wss://[2620:1ec:bdf::69]")]
+    [InlineData("wss://[2620:1ec:46::69]")]
+    public async Task ReturnsFalseForKnownGoodUris(string uriAsString)
+    {
+        Uri uri = new(uriAsString);
+
+        Assert.False(await Ssrf.IsUnsafe(
+            uri,
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData("http://example.com")]
+    [InlineData("http://www.example.com")]
+    [InlineData("http://104.18.26.120")]
+    [InlineData("http://104.18.27.120")]
+    [InlineData("http://[2620:1ec:bdf::69]")]
+    [InlineData("http://[2620:1ec:46::69]")]
+    [InlineData("ws://example.com")]
+    [InlineData("ws://www.example.com")]
+    [InlineData("ws://104.18.26.120")]
+    [InlineData("ws://104.18.27.120")]
+    [InlineData("ws://[2620:1ec:bdf::69]")]
+    [InlineData("ws://[2620:1ec:46::69]")]
+    public async Task ReturnsTrueForNonSecureUris(string uriAsString)
+    {
+        Uri uri = new(uriAsString);
+
+        Assert.True(await Ssrf.IsUnsafe(
+            uri,
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData(@"\\unc\documents")]
+    [InlineData(@"\\unc.example\documents")]
+    public async Task ReturnsTrueForUncUris(string uriAsString)
+    {
+        Uri uri = new(uriAsString);
+        Assert.True(await Ssrf.IsUnsafe(
+            uri,
+            allowInsecureProtocols: true,
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData("example.com")]
+    [InlineData("www.example.com")]
     [InlineData("104.18.26.120")]
     [InlineData("104.18.27.120")]
     [InlineData("[2620:1ec:bdf::69]")]
     [InlineData("[2620:1ec:46::69]")]
-    public void ReturnsFalseForGoodIpAddresses(string ipAddressAsString)
+    public async Task ReturnsFalseForGoodUrisIfInsecureProtocolsAllowed(string host)
     {
-        Assert.False(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+        Assert.False(await Ssrf.IsUnsafe(
+            new Uri($"https://{host}/"),
+            allowInsecureProtocols: true,
+            cancellationToken: TestContext.Current.CancellationToken));
+        Assert.False(await Ssrf.IsUnsafe(
+            new Uri($"wss://{host}/"),
+            allowInsecureProtocols: true,
+            cancellationToken: TestContext.Current.CancellationToken));
+        Assert.False(await Ssrf.IsUnsafe(
+            new Uri($"http://{host}/"),
+            allowInsecureProtocols: true,
+            cancellationToken: TestContext.Current.CancellationToken));
+        Assert.False(await Ssrf.IsUnsafe(
+            new Uri($"ws://{host}/"),
+            allowInsecureProtocols: true,
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData("/relative/path")]
+    [InlineData("/another/path")]
+    public async Task ReturnsTrueForRelativeUris(string relativeUri)
+    {
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri(relativeUri, UriKind.Relative),
+            cancellationToken: TestContext.Current.CancellationToken));
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri(relativeUri, UriKind.Relative),
+            allowInsecureProtocols: true,
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Theory]
@@ -22,16 +115,30 @@ public class IsUnsafeIpAddressTests
     [InlineData("104.18.27.120")]
     [InlineData("[2620:1ec:bdf::69]")]
     [InlineData("[2620:1ec:46::69]")]
-    public void ReturnsTrueForGoodIpAddressesIfTheyAreInTheSpecifiedAdditionalUnsafeNetworks(string ipAddressAsString)
+    public async Task ReturnsFalseForGoodIpAddressesOnSecureProtocols(string ipAddressAsString)
     {
-        Assert.True(Ssrf.IsUnsafeIpAddress(
-            ipAddress: IPAddress.Parse(ipAddressAsString),
+        Assert.False(await Ssrf.IsUnsafe(
+            new Uri($"https://{ipAddressAsString}"),
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData("104.18.26.120")]
+    [InlineData("104.18.27.120")]
+    [InlineData("[2620:1ec:bdf::69]")]
+    [InlineData("[2620:1ec:46::69]")]
+    public async Task ReturnsTrueForGoodIpAddressesOnSecureProtocolsIfTheyAreInTheSpecifiedAdditionalUnsafeNetworks(string ipAddressAsString)
+    {
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"https://{ipAddressAsString}"),
+            allowInsecureProtocols: false,
             additionalUnsafeNetworks:
             [
                 IPNetwork.Parse("104.16.0.0/12"),
                 IPNetwork.Parse("2620:1ec::/36"),
             ],
-            additionalUnsafeIpAddresses: null));
+            additionalUnsafeIpAddresses: null,
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Theory]
@@ -39,10 +146,11 @@ public class IsUnsafeIpAddressTests
     [InlineData("104.18.27.120")]
     [InlineData("[2620:1ec:bdf::69]")]
     [InlineData("[2620:1ec:46::69]")]
-    public void ReturnsTrueForGoodIpAddressesIfTheyAreInTheSpecifiedAdditionalUnsafeIpAddresses(string ipAddressAsString)
+    public async Task ReturnsTrueForGoodIpAddressesIfTheyAreInTheSpecifiedAdditionalUnsafeIpAddresses(string ipAddressAsString)
     {
-        Assert.True(Ssrf.IsUnsafeIpAddress(
-            ipAddress: IPAddress.Parse(ipAddressAsString),
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"https://{ipAddressAsString}"),
+            allowInsecureProtocols: false,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses:
             [
@@ -50,7 +158,8 @@ public class IsUnsafeIpAddressTests
                 IPAddress.Parse("104.18.27.120"),
                 IPAddress.Parse("2620:1ec:bdf::69"),
                 IPAddress.Parse("2620:1ec:46::69"),
-            ]));
+            ],
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Theory]
@@ -58,10 +167,11 @@ public class IsUnsafeIpAddressTests
     [InlineData("104.18.27.120")]
     [InlineData("[2620:1ec:bdf::69]")]
     [InlineData("[2620:1ec:46::69]")]
-    public void ReturnsTrueForGoodIpAddressesIfTheyAreInTheSpecifiedAdditionalUnsafeIpNetworksAndOrIpAddresses(string ipAddressAsString)
+    public async Task ReturnsTrueForGoodIpAddressesIfTheyAreInTheSpecifiedAdditionalUnsafeIpNetworksAndOrIpAddresses(string ipAddressAsString)
     {
-        Assert.True(Ssrf.IsUnsafeIpAddress(
-            ipAddress: IPAddress.Parse(ipAddressAsString),
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"https://{ipAddressAsString}"),
+            allowInsecureProtocols: false,
             additionalUnsafeNetworks:
             [
                 IPNetwork.Parse("104.16.0.0/12"),
@@ -73,7 +183,8 @@ public class IsUnsafeIpAddressTests
                 IPAddress.Parse("104.18.27.120"),
                 IPAddress.Parse("2620:1ec:bdf::69"),
                 IPAddress.Parse("2620:1ec:46::69"),
-            ]));
+            ],
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Theory]
@@ -82,9 +193,11 @@ public class IsUnsafeIpAddressTests
     [InlineData("::ffff:192.168.0.1")]
     [InlineData("::ffff:127.0.0.1")]
     [InlineData("::ffff:169.254.169.254")]
-    public void ReturnsTrueForIPv4MappedIPv6AddressesInBuiltInUnsafeRanges(string ipv4MappedIpv6)
+    public async Task ReturnsTrueForIPv4MappedIPv6AddressesInBuiltInUnsafeRanges(string ipv4MappedIpv6)
     {
-        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipv4MappedIpv6)));
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"https://[{ipv4MappedIpv6}]"),
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Theory]
@@ -103,28 +216,37 @@ public class IsUnsafeIpAddressTests
     [InlineData("224.0.0.1")]
     [InlineData("240.0.0.0")]
     [InlineData("169.254.169.254")]
-    [InlineData("fe80::1")]
-    [InlineData("fc00::1")]
-    [InlineData("fec0::1")]
-    [InlineData("2001::1")]
-    [InlineData("2001:db8::1")]
-    public void ReturnsTrueForIpAddressesInThePredefinedNetworks(string ipAddressAsString)
+    [InlineData("[fe80::1]")]
+    [InlineData("[fc00::1]")]
+    [InlineData("[fec0::1]")]
+    [InlineData("[2001::1]")]
+    [InlineData("[2001:db8::1]")]
+    public async Task ReturnsTrueForIpAddressesInThePredefinedNetworks(string ipAddressAsString)
     {
-        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"https://{ipAddressAsString}"),
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
-    [Fact]
-    public void ReturnsTrueForLoopbackIpAddresses()
+    [Theory]
+    [InlineData("127.0.0.0")]
+    [InlineData("127.0.0.1")]
+    [InlineData("[::1]")]
+    public async Task ReturnsTrueForLoopbackAddresses(string ipAddressAsString)
     {
-        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Loopback));
-        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.IPv6Loopback));
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"https://{ipAddressAsString}"),
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
-    [Fact]
-    public void ReturnsTrueForUnspecifiedIpAddresses()
+    [Theory]
+    [InlineData("0.0.0.1")]
+    [InlineData("[0:0:0:0:0:0:0:0]")]
+    public async Task ReturnsTrueForUnspecifiedAddresses(string ipAddressAsString)
     {
-        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.None));
-        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.IPv6None));
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"https://{ipAddressAsString}"),
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Theory]
@@ -259,23 +381,21 @@ public class IsUnsafeIpAddressTests
     [InlineData("ff05:0:0:0:0:db8::")]
     [InlineData("ff05:0:0:0:0:0:ee10:0")]
     [InlineData("ff05:0:0:0:0:0:ee10:1f")]
-    public void ReturnsTrueForKnownIpv6MulticastAddresses(string ipAddressAsString)
+    public async Task ReturnsTrueForKnownIpv6MulticastAddresses(string ipAddressAsString)
     {
-        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"https://[{ipAddressAsString}]"),
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 
     [Theory]
     [InlineData("fe80::1a2b:3cff:fe4d:5e6f")] // Link-local unicast address
     [InlineData("fec0:0000:0000:0000:0000:0000:0000:0001")] // Site-local unicast address
     [InlineData("fe80::1")] // Link-local unicast address
-    public void ReturnsTrueForKnownIpv6KnownLocalAddresses(string ipAddressAsString)
+    public async Task ReturnsTrueForKnownIpv6KnownLocalAddresses(string ipAddressAsString)
     {
-        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
-    }
-
-    [Fact]
-    public void ThrowsArgumentNullExceptionIfIpAddressIsNull()
-    {
-        Assert.Throws<ArgumentNullException>(() => Ssrf.IsUnsafeIpAddress(null!));
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"https://[{ipAddressAsString}]"),
+            cancellationToken: TestContext.Current.CancellationToken));
     }
 }

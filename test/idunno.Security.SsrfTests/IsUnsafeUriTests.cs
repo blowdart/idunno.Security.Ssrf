@@ -84,5 +84,4 @@ public class IsUnsafeUriTests
     {
         Assert.Throws<ArgumentNullException>(() => Ssrf.IsUnsafeUri(null!));
     }
-
 }
