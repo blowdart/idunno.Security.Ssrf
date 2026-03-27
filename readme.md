@@ -127,7 +127,7 @@ mitigating SSRF vulnerabilities in your application, and this library can help y
 
 ## License
 
-`idunno.Security.Ssrf` IS available under the MIT license, see the [LICENSE](LICENSE) file for more information.
+`idunno.Security.Ssrf` is available under the MIT license, see the [LICENSE](LICENSE) file for more information.
 
 ## Tipping / Sponsoring
 
