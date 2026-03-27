@@ -44,6 +44,17 @@ public class IsUnsafeUriTests
     }
 
     [Theory]
+    [InlineData(@"ftp://example.com")]
+    [InlineData(@"telnet://exampe.com")]
+    [InlineData(@"ms-teams://exampe.com")]
+    public void ReturnsTrueForUnsafeProtocols(string uriAsString)
+    {
+        Uri uri = new(uriAsString);
+        Assert.True(Ssrf.IsUnsafeUri(uri));
+        Assert.True(Ssrf.IsUnsafeUri(uri, allowInsecureProtocols: true));
+    }
+
+    [Theory]
     [InlineData("example.com")]
     [InlineData("www.example.com")]
     [InlineData("104.18.26.120")]

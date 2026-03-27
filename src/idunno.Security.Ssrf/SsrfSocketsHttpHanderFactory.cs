@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography;
@@ -10,6 +11,7 @@ namespace idunno.Security;
 /// </summary>
 public sealed class SsrfSocketsHttpHanderFactory
 {
+    [ExcludeFromCodeCoverage]
     private SsrfSocketsHttpHanderFactory()
     {
     }
