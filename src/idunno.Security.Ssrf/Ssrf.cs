@@ -177,8 +177,8 @@ public static class Ssrf
             ipAddress = ipAddress.MapToIPv4();
         }
 
-        // Check additional unsafe IP addresses after normalization so that IPv4-mapped IPv6
-        // addresses (e.g. ::ffff:1.2.3.4) are correctly matched against their IPv4 equivalents.
+        // Perform checks so that IPv4-mapped IPv6addresses (e.g. ::ffff:1.2.3.4) are correctly matched against their IPv4 equivalents.
+
         if (additionalUnsafeIpAddresses is not null && additionalUnsafeIpAddresses.Contains(ipAddress))
         {
             return true;
@@ -200,7 +200,6 @@ public static class Ssrf
         {
             return true;
         }
-
 
         if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
         {
