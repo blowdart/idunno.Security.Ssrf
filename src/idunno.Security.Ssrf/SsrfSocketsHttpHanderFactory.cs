@@ -3,6 +3,8 @@ using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Cryptography;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace idunno.Security;
 
@@ -34,8 +36,33 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory: null);
     }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: null,
+            failMixedResults: true,
+            allowInsecureProtocols: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
+    }
+
 
     /// <summary>
     /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
@@ -56,7 +83,32 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: null,
+            failMixedResults: true,
+            allowInsecureProtocols: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -78,7 +130,32 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectTimeout">The connect timeout, in seconds. Defaults to 30 seconds if not specified.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(TimeSpan connectTimeout, ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            failMixedResults: true,
+            allowInsecureProtocols: false,
+            connectTimeout: connectTimeout,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -100,7 +177,33 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowInsecureProtocols: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory: null);
+    }
+
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(ICollection<IPNetwork> additionalUnsafeNetworks, ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: null,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            allowInsecureProtocols: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -122,7 +225,32 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory : null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(bool allowInsecureProtocols, ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: null,
+            failMixedResults: true,
+            allowInsecureProtocols: allowInsecureProtocols,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -145,7 +273,33 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
+    /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, TimeSpan connectTimeout, ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            failMixedResults: true,
+            connectTimeout: connectTimeout,
+            allowInsecureProtocols: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -168,7 +322,33 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="connectTimeout">The connect timeout, in seconds. Defaults to 30 seconds if not specified.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(ICollection<IPNetwork> additionalUnsafeNetworks, TimeSpan connectTimeout, ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: connectTimeout,
+            failMixedResults: true,
+            allowInsecureProtocols: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -191,7 +371,33 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
+    /// <param name="connectTimeout">The connect timeout, in seconds. Defaults to 30 seconds if not specified.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(ICollection<IPAddress> additionalUnsafeIpAddresses, TimeSpan connectTimeout, ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            connectTimeout: connectTimeout,
+            failMixedResults: true,
+            allowInsecureProtocols: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -214,7 +420,33 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
+    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, ICollection<IPNetwork> additionalUnsafeNetworks, ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: null,
+            allowInsecureProtocols: false,
+            failMixedResults: true,
+            connectTimeout: null,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -237,7 +469,33 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
+    /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, ICollection<IPAddress> additionalUnsafeIpAddresses, ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowInsecureProtocols: false,
+            failMixedResults: true,
+            connectTimeout: null,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -261,7 +519,38 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
+    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(
+        ConnectionStrategy connectionStrategy,
+        ICollection<IPNetwork> additionalUnsafeNetworks,
+        ICollection<IPAddress> additionalUnsafeIpAddresses,
+        ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowInsecureProtocols: false,
+            failMixedResults: true,
+            connectTimeout: null,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -285,7 +574,101 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
-            sslOptions: null);
+            sslOptions: null,
+            loggerFactory: null);
+    }
+
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
+    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(
+        ConnectionStrategy connectionStrategy,
+        ICollection<IPNetwork> additionalUnsafeNetworks,
+        TimeSpan connectTimeout,
+        ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: connectTimeout,
+            allowInsecureProtocols: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
+    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
+    /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(
+        ConnectionStrategy connectionStrategy,
+        ICollection<IPNetwork> additionalUnsafeNetworks,
+        ICollection<IPAddress> additionalUnsafeIpAddresses,
+        TimeSpan connectTimeout)
+    {
+        return Create(
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            connectTimeout: connectTimeout,
+            allowInsecureProtocols: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
+    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
+    /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(
+        ConnectionStrategy connectionStrategy,
+        ICollection<IPNetwork> additionalUnsafeNetworks,
+        ICollection<IPAddress> additionalUnsafeIpAddresses,
+        TimeSpan connectTimeout,
+        ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            connectTimeout: connectTimeout,
+            allowInsecureProtocols: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -310,7 +693,35 @@ public sealed class SsrfSocketsHttpHanderFactory
             allowAutoRedirect: options.AllowAutoRedirect,
             automaticDecompression: options.AutomaticDecompression,
             proxy: options.Proxy,
-            sslOptions: options.SslOptions);
+            sslOptions: options.SslOptions,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="options">The <see cref="SsrfOptions"/> to use for configuring the handler.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    /// <exception cref="ArgumentNullException">Thrown if <paramref name="options"/> is <see langword="null"/>.</exception>
+    public static SocketsHttpHandler Create(SsrfOptions options, ILoggerFactory loggerFactory)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+
+        return Create(
+            connectionStrategy: options.ConnectionStrategy,
+            additionalUnsafeNetworks: options.AdditionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: options.AdditionalUnsafeIpAddresses,
+            connectTimeout: options.ConnectTimeout,
+            allowInsecureProtocols: options.AllowInsecureProtocols,
+            failMixedResults: options.FailMixedResults,
+            allowAutoRedirect: options.AllowAutoRedirect,
+            automaticDecompression: options.AutomaticDecompression,
+            proxy: options.Proxy,
+            sslOptions: options.SslOptions,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -352,12 +763,60 @@ public sealed class SsrfSocketsHttpHanderFactory
             automaticDecompression: automaticDecompression,
             proxy: proxy,
             sslOptions: sslOptions,
-            hostEntryResolver: null);
+            hostEntryResolver: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
+    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
+    /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
+    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="failMixedResults">Flag indicating whether to fail when a mixture of safe and unsafe addresses is found. Setting this to <see langword="true"/> will reject the connection if any unsafe addresses are found.</param>
+    /// <param name="allowAutoRedirect">Flag indicating whether to allow auto-redirects. Setting this to <see langword="true"/> can introduce security vulnerabilities and should only be enabled if necessary.</param>
+    /// <param name="automaticDecompression">The type of decompression to use for automatic decompression of HTTP content. If <see langword="null"/>, defaults to <see cref="DecompressionMethods.All"/>.</param>
+    /// <param name="proxy">An optional custom proxy to use.</param>
+    /// <param name="sslOptions">Any <see cref="SslClientAuthenticationOptions" /> to use for client TLS authentication.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(
+        ConnectionStrategy connectionStrategy,
+        ICollection<IPNetwork>? additionalUnsafeNetworks,
+        ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        TimeSpan? connectTimeout,
+        bool allowInsecureProtocols,
+        bool failMixedResults,
+        bool allowAutoRedirect,
+        DecompressionMethods? automaticDecompression,
+        IWebProxy? proxy,
+        SslClientAuthenticationOptions? sslOptions,
+        ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            connectTimeout: connectTimeout,
+            allowInsecureProtocols: allowInsecureProtocols,
+            failMixedResults: failMixedResults,
+            allowAutoRedirect: allowAutoRedirect,
+            automaticDecompression: automaticDecompression,
+            proxy: proxy,
+            sslOptions: sslOptions,
+            hostEntryResolver: null,
+            loggerFactory: loggerFactory);
     }
 
     internal static SocketsHttpHandler Create(
         SsrfOptions options,
-        Func<string, CancellationToken, Task<IPHostEntry>>? hostEntryResolver)
+        Func<string, CancellationToken,
+        Task<IPHostEntry>>? hostEntryResolver,
+        ILoggerFactory? loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
         return Create(
@@ -371,7 +830,8 @@ public sealed class SsrfSocketsHttpHanderFactory
             automaticDecompression: options.AutomaticDecompression,
             proxy: options.Proxy,
             sslOptions: options.SslOptions,
-            hostEntryResolver: hostEntryResolver);
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: loggerFactory);
     }
 
     internal static SocketsHttpHandler Create(
@@ -385,9 +845,12 @@ public sealed class SsrfSocketsHttpHanderFactory
         DecompressionMethods? automaticDecompression,
         IWebProxy? proxy,
         SslClientAuthenticationOptions? sslOptions,
-        Func<string, CancellationToken, Task<IPHostEntry>>? hostEntryResolver)
+        Func<string, CancellationToken, Task<IPHostEntry>>? hostEntryResolver,
+        ILoggerFactory? loggerFactory)
     {
         hostEntryResolver ??= Dns.GetHostEntryAsync;
+        loggerFactory ??= NullLoggerFactory.Instance;
+        ILogger logger = loggerFactory.CreateLogger<SsrfSocketsHttpHanderFactory>();
 
         SocketsHttpHandler handler = new()
         {
@@ -413,6 +876,7 @@ public sealed class SsrfSocketsHttpHanderFactory
 
                 if (Ssrf.IsUnsafeUri(requestedUri, allowInsecureProtocols))
                 {
+                    Log.UnsafeUri(logger, requestedUri);
                     throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
                 }
 
@@ -434,6 +898,7 @@ public sealed class SsrfSocketsHttpHanderFactory
                     catch (Exception ex)
                     {
                         // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
+                        Log.DnsResolutionException(logger, requestedUri, ex);
                         throw new SsrfException(requestedUri, $"Connection blocked as host could not be resolved.", inner: ex);
                     }
                 }
@@ -441,6 +906,7 @@ public sealed class SsrfSocketsHttpHanderFactory
                 // If no IP addresses were resolved, early exit and block the connection as this is could be potential SSRF attack where the attacker is attempting to connect to a non-existent or internal host that is not resolvable through DNS.
                 if (resolvedIpAddresses.Length == 0)
                 {
+                    Log.DnsResolutionFailed(logger, requestedUri);
                     throw new SsrfException(requestedUri, $"Connection blocked as host could not be resolved to any IP addresses.");
                 }
 
@@ -453,6 +919,7 @@ public sealed class SsrfSocketsHttpHanderFactory
                 // If some safe addresses remain but others were filtered out as unsafe, the behavior will depend on the value of the failMixedResults flag. 
                 if (safeResolvedIPAddresses.Count == 0)
                 {
+                    Log.AllResolvedIpAddressesUnsafe(logger, requestedUri);
                     throw new SsrfException(requestedUri, $"Connection blocked as all resolved addresses are unsafe.");
                 }
 
@@ -461,6 +928,7 @@ public sealed class SsrfSocketsHttpHanderFactory
                 // issues if there are misconfigurations in DNS or the additional unsafe lists.
                 if (failMixedResults && safeResolvedIPAddresses.Count != resolvedIpAddresses.Length)
                 {
+                    Log.SomeResolvedIpAddressesUnsafe(logger, requestedUri);
                     throw new SsrfException(requestedUri, $"Connection blocked as some resolved addresses are unsafe.");
                 }
 
@@ -483,16 +951,17 @@ public sealed class SsrfSocketsHttpHanderFactory
                 }
 
                 // Attempt to connect to each safe IP address until a successful connection is made.
-                foreach (IPAddress address in safeResolvedIPAddresses)
+                foreach (IPAddress ipAddress in safeResolvedIPAddresses)
                 {
-                    Socket socket = new(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    Socket socket = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                     try
                     {
-                        await socket.ConnectAsync(new IPEndPoint(address, context.DnsEndPoint.Port), cancellationToken).ConfigureAwait(false);
+                        await socket.ConnectAsync(new IPEndPoint(ipAddress, context.DnsEndPoint.Port), cancellationToken).ConfigureAwait(false);
                         return new NetworkStream(socket, ownsSocket: true);
                     }
                     catch (SocketException)
                     {
+                        Log.ConnectionFailed(logger, ipAddress, requestedUri);
                         socket.Dispose();
                         continue;
                     }
@@ -502,7 +971,8 @@ public sealed class SsrfSocketsHttpHanderFactory
                         throw;
                     }
                 }
-
+                
+                Log.HostUnreachable(logger, requestedUri);
                 throw new SocketException((int)SocketError.HostUnreachable);
             }
         };

@@ -190,7 +190,8 @@ public class HttpClientTests
             automaticDecompression: DecompressionMethods.All,
             proxy: null,
             sslOptions: null,
-            hostEntryResolver: hostEntryResolver));
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory : null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -231,7 +232,8 @@ public class HttpClientTests
             automaticDecompression: DecompressionMethods.All,
             proxy: null,
             sslOptions: null,
-            hostEntryResolver: hostEntryResolver));
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -272,7 +274,8 @@ public class HttpClientTests
             automaticDecompression: DecompressionMethods.All,
             proxy: null,
             sslOptions: null,
-            hostEntryResolver: hostEntryResolver));
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -313,7 +316,8 @@ public class HttpClientTests
             automaticDecompression: DecompressionMethods.All,
             proxy: null,
             sslOptions: null,
-            hostEntryResolver: hostEntryResolver));
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -395,7 +399,8 @@ public class HttpClientTests
             automaticDecompression: DecompressionMethods.All,
             proxy: null,
             sslOptions: null,
-            hostEntryResolver: hostEntryResolver));
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)

@@ -7,8 +7,22 @@ using System.Net.WebSockets;
 using System.Text;
 
 using idunno.Security;
+using Microsoft.Extensions.Logging;
 
 Console.OutputEncoding = Encoding.UTF8;
+ILoggerFactory? loggerFactory = null;
+
+// Uncomment the following lines to enable logging to the console.
+//loggerFactory = LoggerFactory.Create(configure =>
+//{
+//    configure.AddSimpleConsole(options =>
+//    {
+//        options.IncludeScopes = true;
+//        options.TimestampFormat = "G";
+//        options.UseUtcTimestamp = false;
+//    });
+//    configure.SetMinimumLevel(LogLevel.Debug);
+//});
 
 #pragma warning disable S1075 // URIs should not be hardcoded
 #pragma warning disable CA1303 // Do not pass literals as localized parameters
@@ -16,109 +30,108 @@ Console.OutputEncoding = Encoding.UTF8;
 Console.WriteLine();
 Console.WriteLine("HttpClient Tests (allowInsecureProtocols = true)");
 Console.WriteLine("------------------------------------------------");
-await TestWithHttpClient("http://private10_8.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://private172_16_12.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://private192_168_16.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://localhost.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://loopback.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://linklocal.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://cgnat.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://thisnetwork.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://benchmark.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://testnet192_0_2_24.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://testnet198_51_100_24.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://testnet203_0_113_24.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://ietfprotocolassignments.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://multicast.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://reserved.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://broadcast.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
+await TestWithHttpClient("http://private10_8.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://private172_16_12.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://private192_168_16.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://localhost.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://loopback.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://linklocal.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://cgnat.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://thisnetwork.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://benchmark.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://testnet192_0_2_24.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://testnet198_51_100_24.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://testnet203_0_113_24.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://ietfprotocolassignments.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://multicast.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://reserved.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://broadcast.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 
-await TestWithHttpClient("http://cloudmetadata.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
+await TestWithHttpClient("http://cloudmetadata.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 
-await TestWithHttpClient("http://private.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://testnet.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
+await TestWithHttpClient("http://private.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://testnet.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 
-await TestWithHttpClient("http://linklocal.ipv6.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://documentation.ipv6.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://ietfprotocolassignments.ipv6.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-
+await TestWithHttpClient("http://linklocal.ipv6.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://documentation.ipv6.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://ietfprotocolassignments.ipv6.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 Console.WriteLine();
 Console.WriteLine("IPv4");
 Console.WriteLine("----");
 
-await TestWithHttpClient("https://good.ipv4.ssrf.fail").ConfigureAwait(false);
-await TestWithHttpClient("https://mixed.ipv4.ssrf.fail").ConfigureAwait(false);
-await TestWithHttpClient("https://bad.ipv4.ssrf.fail").ConfigureAwait(false);
+await TestWithHttpClient("https://good.ipv4.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://mixed.ipv4.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://bad.ipv4.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
 
 Console.WriteLine();
 Console.WriteLine("failMixedResults = false");
 Console.WriteLine("------------------------");
 
-await TestWithHttpClient("https://good.ipv4.ssrf.fail", failMixedResults: false).ConfigureAwait(false);
-await TestWithHttpClient("https://mixed.ipv4.ssrf.fail", failMixedResults: false).ConfigureAwait(false);
-await TestWithHttpClient("https://bad.ipv4.ssrf.fail", failMixedResults: false).ConfigureAwait(false);
+await TestWithHttpClient("https://good.ipv4.ssrf.fail", failMixedResults: false, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://mixed.ipv4.ssrf.fail", failMixedResults: false, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://bad.ipv4.ssrf.fail", failMixedResults: false, loggerFactory: loggerFactory).ConfigureAwait(false);
 
 Console.WriteLine();
 Console.WriteLine("allowInsecureProtocols = true");
 Console.WriteLine("-----------------------------");
 
-await TestWithHttpClient("http://good.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://mixed.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("http://bad.ipv4.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
+await TestWithHttpClient("http://good.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://mixed.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://bad.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 
 Console.WriteLine();
 Console.WriteLine("IPv6");
 Console.WriteLine("----");
 
-await TestWithHttpClient("https://good.ipv6.ssrf.fail").ConfigureAwait(false);
-await TestWithHttpClient("https://mixed.ipv6.ssrf.fail").ConfigureAwait(false);
-await TestWithHttpClient("https://bad.ipv6.ssrf.fail").ConfigureAwait(false);
+await TestWithHttpClient("https://good.ipv6.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://mixed.ipv6.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://bad.ipv6.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
 
 Console.WriteLine();
 Console.WriteLine("allowInsecureProtocols = true");
 Console.WriteLine("-----------------------------");
 
-await TestWithHttpClient("https://good.ipv6.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("https://mixed.ipv6.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithHttpClient("https://bad.ipv6.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
+await TestWithHttpClient("https://good.ipv6.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://mixed.ipv6.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://bad.ipv6.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 
 Console.WriteLine();
 Console.WriteLine("Mixed");
 Console.WriteLine("-----");
 
-await TestWithHttpClient("https://good.ssrf.fail").ConfigureAwait(false);
-await TestWithHttpClient("https://mixed.ssrf.fail").ConfigureAwait(false);
-await TestWithHttpClient("https://bad.ssrf.fail").ConfigureAwait(false);
+await TestWithHttpClient("https://good.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://mixed.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://bad.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
 
 Console.WriteLine();
 Console.WriteLine("failMixedResults = false");
 Console.WriteLine("------------------------");
 
-await TestWithHttpClient("https://good.ssrf.fail", failMixedResults: false).ConfigureAwait(false);
-await TestWithHttpClient("https://mixed.ssrf.fail", failMixedResults: false).ConfigureAwait(false);
-await TestWithHttpClient("https://bad.ssrf.fail", failMixedResults: false).ConfigureAwait(false);
+await TestWithHttpClient("https://good.ssrf.fail", failMixedResults: false, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://mixed.ssrf.fail", failMixedResults: false, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("https://bad.ssrf.fail", failMixedResults: false, loggerFactory: loggerFactory).ConfigureAwait(false);
 
 Console.WriteLine();
 Console.WriteLine("ClientWebSocket Tests");
-await TestWithClientWebSocket("wss://echo.websocket.org").ConfigureAwait(false);
-await TestWithClientWebSocket("ws://echo.websocket.org").ConfigureAwait(false);
-await TestWithClientWebSocket("wss://good.ssrf.fail").ConfigureAwait(false);
-await TestWithClientWebSocket("wss://mixed.ssrf.fail").ConfigureAwait(false);
-await TestWithClientWebSocket("wss://bad.ssrf.fail").ConfigureAwait(false);
+await TestWithClientWebSocket("wss://echo.websocket.org", loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithClientWebSocket("ws://echo.websocket.org", loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithClientWebSocket("wss://good.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithClientWebSocket("wss://mixed.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithClientWebSocket("wss://bad.ssrf.fail", loggerFactory: loggerFactory).ConfigureAwait(false);
 
 Console.WriteLine();
 Console.WriteLine("AllowInsecureProtocols=true");
 Console.WriteLine("---------------------------");
-await TestWithClientWebSocket("ws://echo.websocket.org", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithClientWebSocket("ws://good.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithClientWebSocket("ws://mixed.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
-await TestWithClientWebSocket("ws://bad.ssrf.fail", allowInsecureProtocols: true).ConfigureAwait(false);
+await TestWithClientWebSocket("ws://echo.websocket.org", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithClientWebSocket("ws://good.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithClientWebSocket("ws://mixed.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithClientWebSocket("ws://bad.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 
 
 #pragma warning restore CA1303 // Do not pass literals as localized parameters
 #pragma warning restore S1075 // URIs should not be hardcoded
 
-static async Task TestWithHttpClient(string uri, bool allowInsecureProtocols = false, bool failMixedResults = true)
+static async Task TestWithHttpClient(string uri, bool allowInsecureProtocols = false, bool failMixedResults = true, ILoggerFactory? loggerFactory = null)
 {
     bool exceptionThrown = false;
     string errorMessage = string.Empty;
@@ -138,7 +151,8 @@ static async Task TestWithHttpClient(string uri, bool allowInsecureProtocols = f
             {
                 // Ignore SSL errors since some of the test URLs have invalid certificates. Do not do this in production code.
                 RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
-            })))
+            },
+            loggerFactory: loggerFactory)))
     {
         try
         {
@@ -203,7 +217,7 @@ static async Task TestWithHttpClient(string uri, bool allowInsecureProtocols = f
     }
 }
 
-static async Task TestWithClientWebSocket(string uri, bool allowInsecureProtocols = false, bool failMixedResults = true)
+static async Task TestWithClientWebSocket(string uri, bool allowInsecureProtocols = false, bool failMixedResults = true, ILoggerFactory? loggerFactory = null)
 {
     bool exceptionThrown = false;
     string errorMessage = string.Empty;
@@ -223,7 +237,8 @@ static async Task TestWithClientWebSocket(string uri, bool allowInsecureProtocol
             {
                 // Ignore SSL errors since some of the test URLs have invalid certificates. Do not do this in production code.
                 RemoteCertificateValidationCallback = (sender, certificate, chain, sslPolicyErrors) => true
-            })))
+            },
+            loggerFactory: loggerFactory)))
     {
         try
         {
