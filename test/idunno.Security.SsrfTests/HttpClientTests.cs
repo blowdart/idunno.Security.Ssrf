@@ -372,6 +372,43 @@ public class HttpClientTests
 
         Assert.IsType<SsrfException>(innermostException);
         Assert.Equal("https://example.org/", ((SsrfException)innermostException).Uri!.ToString());
+    }
 
+    [Fact]
+    public async Task ConnectionFailsWhenDnsResolutionReturnsNoIpAddresses()
+    {
+        string hostName = "https://example.org/";
+
+        static async Task<IPHostEntry> hostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry();
+        }
+
+        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: [IPNetwork.Parse("2620:1ec::/36")],
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: new TimeSpan(0, 0, 5),
+            allowInsecureProtocols: true,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: null,
+            sslOptions: null,
+            hostEntryResolver: hostEntryResolver));
+        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+        Exception? innermostException = ex;
+        while (innermostException.InnerException is not null)
+        {
+            innermostException = innermostException.InnerException;
+
+            if (innermostException is SsrfException)
+            {
+                break;
+            }
+        }
+
+        Assert.IsType<SsrfException>(innermostException);
+        Assert.Equal(hostName, ((SsrfException)innermostException).Uri!.ToString());
     }
 }

@@ -342,16 +342,16 @@ public sealed class SsrfSocketsHttpHanderFactory
         SslClientAuthenticationOptions? sslOptions)
     {
         return Create(
-            connectionStrategy : connectionStrategy,
-            additionalUnsafeNetworks : additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses : additionalUnsafeIpAddresses,
-            connectTimeout : connectTimeout,
-            allowInsecureProtocols : allowInsecureProtocols,
-            failMixedResults : failMixedResults,
-            allowAutoRedirect : allowAutoRedirect,
-            automaticDecompression : automaticDecompression,
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            connectTimeout: connectTimeout,
+            allowInsecureProtocols: allowInsecureProtocols,
+            failMixedResults: failMixedResults,
+            allowAutoRedirect: allowAutoRedirect,
+            automaticDecompression: automaticDecompression,
             proxy: proxy,
-            sslOptions : sslOptions,
+            sslOptions: sslOptions,
             hostEntryResolver: null);
     }
 
@@ -406,8 +406,8 @@ public sealed class SsrfSocketsHttpHanderFactory
                 // This may result in additional latency for connections due to DNS lookups, but is necessary as caching would introduce a TOCTOU (Time of Check to Time of Use)
                 // vulnerability where an attacker could change the resolved IP address after validation but before connection.
 
-                IPAddress[] addresses;
-                List<IPAddress> safeIPAddresses = [];
+                IPAddress[] resolvedIpAddresses = [];
+                List<IPAddress> safeResolvedIPAddresses = [];
 
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
 
@@ -418,14 +418,18 @@ public sealed class SsrfSocketsHttpHanderFactory
 
                 if (IPAddress.TryParse(context.DnsEndPoint.Host, out IPAddress? parsedAddress))
                 {
-                    addresses = [parsedAddress]; 
+                    resolvedIpAddresses = [parsedAddress];
                 }
                 else
                 {
                     try
                     {
                         IPHostEntry entry = await hostEntryResolver(context.DnsEndPoint.Host, cancellationToken).ConfigureAwait(false);
-                        addresses = entry.AddressList;
+
+                        if (entry.AddressList is not null)
+                        {
+                            resolvedIpAddresses = entry.AddressList;
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -433,57 +437,73 @@ public sealed class SsrfSocketsHttpHanderFactory
                         throw new SsrfException(requestedUri, $"Connection blocked as host could not be resolved.", inner: ex);
                     }
                 }
-                safeIPAddresses.AddRange(from IPAddress address in addresses
-                                         where !Ssrf.IsUnsafeIpAddress(address, additionalUnsafeNetworks, additionalUnsafeIpAddresses)
-                                         select address);
 
-                if (failMixedResults && safeIPAddresses.Count != addresses.Length)
+                // If no IP addresses were resolved, early exit and block the connection as this is could be potential SSRF attack where the attacker is attempting to connect to a non-existent or internal host that is not resolvable through DNS.
+                if (resolvedIpAddresses.Length == 0)
+                {
+                    throw new SsrfException(requestedUri, $"Connection blocked as host could not be resolved to any IP addresses.");
+                }
+
+                // Pare down the list of resolved IP addresses to just the safe addresses by applying the built-in and additional unsafe IP and network rules.
+                safeResolvedIPAddresses.AddRange(from IPAddress address in resolvedIpAddresses
+                                                 where !Ssrf.IsUnsafeIpAddress(address, additionalUnsafeNetworks, additionalUnsafeIpAddresses)
+                                                 select address);
+
+                // If no safe IP addresses remain after filtering, block the connection as all resolved addresses are unsafe.
+                // If some safe addresses remain but others were filtered out as unsafe, the behavior will depend on the value of the failMixedResults flag. 
+                if (safeResolvedIPAddresses.Count == 0)
+                {
+                    throw new SsrfException(requestedUri, $"Connection blocked as all resolved addresses are unsafe.");
+                }
+
+                // If failMixedResults is set to true, block the connection if any unsafe addresses were found, even if some safe addresses remain.
+                // This is a more conservative approach that errs on the side of blocking potentially unsafe connections, but may cause connectivity
+                // issues if there are misconfigurations in DNS or the additional unsafe lists.
+                if (failMixedResults && safeResolvedIPAddresses.Count != resolvedIpAddresses.Length)
                 {
                     throw new SsrfException(requestedUri, $"Connection blocked as some resolved addresses are unsafe.");
                 }
 
-                // Reorder the list of safe IP addresses based on the specified connection strategy.
-                if (connectionStrategy.HasFlag(ConnectionStrategy.Random))
+                // Reorder the list of safe IP addresses based on the specified connection strategy, if there are multiple addresses to choose from.
+                if (safeResolvedIPAddresses.Count > 1)
                 {
-                    safeIPAddresses = [.. safeIPAddresses.OrderBy(_ => RandomNumberGenerator.GetInt32(0, safeIPAddresses.Count))];
-                }
-
-                if (connectionStrategy.HasFlag(ConnectionStrategy.Ipv4Preferred))
-                {
-                    safeIPAddresses = [.. safeIPAddresses.OrderByDescending(a => a.AddressFamily == AddressFamily.InterNetwork)];
-                }
-                else if (connectionStrategy.HasFlag(ConnectionStrategy.Ipv6Preferred))
-                {
-                    safeIPAddresses = [.. safeIPAddresses.OrderByDescending(a => a.AddressFamily == AddressFamily.InterNetworkV6)];
-                }
-
-                if (safeIPAddresses.Count > 0)
-                {
-                    // Attempt to connect to each safe IP address until a successful connection is made.
-                    foreach (IPAddress address in safeIPAddresses)
+                    if (connectionStrategy.HasFlag(ConnectionStrategy.Random))
                     {
-                        Socket socket = new(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-                        try
-                        {
-                            await socket.ConnectAsync(new IPEndPoint(address, context.DnsEndPoint.Port), cancellationToken).ConfigureAwait(false);
-                            return new NetworkStream(socket, ownsSocket: true);
-                        }
-                        catch (SocketException)
-                        {
-                            socket.Dispose();
-                            continue;
-                        }
-                        catch
-                        {
-                            socket.Dispose();
-                            throw;
-                        }
+                        safeResolvedIPAddresses = [.. safeResolvedIPAddresses.OrderBy(_ => RandomNumberGenerator.GetInt32(0, safeResolvedIPAddresses.Count))];
                     }
 
-                    throw new SocketException((int)SocketError.HostUnreachable);
+                    if (connectionStrategy.HasFlag(ConnectionStrategy.Ipv4Preferred))
+                    {
+                        safeResolvedIPAddresses = [.. safeResolvedIPAddresses.OrderByDescending(a => a.AddressFamily == AddressFamily.InterNetwork)];
+                    }
+                    else if (connectionStrategy.HasFlag(ConnectionStrategy.Ipv6Preferred))
+                    {
+                        safeResolvedIPAddresses = [.. safeResolvedIPAddresses.OrderByDescending(a => a.AddressFamily == AddressFamily.InterNetworkV6)];
+                    }
                 }
 
-                throw new SsrfException(requestedUri, $"Connection blocked as all resolved addresses are unsafe.");
+                // Attempt to connect to each safe IP address until a successful connection is made.
+                foreach (IPAddress address in safeResolvedIPAddresses)
+                {
+                    Socket socket = new(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                    try
+                    {
+                        await socket.ConnectAsync(new IPEndPoint(address, context.DnsEndPoint.Port), cancellationToken).ConfigureAwait(false);
+                        return new NetworkStream(socket, ownsSocket: true);
+                    }
+                    catch (SocketException)
+                    {
+                        socket.Dispose();
+                        continue;
+                    }
+                    catch
+                    {
+                        socket.Dispose();
+                        throw;
+                    }
+                }
+
+                throw new SocketException((int)SocketError.HostUnreachable);
             }
         };
 
