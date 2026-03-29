@@ -70,6 +70,9 @@ public static class Ssrf
             // Documentation IPv6 addresses https://datatracker.ietf.org/doc/html/rfc3849
             new (IPAddress.Parse("2001:db8::"), 32),
 
+            // Expanded documentation IPv6 addresses https://datatracker.ietf.org/doc/html/rfc9637
+            new (IPAddress.Parse("3fff::"), 20),
+
             // NAT64 well-known prefix https://datatracker.ietf.org/doc/html/rfc6052
             // NAT64 gateways translate these addresses to their embedded IPv4 equivalents,
             // which could be used to reach private IPv4 infrastructure.
