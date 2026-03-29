@@ -170,7 +170,7 @@ RWTsT4BHHChe/Rj/GBAuZHg3RaZFnfBDqaZ7KzLvr44a7mO6fLCxSAFc
 ```
 
 To validate a file using an artifact signature from a [release](https://github.com/blowdart/idunno.Security.Ssrf/releases)
-download the `.nupkg` from nuget and the appropriate `.minisig` from the release page, then use the following command,
+download the `.nupkg` from nuget and the appropriate the `.minisig` from the release page, then use the following command,
 replacing `<package-path>` with the file name you wish to verify.
 
 ```
@@ -208,7 +208,7 @@ or through the [command line](https://learn.microsoft.com/en-us/dotnet/core/tool
 
 The package source URI is https://www.myget.org/F/blowdart/api/v3/index.json
 
-Please note that nightly builds are signed with [Trusted Signing](https://azure.microsoft.com/en-us/products/trusted-signing),
+Please note that nightly builds are signed with Azure [Artifact Signing](https://azure.microsoft.com/en-us/products/artifact-signing/),
 the signing certificate chain will not match the signing chain of a release build. The subject name remains the same.
 
 ### External analyzers used during builds
