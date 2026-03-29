@@ -38,4 +38,7 @@ If the SSRF check finds an unsafe host, or a host that resolves to an unsafe add
 Depending on where the exception it thrown, and the type of client it will end up as the `InnerException` on the
 `HttpRequestException`, `SocketException` or `WebSocketException` thrown by the client.
 
-See the repo [README](https://github.com/blowdart/idunnoSecuritySsrf/blob/main/readme.md) for more details.
+Please see the full [README](https://github.com/blowdart/idunno.Security.Ssrf/blob/main/readme.md) for more details on how to use
+this nupkg.
+
+The [CHANGELOG](https://github.com/blowdart/idunno.Security.Ssrf/blob/main/CHANGELOG.md) has a full a list of changes in each version.
