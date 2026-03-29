@@ -102,7 +102,7 @@ When an application and an attacker love each other very much ...
 A ServerSide Request Forgery (SSRF) vulnerability occurs when an application takes a user-supplied URL and makes a request to that URL without
 properly, and continuously validating it.
 
-Imagine an application that takes a user supplied URL as input and fetches data from it. Everything works fine when the user supplies a URL like `https://example.com/data`,
+Imagine an application that takes a user-supplied URL as input and fetches data from it. Everything works fine when the user supplies a URL like `https://example.com/data`,
 but what if the user supplies a URL like `http://localhost/admin`? If the application is running on a server that has an admin interface accessible at `http://localhost/admin`,
 then the application could potentially access sensitive information and share it with an attacker or allow them
 to perform actions on the server that they shouldn't be able to.
