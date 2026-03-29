@@ -221,6 +221,7 @@ public class IsUnsafeTests
     [InlineData("[fec0::1]")]
     [InlineData("[2001::1]")]
     [InlineData("[2001:db8::1]")]
+    [InlineData("[3fff::42]")]
     public async Task ReturnsTrueForIpAddressesInThePredefinedNetworks(string ipAddressAsString)
     {
         Assert.True(await Ssrf.IsUnsafe(
