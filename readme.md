@@ -27,7 +27,6 @@ If you want to protect a `ClientWebSocket` you pass a an instance of the handler
 `ConnectAsync(Uri uri, System.Net.Http.HttpMessageInvoker? invoker, System.Threading.CancellationToken cancellationToken);`.
 
 ```c#
-
 using (var webSocket = new ClientWebSocket())
 using (var invoker = new HttpClient(
     SsrfSocketsHttpHanderFactory.Create()))
@@ -117,7 +116,6 @@ In addition the default lists of [known bad IP networks and IP addresses](https:
 
 If you are accepting user input that is used to make outgoing HTTP requests, or WebSocket connections, then you should be
 mitigating SSRF vulnerabilities in your application, and this library can help you do that.
-
 
 ## Current Build Status
 
@@ -226,4 +224,3 @@ the signing certificate chain will not match the signing chain of a release buil
 * [ReportGenerator](https://github.com/danielpalme/ReportGenerator) - used to produce code coverage reports.
 * [sign](https://github.com/dotnet/sign) - used to code sign assemblies and nuget packages.
 * [xunit](https://github.com/xunit/xunit) - used for unit tests.
-
