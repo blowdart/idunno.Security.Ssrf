@@ -26,6 +26,11 @@
       <Build Solution="CodeQL|*" Project="false" />
       <Build Solution="Release|*" Project="false" />
     </Project>
+    <Project Path="demo/DelegatingHttpHandler/DelegatingHttpHandler.csproj" Id="d030bb3a-bf87-4a1f-9030-baabeff96911">
+      <BuildType Solution="CodeQL|*" Project="Debug" />
+      <Build Solution="CodeQL|*" Project="false" />
+      <Build Solution="Release|*" Project="false" />
+    </Project>
   </Folder>
   <Folder Name="/Solution Items/">
     <File Path=".editorconfig" />

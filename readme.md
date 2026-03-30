@@ -28,13 +28,13 @@ If you want to protect a `ClientWebSocket` you pass a an instance of the handler
 
 ```c#
 
-using (var webSocket = new ClientWebSock())
-using (var httpClient = new HttpClient(
-    SsrfSocketsHttpHanderFactory.Create(connectTimeout: new TimeSpan(0, 0, 5))))
+using (var webSocket = new ClientWebSocket())
+using (var invoker = new HttpClient(
+    SsrfSocketsHttpHanderFactory.Create()))
 {
-    await _client.ConnectAsync(
-        uri: "wss://echo.websocket.org",
-        invoker: httpClient);
+    await webSocket.ConnectAsync(
+        uri: new Uri("wss://echo.websocket.org"),
+        invoker: invoker);
 }
 ```
 
