@@ -14,7 +14,7 @@ Add the `idunno.Security.Ssrf` package to your project, and then when you create
 to the message handler pipeline.
 
 ```c#
-using (var httpClient = new HttpClient(idunno.Security.SsrfSocketsHttpHanderFactory.Create()))   
+using (var httpClient = new HttpClient(idunno.Security.SsrfSocketsHttpHandlerFactory.Create()))
 {
     _ = await httpClient.GetAsync(new Uri("bad.ssl.fail")).ConfigureAwait(false);
 }
@@ -26,7 +26,7 @@ If you want to protect a `ClientWebSocket` you can pass a an instance of the han
 ```c#
 
 using (var webSocket = new ClientWebSock())
-using (var httpClient = new HttpClient(idunno.Security.SsrfSocketsHttpHanderFactory.Create()))
+using (var httpClient = new HttpClient(idunno.Security.SsrfSocketsHttpHandlerFactory.Create()))
 {
     await webSocket.ConnectAsync(
         uri: new Uri("wss://echo.websocket.org"),

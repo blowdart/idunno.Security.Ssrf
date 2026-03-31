@@ -7,7 +7,7 @@ using System.Net.Security;
 namespace idunno.Security;
 
 /// <summary>
-/// Encapsulates options for the <see cref="SsrfSocketsHttpHanderFactory"/>.
+/// Encapsulates options for the <see cref="SsrfSocketsHttpHandlerFactory"/>.
 /// </summary>
 public record SsrfOptions
 {

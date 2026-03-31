@@ -9,7 +9,7 @@ using DelegatingHttpHandler;
 
 var timingHandler = new TimingHandler()
 {
-    InnerHandler = SsrfSocketsHttpHanderFactory.Create(
+    InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
          connectionStrategy: ConnectionStrategy.None,
          additionalUnsafeNetworks: null,
          additionalUnsafeIpAddresses: null,
@@ -31,7 +31,7 @@ using (var httpClient = new HttpClient(timingHandler))
 
 timingHandler = new TimingHandler()
 {
-    InnerHandler = SsrfSocketsHttpHanderFactory.Create(
+    InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
          connectionStrategy: ConnectionStrategy.None,
          additionalUnsafeNetworks: null,
          additionalUnsafeIpAddresses: [
