@@ -97,7 +97,10 @@ public static class Ssrf
     {
         ArgumentNullException.ThrowIfNull(uri);
 
-        return IsUnsafeUri(uri: uri, allowInsecureProtocols: false);
+        return IsUnsafeUri(
+            uri: uri,
+            allowInsecureProtocols: false,
+            allowLoopback: false);
     }
 
     /// <summary>
@@ -112,9 +115,32 @@ public static class Ssrf
     {
         ArgumentNullException.ThrowIfNull(uri);
 
+        return IsUnsafeUri(
+            uri: uri,
+            allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: false);
+    }
+
+    /// <summary>
+    /// Evaluates the given <paramref name="uri"/> to determine if it is potentially unsafe for use in server-side requests,
+    /// based on its host name type, whether it is absolute, loopback, UNC, and its scheme.
+    /// </summary>
+    /// <param name="uri">The <see cref="Uri"/> to evaluate.</param>
+    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowLoopback">Flag indicating whether localhost URIs will be allowed or rejected.</param>
+    /// <returns><see langword="true"/> if the <paramref name="uri" /> is potentially unsafe; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
+    public static bool IsUnsafeUri(Uri uri, bool allowInsecureProtocols, bool allowLoopback)
+    {
+        ArgumentNullException.ThrowIfNull(uri);
+
         if (!uri.IsAbsoluteUri ||
-            uri.IsLoopback ||
             uri.IsUnc)
+        {
+            return true;
+        }
+
+        if (uri.IsLoopback && !allowLoopback)
         {
             return true;
         }
@@ -146,7 +172,30 @@ public static class Ssrf
     {
         ArgumentNullException.ThrowIfNull(ipAddress);
 
-        return IsUnsafeIpAddress(ipAddress, additionalUnsafeNetworks: null, additionalUnsafeIpAddresses: null);
+        return IsUnsafeIpAddress(
+            ipAddress: ipAddress,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowLoopback: false);
+    }
+
+    /// <summary>
+    /// Evaluates the given <paramref name="ipAddress"/> to determine if it is potentially unsafe for use in server-side requests, based on its address type, whether it is unspecified, loopback, multicast, link-local, site-local, unique local,
+    /// and whether it falls within known unsafe IP network ranges.
+    /// </summary>
+    /// <param name="ipAddress">The <see cref="IPAddress"/> to evaluate.</param>
+    /// <param name="allowLoopback">Indicates whether localhost addresses should be considered safe.</param>
+    /// <returns><see langword="true"/> if the <paramref name="ipAddress" /> is potentially unsafe; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/>.</exception>
+    public static bool IsUnsafeIpAddress(IPAddress ipAddress, bool allowLoopback)
+    {
+        ArgumentNullException.ThrowIfNull(ipAddress);
+
+        return IsUnsafeIpAddress(
+            ipAddress: ipAddress,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowLoopback: allowLoopback);
     }
 
     /// <summary>
@@ -166,13 +215,43 @@ public static class Ssrf
     {
         ArgumentNullException.ThrowIfNull(ipAddress);
 
+        return IsUnsafeIpAddress(
+            ipAddress: ipAddress,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowLoopback: false);
+    }
+
+    /// <summary>
+    /// Evaluates the given <paramref name="ipAddress"/> to determine if it is potentially unsafe for use in server-side requests, based on its address type, whether it is unspecified, loopback, multicast, link-local, site-local, unique local,
+    /// and whether it falls within known unsafe IP network ranges. Optional additional networks can be provided to consider as unsafe beyond the built-in defaults.
+    /// </summary>
+    /// <param name="ipAddress">The <see cref="IPAddress"/> to evaluate.</param>
+    /// <param name="additionalUnsafeNetworks">Optional additional networks to consider unsafe.</param>
+    /// <param name="additionalUnsafeIpAddresses">Optional additional IP addresses to consider unsafe.</param>
+    /// <param name="allowLoopback">Indicates whether localhost addresses should be considered safe.</param>
+    /// <returns><see langword="true"/> if the <paramref name="ipAddress" /> is potentially unsafe; otherwise, <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/>.</exception>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoids delegate allocation on hot path.")]
+    public static bool IsUnsafeIpAddress(
+        IPAddress ipAddress,
+        ICollection<IPNetwork>? additionalUnsafeNetworks,
+        ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        bool allowLoopback)
+    {
+        ArgumentNullException.ThrowIfNull(ipAddress);
+
         // Normalize IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1) to IPv4 before range checks.
         if (ipAddress.IsIPv4MappedToIPv6)
         {
             ipAddress = ipAddress.MapToIPv4();
         }
 
-        // Perform checks so that IPv4-mapped IPv6addresses (e.g. ::ffff:1.2.3.4) are correctly matched against their IPv4 equivalents.
+        // Allow override to consider localhost addresses as safe
+        if (allowLoopback && IPAddress.IsLoopback(ipAddress))
+        {
+            return false;
+        }
 
         if (additionalUnsafeIpAddresses is not null && additionalUnsafeIpAddresses.Contains(ipAddress))
         {
@@ -269,6 +348,7 @@ public static class Ssrf
         return IsUnsafe(
             uri: uri,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
             hostEntryResolver: null,
@@ -292,6 +372,7 @@ public static class Ssrf
         return IsUnsafe(
             uri: uri,
             allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: false,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
             hostEntryResolver: null,
@@ -316,6 +397,7 @@ public static class Ssrf
         return IsUnsafe(
             uri: uri,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: null,
             hostEntryResolver: null,
@@ -340,6 +422,7 @@ public static class Ssrf
         return IsUnsafe(
             uri: uri,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             hostEntryResolver: null,
@@ -368,6 +451,7 @@ public static class Ssrf
         return IsUnsafe(
             uri: uri,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             hostEntryResolver: null,
@@ -398,6 +482,40 @@ public static class Ssrf
         return IsUnsafe(
             uri: uri,
             allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: false,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            hostEntryResolver: null,
+            cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// Implements simple SSRF validation on the specified <paramref name="uri"/> by checking 
+    /// its protocol (HTTPS only), host name type, whether it is absolute, loopback, UNC, and its scheme, and that
+    /// the host resolves to a public IP address which is not in a known unsafe range.
+    /// </summary>
+    /// <param name="uri">The <see cref="Uri"/> to validate.</param>
+    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowLoopback">Flag indicating whether localhost URIs will be allowed or rejected.</param>
+    /// <param name="additionalUnsafeNetworks">Optional additional networks to consider unsafe.</param>
+    /// <param name="additionalUnsafeIpAddresses">Optional additional IP addresses to consider unsafe.</param>
+    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
+    /// <returns><see langword="true" /> if the <paramref name="uri" /> is considered safe, otherwise <see langword="false"/>.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
+    public static Task<bool> IsUnsafe(
+        Uri uri,
+        bool allowInsecureProtocols,
+        bool allowLoopback,
+        ICollection<IPNetwork>? additionalUnsafeNetworks,
+        ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(uri);
+
+        return IsUnsafe(
+            uri: uri,
+            allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: allowLoopback,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             hostEntryResolver: null,
@@ -408,6 +526,7 @@ public static class Ssrf
     internal static async Task<bool> IsUnsafe(
         Uri uri,
         bool allowInsecureProtocols,
+        bool allowLoopback,
         ICollection<IPNetwork>? additionalUnsafeNetworks,
         ICollection<IPAddress>? additionalUnsafeIpAddresses,
         Func<string, CancellationToken, Task<IPHostEntry>>? hostEntryResolver = null,
@@ -417,7 +536,10 @@ public static class Ssrf
 
         hostEntryResolver ??= s_defaultHostEntryResolver;
 
-        if (IsUnsafeUri(uri, allowInsecureProtocols))
+        if (IsUnsafeUri(
+            uri: uri,
+            allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: allowLoopback))
         {
             return true;
         }
@@ -429,7 +551,8 @@ public static class Ssrf
             return IsUnsafeIpAddress(
                 ipAddress: ipAddress,
                 additionalUnsafeNetworks: additionalUnsafeNetworks,
-                additionalUnsafeIpAddresses: additionalUnsafeIpAddresses);
+                additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+                allowLoopback: allowLoopback);
         }
 
         IPHostEntry? hostEntry = await hostEntryResolver(uri.Host, cancellationToken).ConfigureAwait(false);
@@ -443,7 +566,8 @@ public static class Ssrf
             if (IsUnsafeIpAddress(
                 ipAddress: ipAddress,
                 additionalUnsafeNetworks: additionalUnsafeNetworks,
-                additionalUnsafeIpAddresses: additionalUnsafeIpAddresses))
+                additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+                allowLoopback: allowLoopback))
             {
                 return true;
             }

@@ -34,7 +34,7 @@ public record SsrfOptions
     public TimeSpan? ConnectTimeout { get; set; }
 
     /// <summary>
-    /// Gets or sets a flag indicating whether http:// and ws:// URIs will be allowed or rejected.
+    /// Gets or sets a flag indicating whether http:// and ws:// URIs will be allowed or rejected. Defaults to <see langword="false"/>.
     /// </summary>
     public bool AllowInsecureProtocols { get; set; }
 
@@ -46,7 +46,7 @@ public record SsrfOptions
     public bool FailMixedResults { get; set; } = true;
 
     /// <summary>
-    /// Gets or sets a value that indicates whether the handler should follow redirection responses.
+    /// Gets or sets a value that indicates whether the handler should follow redirection responses. Defaults to <see langword="false"/>.
     /// </summary>
     public bool AllowAutoRedirect { get; set; }
 
@@ -64,4 +64,9 @@ public record SsrfOptions
     /// Gets or sets the set of options used for client TLS authentication.
     /// </summary>
     public SslClientAuthenticationOptions? SslOptions { get; set; }
+
+    /// <summary>
+    /// Gets or sets a flag indicating whether to allow loopback addresses (e.g. localhost, 127.0.0.1, ::1). Defaults to <see langword="false"/>.
+    /// </summary>
+    public bool AllowLoopback { get; set; }
 }

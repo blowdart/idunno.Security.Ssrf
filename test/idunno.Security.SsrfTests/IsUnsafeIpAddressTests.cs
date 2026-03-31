@@ -314,4 +314,18 @@ public class IsUnsafeIpAddressTests
     {
         Assert.Throws<ArgumentNullException>(() => Ssrf.IsUnsafeIpAddress(null!));
     }
+
+    [InlineData("127.0.0.1")]
+    [InlineData("127.0.0.2")]
+    [InlineData("127.255.255.254")]
+    [InlineData("::1")]
+    [Theory]
+    public void ReturnsFalseForLoopbackIfAllowLoopbackIsTrue(string ipAddressAsString)
+    {
+        Assert.False(Ssrf.IsUnsafeIpAddress(
+            ipAddress: IPAddress.Parse(ipAddressAsString),
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowLoopback: true));
+    }
 }

@@ -1,4 +1,12 @@
-﻿## 2.0.0 - 2026-31-03
+﻿## 2.1.0 - 2026-31-03
+
+### Added
+
+* Added `allowLoopback` parameter to `Ssrf.IsUnsafe`, `Ssrf.IsUnsafeHost`, `Ssrf.IsUnsafeIPAddress` and
+  `SsrfSocketsHttpHandlerFactory.Create` methods to allow localhost addresses to be considered valid
+  if explicitly specified.
+
+## 2.0.0 - 2026-31-03
 
 ### Changed
 

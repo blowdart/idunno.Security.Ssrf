@@ -117,6 +117,11 @@ In addition the default lists of [known bad IP networks and IP addresses](https:
 If you are accepting user input that is used to make outgoing HTTP requests, or WebSocket connections, then you should be
 mitigating SSRF vulnerabilities in your application, and this library can help you do that.
 
+## Special casing loopback/localhost
+By default, loopback/localhost addresses are considered unsafe by the handler, and will cause an `SsrfException` to be thrown if encountered.
+However if you have a legitimate reason to allow them to be accessed, you can set the `allowLoopback` parameter to `true`
+when calling `SsrfSocketsHttpHandlerFactory.Create()`, or when calling the `IsUnsafe`, `IsUnsafeUri` or `IsUnsafeIpAddress` methods.
+
 ## Current Build Status
 
 [![Build Status](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/ci-build.yml/badge.svg?branch=main)](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/ci-build.yml)

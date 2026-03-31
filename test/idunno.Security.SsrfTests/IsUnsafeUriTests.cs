@@ -75,10 +75,10 @@ public class IsUnsafeUriTests
     [InlineData("[::1]")]
     public void ReturnsTrueForLocalhostAndLoopbackAddresses(string host)
     {
-        Assert.True(Ssrf.IsUnsafeUri(new Uri($"http://{host}/")));
+        Assert.True(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowInsecureProtocols: true));
         Assert.True(Ssrf.IsUnsafeUri(new Uri($"https://{host}/")));
         Assert.True(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowInsecureProtocols: true));
-        Assert.True(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowInsecureProtocols: true));
+        Assert.True(Ssrf.IsUnsafeUri(new Uri($"https://{host}/")));
     }
 
     [Theory]
@@ -94,5 +94,17 @@ public class IsUnsafeUriTests
     public void ThrowsArgumentNullExceptionIfUriIsNull()
     {
         Assert.Throws<ArgumentNullException>(() => Ssrf.IsUnsafeUri(null!));
+    }
+
+    [Theory]
+    [InlineData("localhost")]
+    [InlineData("127.0.0.1")]
+    [InlineData("[::1]")]
+    public void ReturnsFalseForLocalhostAndLoopbackAddressesIfAllowLoopbackIsTrue(string host)
+    {
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowInsecureProtocols: true, allowLoopback: true));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowInsecureProtocols: false, allowLoopback: true));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowInsecureProtocols: true, allowLoopback: true));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowInsecureProtocols: false, allowLoopback: true));
     }
 }

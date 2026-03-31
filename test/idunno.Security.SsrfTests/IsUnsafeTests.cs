@@ -426,9 +426,42 @@ public class IsUnsafeTests
         Assert.True(await Ssrf.IsUnsafe(
             uri: new Uri("https://example.com"),
             allowInsecureProtocols: false,
+            allowLoopback: false,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
             hostEntryResolver: emptyResolver,
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData("localhost")]
+    [InlineData("127.0.0.1")]
+    [InlineData("[::1]")]
+    public async Task ReturnsFalseForLocalhostAndLoopbackAddressesIfAllowLoopbackIsTrue(string host)
+    {
+        Assert.False(await Ssrf.IsUnsafe(
+            new Uri($"https://{host}/"),
+            allowInsecureProtocols: false,
+            allowLoopback: true,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            hostEntryResolver: null,
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData("localhost")]
+    [InlineData("127.0.0.1")]
+    [InlineData("[::1]")]
+    public async Task ReturnsTrueForLocalhostAndLoopbackAddressesIfAllowLoopbackIsTrueAndAllowInsecureProtocolsIsFalse(string host)
+    {
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"http://{host}/"),
+            allowInsecureProtocols: false,
+            allowLoopback: true,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            hostEntryResolver: null,
             cancellationToken: TestContext.Current.CancellationToken));
     }
 }

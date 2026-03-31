@@ -80,6 +80,7 @@ public class HttpClientTests
             additionalUnsafeIpAddresses: null,
             connectTimeout: new TimeSpan(0,0,1),
             allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
@@ -157,6 +158,7 @@ public class HttpClientTests
             additionalUnsafeIpAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
             allowInsecureProtocols: true,
+            allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
@@ -185,6 +187,7 @@ public class HttpClientTests
             additionalUnsafeIpAddresses: [IPAddress.Parse("1.2.3.4")],
             connectTimeout: new TimeSpan(0, 0, 5),
             allowInsecureProtocols: true,
+            allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
@@ -227,6 +230,7 @@ public class HttpClientTests
             additionalUnsafeIpAddresses: [IPAddress.Parse("2606:4700::6812:1b78")],
             connectTimeout: new TimeSpan(0, 0, 5),
             allowInsecureProtocols: true,
+            allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
@@ -269,6 +273,7 @@ public class HttpClientTests
             additionalUnsafeIpAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
             allowInsecureProtocols: true,
+            allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
@@ -310,7 +315,8 @@ public class HttpClientTests
             additionalUnsafeNetworks: [IPNetwork.Parse("2620:1ec::/36")],
             additionalUnsafeIpAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: true,
+            allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
@@ -393,7 +399,8 @@ public class HttpClientTests
             additionalUnsafeNetworks: [IPNetwork.Parse("2620:1ec::/36")],
             additionalUnsafeIpAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: true,
+            allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
@@ -401,7 +408,9 @@ public class HttpClientTests
             sslOptions: null,
             hostEntryResolver: hostEntryResolver,
             loggerFactory: null));
+
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
         {
@@ -416,4 +425,134 @@ public class HttpClientTests
         Assert.IsType<SsrfException>(innermostException);
         Assert.Equal(hostName, ((SsrfException)innermostException).Uri!.ToString());
     }
+
+    [Theory]
+    [InlineData("http://localhost/")]
+    [InlineData("https://localhost/")]
+    [InlineData("http://127.0.0.1/")]
+    [InlineData("https://127.0.0.1/")]
+    [InlineData("http://127.255.255.254/")]
+    [InlineData("https://127.255.255.254/")]
+    [InlineData("http://[::1]/")]
+    [InlineData("https://[::1]/")]
+    public async Task ConnectionDoesNotThrowForLoopbackHostWhenAllowLoopbackIsSet(string hostName)
+    {
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: new TimeSpan(0, 0, 1),
+            allowInsecureProtocols: true,
+            allowLoopback: true,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: null));
+
+        Exception? ex = await Record.ExceptionAsync(async () => {
+            await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
+        });
+
+        Assert.NotNull(ex);
+        Assert.IsNotType<SsrfException>(ex);
+
+        Exception? innermostException = ex;
+        while (innermostException.InnerException is not null)
+        {
+            innermostException = innermostException.InnerException;
+
+            if (innermostException is SsrfException)
+            {
+                break;
+            }
+        }
+
+        Assert.IsNotType<SsrfException>(innermostException);
+    }
+
+    [Theory]
+    [InlineData("http://localhost/")]
+    [InlineData("https://localhost/")]
+    [InlineData("http://127.0.0.1/")]
+    [InlineData("https://127.0.0.1/")]
+    [InlineData("http://127.255.255.254/")]
+    [InlineData("https://127.255.255.254/")]
+    [InlineData("http://[::1]/")]
+    [InlineData("https://[::1]/")]
+    public async Task ConnectionDoesNotThrowForLoopbackHostWhenAllowLoopbackIsSetInOptions(string hostName)
+    {
+        SsrfOptions options = new()
+        {
+            ConnectTimeout = new TimeSpan(0, 0, 1),
+            AllowInsecureProtocols = true,
+            AllowLoopback = true,
+        };
+
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(options));
+
+        Exception? ex = await Record.ExceptionAsync(async () => {
+            await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
+        });
+
+        Assert.NotNull(ex);
+        Assert.IsNotType<SsrfException>(ex);
+
+        Exception? innermostException = ex;
+        while (innermostException.InnerException is not null)
+        {
+            innermostException = innermostException.InnerException;
+
+            if (innermostException is SsrfException)
+            {
+                break;
+            }
+        }
+
+        Assert.IsNotType<SsrfException>(innermostException);
+    }
+
+    [Theory]
+    [InlineData("http://localhost/")]
+    [InlineData("http://127.0.0.1/")]
+    [InlineData("http://127.255.255.254/")]
+    [InlineData("http://[::1]/")]
+    public async Task ConnectionThrowsForInsecureLoopbackHostWhenAllowLoopbackIsSetButAllowInsecureIsFalse(string hostName)
+    {
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: new TimeSpan(0, 0, 1),
+            allowInsecureProtocols: false,
+            allowLoopback: true,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: null));
+
+        Exception? ex = await Record.ExceptionAsync(async () => {
+            await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
+        });
+
+        Assert.NotNull(ex);
+        Assert.IsNotType<SsrfException>(ex);
+
+        Exception? innermostException = ex;
+        while (innermostException.InnerException is not null)
+        {
+            innermostException = innermostException.InnerException;
+
+            if (innermostException is SsrfException)
+            {
+                break;
+            }
+        }
+
+        Assert.IsType<SsrfException>(innermostException);
+    }
+
 }

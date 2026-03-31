@@ -36,6 +36,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -59,6 +60,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -83,6 +85,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -107,6 +110,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -129,6 +133,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeIpAddresses: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             connectTimeout: connectTimeout,
             allowAutoRedirect: false,
             automaticDecompression: null,
@@ -153,6 +158,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeIpAddresses: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             connectTimeout: connectTimeout,
             allowAutoRedirect: false,
             automaticDecompression: null,
@@ -175,9 +181,10 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: null,
             connectTimeout: null,
+            allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
-            allowInsecureProtocols: false,
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
@@ -201,8 +208,9 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeIpAddresses: null,
             connectTimeout: null,
             failMixedResults: true,
-            allowAutoRedirect: false,
             allowInsecureProtocols: false,
+            allowLoopback: false,
+            allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
@@ -225,6 +233,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -232,6 +241,30 @@ public sealed class SsrfSocketsHttpHandlerFactory
             loggerFactory : null);
     }
 
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowLoopback">Flag indicating whether localhost and loopback addresses will be allowed or rejected.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(bool allowInsecureProtocols, bool allowLoopback)
+    {
+        return Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: null,
+            failMixedResults: true,
+            allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: allowLoopback,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: null);
+    }
     /// <summary>
     /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
     /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
@@ -249,6 +282,33 @@ public sealed class SsrfSocketsHttpHandlerFactory
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            loggerFactory: loggerFactory);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowLoopback">Flag indicating whether localhost and loopback addresses will be allowed or rejected.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(bool allowInsecureProtocols, bool allowLoopback, ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: null,
+            failMixedResults: true,
+            allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: allowLoopback,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -273,6 +333,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             failMixedResults: true,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -298,6 +359,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             failMixedResults: true,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -322,6 +384,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             connectTimeout: connectTimeout,
             failMixedResults: true,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -347,6 +410,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             connectTimeout: connectTimeout,
             failMixedResults: true,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -371,6 +435,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             connectTimeout: connectTimeout,
             failMixedResults: true,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -396,6 +461,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             connectTimeout: connectTimeout,
             failMixedResults: true,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
@@ -418,9 +484,10 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: null,
             allowInsecureProtocols: false,
+            allowLoopback: false,
+            allowAutoRedirect: false,
             failMixedResults: true,
             connectTimeout: null,
-            allowAutoRedirect: false,
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
@@ -443,6 +510,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: null,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: true,
             connectTimeout: null,
             allowAutoRedirect: false,
@@ -467,6 +535,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: true,
             connectTimeout: null,
             allowAutoRedirect: false,
@@ -492,6 +561,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: true,
             connectTimeout: null,
             allowAutoRedirect: false,
@@ -517,6 +587,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: true,
             connectTimeout: null,
             allowAutoRedirect: false,
@@ -547,6 +618,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: true,
             connectTimeout: null,
             allowAutoRedirect: false,
@@ -573,6 +645,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeIpAddresses: null,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: null,
@@ -606,6 +679,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             allowInsecureProtocols: false,
             failMixedResults: true,
             allowAutoRedirect: false,
+            allowLoopback: false,
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
@@ -634,6 +708,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: null,
@@ -666,6 +741,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
+            allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: null,
@@ -687,16 +763,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ArgumentNullException.ThrowIfNull(options);
 
         return Create(
-            connectionStrategy: options.ConnectionStrategy,
-            additionalUnsafeNetworks: options.AdditionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: options.AdditionalUnsafeIpAddresses,
-            connectTimeout: options.ConnectTimeout,
-            allowInsecureProtocols: options.AllowInsecureProtocols,
-            failMixedResults: options.FailMixedResults,
-            allowAutoRedirect: options.AllowAutoRedirect,
-            automaticDecompression: options.AutomaticDecompression,
-            proxy: options.Proxy,
-            sslOptions: options.SslOptions,
+            options: options,
+            hostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -714,16 +782,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ArgumentNullException.ThrowIfNull(options);
 
         return Create(
-            connectionStrategy: options.ConnectionStrategy,
-            additionalUnsafeNetworks: options.AdditionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: options.AdditionalUnsafeIpAddresses,
-            connectTimeout: options.ConnectTimeout,
-            allowInsecureProtocols: options.AllowInsecureProtocols,
-            failMixedResults: options.FailMixedResults,
-            allowAutoRedirect: options.AllowAutoRedirect,
-            automaticDecompression: options.AutomaticDecompression,
-            proxy: options.Proxy,
-            sslOptions: options.SslOptions,
+            options: options,
+            hostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -737,6 +797,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
     /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
     /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowLoopback">Flag indicating whether loopback addresses will be allowed or rejected.</param>
     /// <param name="failMixedResults">Flag indicating whether to fail when a mixture of safe and unsafe addresses is found. Setting this to <see langword="true"/> will reject the connection if any unsafe addresses are found.</param>
     /// <param name="allowAutoRedirect">Flag indicating whether to allow auto-redirects. Setting this to <see langword="true"/> can introduce security vulnerabilities and should only be enabled if necessary.</param>
     /// <param name="automaticDecompression">The type of decompression to use for automatic decompression of HTTP content. If <see langword="null"/>, defaults to <see cref="DecompressionMethods.All"/>.</param>
@@ -749,6 +810,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ICollection<IPAddress>? additionalUnsafeIpAddresses,
         TimeSpan? connectTimeout,
         bool allowInsecureProtocols,
+        bool allowLoopback,
         bool failMixedResults,
         bool allowAutoRedirect,
         DecompressionMethods? automaticDecompression,
@@ -761,6 +823,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: allowLoopback,
             failMixedResults: failMixedResults,
             allowAutoRedirect: allowAutoRedirect,
             automaticDecompression: automaticDecompression,
@@ -780,6 +843,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
     /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
     /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowLoopback">Flag indicating whether loopback addresses will be allowed or rejected.</param>
     /// <param name="failMixedResults">Flag indicating whether to fail when a mixture of safe and unsafe addresses is found. Setting this to <see langword="true"/> will reject the connection if any unsafe addresses are found.</param>
     /// <param name="allowAutoRedirect">Flag indicating whether to allow auto-redirects. Setting this to <see langword="true"/> can introduce security vulnerabilities and should only be enabled if necessary.</param>
     /// <param name="automaticDecompression">The type of decompression to use for automatic decompression of HTTP content. If <see langword="null"/>, defaults to <see cref="DecompressionMethods.All"/>.</param>
@@ -793,6 +857,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ICollection<IPAddress>? additionalUnsafeIpAddresses,
         TimeSpan? connectTimeout,
         bool allowInsecureProtocols,
+        bool allowLoopback,
         bool failMixedResults,
         bool allowAutoRedirect,
         DecompressionMethods? automaticDecompression,
@@ -806,6 +871,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: allowLoopback,
             failMixedResults: failMixedResults,
             allowAutoRedirect: allowAutoRedirect,
             automaticDecompression: automaticDecompression,
@@ -817,8 +883,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
 
     internal static SocketsHttpHandler Create(
         SsrfOptions options,
-        Func<string, CancellationToken,
-        Task<IPHostEntry>>? hostEntryResolver,
+        Func<string, CancellationToken, Task<IPHostEntry>>? hostEntryResolver,
         ILoggerFactory? loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -830,6 +895,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             allowInsecureProtocols: options.AllowInsecureProtocols,
             failMixedResults: options.FailMixedResults,
             allowAutoRedirect: options.AllowAutoRedirect,
+            allowLoopback: options.AllowLoopback,
             automaticDecompression: options.AutomaticDecompression,
             proxy: options.Proxy,
             sslOptions: options.SslOptions,
@@ -843,6 +909,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ICollection<IPAddress>? additionalUnsafeIpAddresses,
         TimeSpan? connectTimeout,
         bool allowInsecureProtocols,
+        bool allowLoopback,
         bool failMixedResults,
         bool allowAutoRedirect,
         DecompressionMethods? automaticDecompression,
@@ -876,7 +943,10 @@ public sealed class SsrfSocketsHttpHandlerFactory
 
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
 
-                if (Ssrf.IsUnsafeUri(requestedUri, allowInsecureProtocols))
+                if (Ssrf.IsUnsafeUri(
+                    uri: requestedUri,
+                    allowInsecureProtocols: allowInsecureProtocols,
+                    allowLoopback: allowLoopback))
                 {
                     Log.UnsafeUri(logger, requestedUri);
                     throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
@@ -919,11 +989,16 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 List<IPAddress> safeResolvedIPAddresses = new(resolvedIpAddresses.Length);
 
 #pragma warning disable S3267 // Loops should be simplified with "LINQ" expressions - avoids delegate allocation on hot path
-                foreach (IPAddress address in resolvedIpAddresses)
+                foreach (IPAddress ipAddress in resolvedIpAddresses)
                 {
-                    if (!Ssrf.IsUnsafeIpAddress(address, additionalUnsafeNetworks, additionalUnsafeIpAddresses))
+                    if (!Ssrf.IsUnsafeIpAddress(
+                        ipAddress: ipAddress,
+                        additionalUnsafeNetworks: additionalUnsafeNetworks,
+                        additionalUnsafeIpAddresses:
+                        additionalUnsafeIpAddresses,
+                        allowLoopback: allowLoopback))
                     {
-                        safeResolvedIPAddresses.Add(address);
+                        safeResolvedIPAddresses.Add(ipAddress);
                     }
                 }
 #pragma warning restore S3267
