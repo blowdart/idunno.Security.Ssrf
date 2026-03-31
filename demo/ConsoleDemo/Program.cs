@@ -137,7 +137,7 @@ static async Task TestWithHttpClient(string uri, bool allowInsecureProtocols = f
     string errorMessage = string.Empty;
 
     using (var httpClient = new HttpClient(
-        SsrfSocketsHttpHanderFactory.Create(
+        SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
@@ -223,7 +223,7 @@ static async Task TestWithClientWebSocket(string uri, bool allowInsecureProtocol
     string errorMessage = string.Empty;
 
     using (var clientWebSocket = new ClientWebSocket())
-    using (var invoker = new HttpClient(SsrfSocketsHttpHanderFactory.Create(
+    using (var invoker = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
@@ -300,7 +300,7 @@ static async Task TestWithClientWebSocket(string uri, bool allowInsecureProtocol
                     errorMessage = $"{ex.GetType().Name} => {innerException.GetType().Name}: {innerException.Message}";
                 }
             }
-          
+
         }
         catch (TaskCanceledException ex)
         {

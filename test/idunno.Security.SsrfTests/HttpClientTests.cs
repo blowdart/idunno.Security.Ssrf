@@ -16,7 +16,7 @@ public class HttpClientTests
     [InlineData("https://bad.ipv6.ssrf.fail/")]
     public async Task ConnectionThrowsForUnsafeUri(string hostName)
     {
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(connectTimeout: new TimeSpan(0,0,5)));
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(connectTimeout: new TimeSpan(0,0,5)));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
 
         Exception? innermostException = ex;
@@ -40,7 +40,7 @@ public class HttpClientTests
     [InlineData("https://mixed.ipv6.ssrf.fail/")]
     public async Task ConnectionThrowsForHostsThatReturnAMixOfSafeAndUnsafeIPAddresses(string hostName)
     {
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(connectTimeout: new TimeSpan(0, 0, 5)));
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(connectTimeout: new TimeSpan(0, 0, 5)));
         try
         {
             _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
@@ -74,7 +74,7 @@ public class HttpClientTests
     [InlineData("https://mixed.ipv6.ssrf.fail/")]
     public async Task ConnectionContinuesForHostsThatReturnAMixOfSafeAndUnsafeIPAddressesIfFailMixedResultsIsFalse(string hostName)
     {
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
@@ -119,7 +119,7 @@ public class HttpClientTests
     [InlineData("https://github.com/")]
     public async Task ConnectionSucceedsForSafeUri(string hostName)
     {
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(connectTimeout: new TimeSpan(0, 0, 5)));
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(connectTimeout: new TimeSpan(0, 0, 5)));
         HttpResponseMessage response = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(response.IsSuccessStatusCode);
     }
@@ -129,7 +129,7 @@ public class HttpClientTests
     [InlineData("http://github.com/")]
     public async Task ConnectionThrowsForSafeHostButUnsafeProtocol(string hostName)
     {
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create());
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create());
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -151,7 +151,7 @@ public class HttpClientTests
     [InlineData("http://github.com/")]
     public async Task ConnectionThrowsForSafeHostButUnsafeProtocolIfAllowInsecureProtocolIsTrue(string hostName)
     {
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
@@ -179,7 +179,7 @@ public class HttpClientTests
             };
         }
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: [IPAddress.Parse("1.2.3.4")],
@@ -221,7 +221,7 @@ public class HttpClientTests
             };
         }
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: [IPAddress.Parse("2606:4700::6812:1b78")],
@@ -263,7 +263,7 @@ public class HttpClientTests
             };
         }
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: [IPNetwork.Parse("1.2.3.0/24")],
             additionalUnsafeIpAddresses: null,
@@ -305,7 +305,7 @@ public class HttpClientTests
             };
         }
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: [IPNetwork.Parse("2620:1ec::/36")],
             additionalUnsafeIpAddresses: null,
@@ -361,7 +361,7 @@ public class HttpClientTests
             SslOptions = null
         };
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(options));
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(options));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync("https://example.org", cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -388,7 +388,7 @@ public class HttpClientTests
             return new IPHostEntry();
         }
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHanderFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: [IPNetwork.Parse("2620:1ec::/36")],
             additionalUnsafeIpAddresses: null,

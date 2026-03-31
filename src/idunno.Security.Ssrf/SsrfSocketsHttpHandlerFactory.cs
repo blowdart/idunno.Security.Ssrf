@@ -12,12 +12,12 @@ namespace idunno.Security;
 /// <summary>
 /// Contains helper methods for validating URIs and IP addresses to mitigate SSRF (Server-Side Request Forgery) vulnerabilities.
 /// </summary>
-public sealed class SsrfSocketsHttpHanderFactory
+public sealed class SsrfSocketsHttpHandlerFactory
 {
     private static readonly Func<string, CancellationToken, Task<IPHostEntry>> s_defaultHostEntryResolver = Dns.GetHostEntryAsync;
 
     [ExcludeFromCodeCoverage]
-    private SsrfSocketsHttpHanderFactory()
+    private SsrfSocketsHttpHandlerFactory()
     {
     }
 
@@ -853,7 +853,7 @@ public sealed class SsrfSocketsHttpHanderFactory
     {
         hostEntryResolver ??= s_defaultHostEntryResolver;
         loggerFactory ??= NullLoggerFactory.Instance;
-        ILogger logger = loggerFactory.CreateLogger<SsrfSocketsHttpHanderFactory>();
+        ILogger logger = loggerFactory.CreateLogger<SsrfSocketsHttpHandlerFactory>();
 
         SocketsHttpHandler handler = new()
         {
@@ -929,7 +929,7 @@ public sealed class SsrfSocketsHttpHanderFactory
 #pragma warning restore S3267
 
                 // If no safe IP addresses remain after filtering, block the connection as all resolved addresses are unsafe.
-                // If some safe addresses remain but others were filtered out as unsafe, the behavior will depend on the value of the failMixedResults flag. 
+                // If some safe addresses remain but others were filtered out as unsafe, the behavior will depend on the value of the failMixedResults flag.
                 if (safeResolvedIPAddresses.Count == 0)
                 {
                     Log.AllResolvedIpAddressesUnsafe(logger, requestedUri);
@@ -989,7 +989,7 @@ public sealed class SsrfSocketsHttpHanderFactory
                         throw;
                     }
                 }
-                
+
                 Log.HostUnreachable(logger, requestedUri);
                 throw new SocketException((int)SocketError.HostUnreachable);
             }

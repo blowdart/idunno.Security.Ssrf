@@ -17,7 +17,7 @@ pass an instance of the handler in the constructor to add the handler to the mes
 
 ```c#
 using (var httpClient = new HttpClient(
-    SsrfSocketsHttpHanderFactory.Create(connectTimeout: new TimeSpan(0, 0, 5))))
+    SsrfSocketsHttpHandlerFactory.Create(connectTimeout: new TimeSpan(0, 0, 5))))
 {
     _ = await httpClient.GetAsync(new Uri("bad.ssl.fail")).ConfigureAwait(false);
 }
@@ -29,7 +29,7 @@ If you want to protect a `ClientWebSocket` you pass a an instance of the handler
 ```c#
 using (var webSocket = new ClientWebSocket())
 using (var invoker = new HttpClient(
-    SsrfSocketsHttpHanderFactory.Create()))
+    SsrfSocketsHttpHandlerFactory.Create()))
 {
     await webSocket.ConnectAsync(
         uri: new Uri("wss://echo.websocket.org"),
@@ -40,13 +40,13 @@ using (var invoker = new HttpClient(
 If the SSRF handler finds an unsafe host, or a host that resolves to an IP unsafe address it will throw an `SsrfException`.
 
 If the SSRF handler finds an unsafe protocol, (i.e. http://, ws://) it will throw an `SsrfException`, unless
-the `allowInsecureProtocols` parameter is set to `true` when calling `SsrfSocketsHttpHanderFactory.Create()`.
+the `allowInsecureProtocols` parameter is set to `true` when calling `SsrfSocketsHttpHandlerFactory.Create()`.
 It will always throw when it encounters an non-HTTP/HTTPS/WS/WSS protocol, even if `allowInsecureProtocols` is set to `true`.
 
 Extra unsafe IP address ranges can be provided using the `additionalUnsafeNetworks` parameter.
 
 If the SSRF handler finds a mixture of safe and unsafe IP addresses for a host it will throw an `SsrfException` unless the
-`failMixedResults` parameter is set to `false` when calling `SsrfSocketsHttpHanderFactory.Create()`.
+`failMixedResults` parameter is set to `false` when calling `SsrfSocketsHttpHandlerFactory.Create()`.
 If `failMixedResults` is set to `false` then the handler will allow the request to proceed to any safe IP addresses
 discovered during DNS resolution, and will ignore any unsafe IP addresses discovered.
 This is not recommended, but it is provided as an option for scenarios where a host may legitimately
@@ -79,7 +79,7 @@ if (idunno.Security.Ssrf.IsUnsafeIpAddress(IPAddress.Parse("127.0.0.1")))
 
 If you want to perform both checks you can use the `IsUnsafe` method, which will check both the URI and the resolved IP addresses.
 
-Note these checks are performed within `SsrfSocketsHttpHanderFactory.Create()` during the creation of an outgoing connection,
+Note these checks are performed within `SsrfSocketsHttpHandlerFactory.Create()` during the creation of an outgoing connection,
 so you don't need to call them yourself if you're using the handler.
 
 **DO NOT** solely rely on the `IsUnsafeUri` method for validating URIs. This would create a Time of Check /
