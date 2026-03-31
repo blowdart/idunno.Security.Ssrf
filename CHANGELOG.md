@@ -1,6 +1,14 @@
-﻿## 1.1.0 - 2026-29-03
+﻿## 2.0.0 - 2026-31-03
 
-* Expand IPV6 range per [RFC 9637 "Expanding the IPv6 Documentation Space"](https://datatracker.ietf.org/doc/rfc9637/) - Thanks [vcsjones](https://github.com/vcsjones)
+### Changed
+
+* **Breaking:** Correct spelling of `SsrfSocketsHttpHandlerFactory` ([#3](https://github.com/idunno/SsrfSocketsHttpHandlerFactory/issues/3)) ([josephdecock](https://github.com/josephdecock))
+
+## 1.1.0 - 2026-29-03
+
+### Changed
+
+* Expand IPV6 range per [RFC 9637 "Expanding the IPv6 Documentation Space"](https://datatracker.ietf.org/doc/rfc9637/) ([#3](https://github.com/idunno/SsrfSocketsHttpHandlerFactory/issues/2)) ([vcsjones](https://github.com/vcsjones))
 
 ## 1.0.0 - 2026-29-03
 
