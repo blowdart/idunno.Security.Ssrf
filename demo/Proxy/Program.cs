@@ -30,12 +30,12 @@ var ssrfHostValidationHandler = new DebugSsrfHostValidationHandler(
 Console.WriteLine($"Start proxy running on {proxyUri} and press Enter to continue");
 Console.ReadLine();
 
+#pragma warning disable CA1303 // Do not pass literals as localized parameters
 using (var httpClient = new HttpClient(ssrfHostValidationHandler))
 {
-#pragma warning disable CA1303 // Do not pass literals as localized parameters
     Console.WriteLine("Making requests through the proxy...");
 
-    Uri destinationUri = new ("https://www.example.com/");
+    Uri destinationUri = new("https://www.example.com/");
     Console.WriteLine($"Request to {destinationUri} will succeed as it is an allowed protocol and safe destination.");
     HttpResponseMessage response = await httpClient.GetAsync(destinationUri);
     Console.WriteLine($"Response status code: {response.StatusCode}");
@@ -50,7 +50,7 @@ using (var httpClient = new HttpClient(ssrfHostValidationHandler))
     }
     catch (SsrfException ex)
     {
-        Console.WriteLine(ex.Message );
+        Console.WriteLine(ex.Message);
     }
 
     // This request will be blocked by the SSRF protection as it a default dangerous destination.
@@ -91,6 +91,34 @@ using (var httpClient = new HttpClient(ssrfHostValidationHandler))
     {
         Console.WriteLine(ex.Message);
     }
-#pragma warning restore CA1303 // Do not pass literals as localized parameters
 }
 
+var allowMixedSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+    allowInsecureProtocols: true,
+    allowLoopback: false,
+    failMixedResults: false)
+{
+    InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
+    connectionStrategy: ConnectionStrategy.None,
+    additionalUnsafeNetworks: null,
+    additionalUnsafeIpAddresses: null,
+    connectTimeout: TimeSpan.FromSeconds(1),
+    allowInsecureProtocols: true, // Must allow insecure protocols for the proxy itself to work.
+    allowLoopback: true, // Must allow loopback for the proxy itself to work.
+    failMixedResults: false,
+    allowAutoRedirect: false,
+    automaticDecompression: DecompressionMethods.All,
+    proxy: new WebProxy(proxyUri),
+    sslOptions: null,
+    loggerFactory: null)
+};
+
+using (var httpClient = new HttpClient(allowMixedSsrfHostValidationHandler))
+{
+    Uri destinationUri = new("http://mixed.ssrf.fail");
+    Console.WriteLine($"Request to {destinationUri} will fail, but not with an SSRF error, as it is an allowed protocol and has at least one safe IP address.");
+    HttpResponseMessage response = await httpClient.GetAsync(destinationUri);
+    Console.WriteLine($"Response status code: {response.StatusCode}");
+}
+
+#pragma warning restore CA1303 // Do not pass literals as localized parameters

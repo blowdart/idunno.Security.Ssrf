@@ -149,14 +149,14 @@ internal static class CommonFunctions
             {
                 safeResolvedIPAddresses.Add(ipAddress);
             }
+        }
 
-            // If no safe IP addresses remain after filtering, block the connection as all resolved addresses are unsafe.
-            // If some safe addresses remain but others were filtered out as unsafe, the behavior will depend on the value of the failMixedResults flag.
-            if (safeResolvedIPAddresses.Count == 0)
-            {
-                Log.AllResolvedIpAddressesUnsafe(logger, uri);
-                throw new SsrfException(uri, $"Connection blocked as all resolved addresses are unsafe.");
-            }
+        // If no safe IP addresses remain after filtering, block the connection as all resolved addresses are unsafe.
+        // If some safe addresses remain but others were filtered out as unsafe, the behavior will depend on the value of the failMixedResults flag.
+        if (safeResolvedIPAddresses.Count == 0)
+        {
+            Log.AllResolvedIpAddressesUnsafe(logger, uri);
+            throw new SsrfException(uri, $"Connection blocked as all resolved addresses are unsafe.");
         }
 
         // If failMixedResults is set to true, block the connection if any unsafe addresses were found, even if some safe addresses remain.

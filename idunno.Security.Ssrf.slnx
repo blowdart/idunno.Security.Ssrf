@@ -33,6 +33,7 @@
     </Project>
     <Project Path="demo/Proxy/Proxy.csproj" Id="602684df-7a64-436d-aaaf-7ab0abef41df">
       <BuildType Solution="CodeQL|*" Project="Debug" />
+      <Build Solution="CodeQL|*" Project="false" />
     </Project>
   </Folder>
   <Folder Name="/Solution Items/">
