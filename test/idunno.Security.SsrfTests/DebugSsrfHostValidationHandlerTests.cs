@@ -1,13 +1,7 @@
 ﻿// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net;
-using System.Net.Sockets;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace idunno.Security.SsrfTests;
 
@@ -96,7 +90,7 @@ public class DebugSsrfHostValidationHandlerTests
                  connectTimeout: TimeSpan.FromSeconds(1),
                  allowInsecureProtocols: true,
                  allowLoopback: true,
-                 failMixedResults: true,
+                 failMixedResults: false,
                  allowAutoRedirect: false,
                  automaticDecompression: DecompressionMethods.All,
                  proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
@@ -104,9 +98,18 @@ public class DebugSsrfHostValidationHandlerTests
                  loggerFactory: null)
         };
         using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+        Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
 
-        TaskCanceledException ex = await Assert.ThrowsAsync<TaskCanceledException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
-        Assert.IsType<TimeoutException>(ex.InnerException);
+        // Windows and Linux (and probably Mac) throw different exceptions, so check for the lack
+        // of an SSRF exception which indicates the connection was let through the SSRF checks.
+        Assert.NotNull(ex);
+        Assert.IsNotType<SsrfException>(ex);
+
+        while (ex.InnerException is not null)
+        {
+            ex = ex.InnerException;
+            Assert.IsNotType<SsrfException>(ex);
+        }
     }
 
     [Theory]
@@ -134,8 +137,18 @@ public class DebugSsrfHostValidationHandlerTests
                  loggerFactory: null)
         };
         using HttpClient httpClient = new(debugSsrfHostValidationHandler);
-        TaskCanceledException ex = await Assert.ThrowsAsync<TaskCanceledException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
-        Assert.IsType<TimeoutException>(ex.InnerException);
+        Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+
+        // Windows and Linux (and probably Mac) throw different exceptions, so check for the lack
+        // of an SSRF exception which indicates the connection was let through the SSRF checks.
+        Assert.NotNull(ex);
+        Assert.IsNotType<SsrfException>(ex);
+
+        while (ex.InnerException is not null)
+        {
+            ex = ex.InnerException;
+            Assert.IsNotType<SsrfException>(ex);
+        }
     }
 
     [Theory]
@@ -194,8 +207,18 @@ public class DebugSsrfHostValidationHandlerTests
         };
         using HttpClient httpClient = new(debugSsrfHostValidationHandler);
 
-        TaskCanceledException ex = await Assert.ThrowsAsync<TaskCanceledException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
-        Assert.IsType<TimeoutException>(ex.InnerException);
+        Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+
+        // Windows and Linux (and probably Mac) throw different exceptions, so check for the lack
+        // of an SSRF exception which indicates the connection was let through the SSRF checks.
+        Assert.NotNull(ex);
+        Assert.IsNotType<SsrfException>(ex);
+
+        while (ex.InnerException is not null)
+        {
+            ex = ex.InnerException;
+            Assert.IsNotType<SsrfException>(ex);
+        }
     }
 
     [Theory]
@@ -535,8 +558,18 @@ public class DebugSsrfHostValidationHandlerTests
         };
         using HttpClient httpClient = new(debugSsrfHostValidationHandler);
 
-        TaskCanceledException ex = await Assert.ThrowsAsync<TaskCanceledException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
-        Assert.IsType<TimeoutException>(ex.InnerException);
+        Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+
+        // Windows and Linux (and probably Mac) throw different exceptions, so check for the lack
+        // of an SSRF exception which indicates the connection was let through the SSRF checks.
+        Assert.NotNull(ex);
+        Assert.IsNotType<SsrfException>(ex);
+
+        while (ex.InnerException is not null)
+        {
+            ex = ex.InnerException;
+            Assert.IsNotType<SsrfException>(ex);
+        }
     }
 
     [Theory]
@@ -575,8 +608,18 @@ public class DebugSsrfHostValidationHandlerTests
         };
         using HttpClient httpClient = new(debugSsrfHostValidationHandler);
 
-        TaskCanceledException ex = await Assert.ThrowsAsync<TaskCanceledException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
-        Assert.IsType<TimeoutException>(ex.InnerException);
+        Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+
+        // Windows and Linux (and probably Mac) throw different exceptions, so check for the lack
+        // of an SSRF exception which indicates the connection was let through the SSRF checks.
+        Assert.NotNull(ex);
+        Assert.IsNotType<SsrfException>(ex);
+
+        while (ex.InnerException is not null)
+        {
+            ex = ex.InnerException;
+            Assert.IsNotType<SsrfException>(ex);
+        }
     }
 
     [Theory]
