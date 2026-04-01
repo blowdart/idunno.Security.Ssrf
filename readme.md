@@ -118,9 +118,73 @@ If you are accepting user input that is used to make outgoing HTTP requests, or 
 mitigating SSRF vulnerabilities in your application, and this library can help you do that.
 
 ## Special casing loopback/localhost
+
 By default, loopback/localhost addresses are considered unsafe by the handler, and will cause an `SsrfException` to be thrown if encountered.
 However if you have a legitimate reason to allow them to be accessed, you can set the `allowLoopback` parameter to `true`
 when calling `SsrfSocketsHttpHandlerFactory.Create()`, or when calling the `IsUnsafe`, `IsUnsafeUri` or `IsUnsafeIpAddress` methods.
+
+## Using Proxies
+
+Proxies can be dangerous they make the outbound request, doing their own DNS resolution and are responsible
+for any SSRF checks. Typically you have no insight on how they are configured, meaning a proxy may do no checks
+at all.This could be used to bypass the SSRF protections provided by this library, and allow an attacker to access
+internal resources that would otherwise be blocked. Even if you perform the checks on outbound URIs and IP addresses
+a proxy will resolve IP addresses on its own, introducing a TOCTOU vulnerability, or it may rewrite the request to
+go to an entirely different destination.
+
+However during development proxies can be useful for debugging, allowing you to capture outgoing requests and responses,
+and inspect them for testing and debugging purposes. To support the debugging scenario, the library provides the `DebugSsrfHostValidationHandler`
+which allows you to use a proxy for debugging purposes while still enforcing the SSRF protections on the outgoing requests.
+Configuration of a proxy is only meant for debugging during development with a debugging proxy such as
+[Fiddler](https://www.telerik.com/fiddler) or [Burp Suite](https://portswigger.net/burp).
+
+To capture requests and responses with a proxy for debugging, you use the `DebugSsrfHostValidationHandler`;
+
+```c#
+using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+    allowInsecureProtocols: false,
+    allowLoopback: false,
+    failMixedResults: true)
+{
+    InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
+         connectionStrategy: ConnectionStrategy.None,
+         additionalUnsafeNetworks: null,
+         additionalUnsafeIpAddresses: null,
+         connectTimeout: TimeSpan.FromSeconds(1),
+         allowInsecureProtocols: true,
+         allowLoopback: true,
+         failMixedResults: true,
+         allowAutoRedirect: false,
+         automaticDecompression: DecompressionMethods.All,
+         proxy: new WebProxy(new Uri("http://127.0.0.1:8866")),
+         sslOptions: null,
+         loggerFactory: null)
+};
+using (var httpClient = new HttpClient(debugSsrfHostValidationHandler))
+{
+    HttpResponseMessage response = await httpClient.GetAsync("https://www.example.com/");
+    Console.WriteLine($"Response status code: {response.StatusCode}");
+
+    // This request will be blocked by the SSRF protection as it is not an allowed protocol and the host is not in the allowlist.
+    try
+    {
+        response = await httpClient.GetAsync("http://localhost:9999");
+        Console.WriteLine($"Response status code: {response.StatusCode}");
+    }
+    catch (SsrfException ex)
+    {
+        Console.WriteLine(ex.Message );
+    }
+}
+```
+
+To use the `DebugSsrfHostValidationHandler`, you set the outer
+`allowInsecureProtocols` and `allowLoopback` to match the settings you would normally use without the proxy,
+and then, in the InnerHandler assignment you must match the `allowInsecureProtocols` and `allowLoopback` to suitable
+values for the *proxy* uri. In the example above the proxy is running on `http://127.0.0.1:8866`, so
+`allowInsecureProtocols` is set to `true` and `allowLoopback` is set to `true` on the inner handler,
+`allowInsecureProtocols` is set to `true` and `allowLoopback` is set to `true` on the inner handler,
+but you may have a proxy running on a non-loopback address, or using HTTPS, so the inner handler settings should be adjusted as necessary.
 
 ## Current Build Status
 

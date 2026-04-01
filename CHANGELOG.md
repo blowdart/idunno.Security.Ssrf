@@ -2,9 +2,10 @@
 
 ### Added
 
-* Added `allowLoopback` parameter to `Ssrf.IsUnsafe`, `Ssrf.IsUnsafeHost`, `Ssrf.IsUnsafeIPAddress` and
+* Add `allowLoopback` parameter to `Ssrf.IsUnsafe`, `Ssrf.IsUnsafeHost`, `Ssrf.IsUnsafeIPAddress` and
   `SsrfSocketsHttpHandlerFactory.Create` methods to allow localhost addresses to be considered valid
-  if explicitly specified.
+  if explicitly specified. Fixes [#4](https://github.com/blowdart/idunno.Security.Ssrf/issues/4)
+* Add `DebugSsrfHostValidationHandler` to support the use of debugging proxies like Fiddler or Burp.
 
 ## 2.0.0 - 2026-31-03
 

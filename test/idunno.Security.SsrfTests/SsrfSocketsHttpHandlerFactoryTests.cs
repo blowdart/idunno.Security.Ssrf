@@ -6,7 +6,7 @@ using System.Net.Sockets;
 
 namespace idunno.Security.SsrfTests;
 
-public class HttpClientTests
+public class SsrfSocketsHttpHandlerFactoryTests
 {
     [Theory]
     [InlineData("http://localhost/")]
@@ -150,7 +150,7 @@ public class HttpClientTests
     [Theory]
     [InlineData("http://example.org/")]
     [InlineData("http://github.com/")]
-    public async Task ConnectionThrowsForSafeHostButUnsafeProtocolIfAllowInsecureProtocolIsTrue(string hostName)
+    public async Task ConnectionDoesNotThrowForSafeHostButUnsafeProtocolIfAllowInsecureProtocolIsTrue(string hostName)
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
@@ -554,5 +554,4 @@ public class HttpClientTests
 
         Assert.IsType<SsrfException>(innermostException);
     }
-
 }
