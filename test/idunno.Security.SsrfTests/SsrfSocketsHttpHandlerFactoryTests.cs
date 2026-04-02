@@ -84,7 +84,6 @@ public class SsrfSocketsHttpHandlerFactoryTests
             failMixedResults: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
-            proxy: null,
             sslOptions: null));
 
         try
@@ -162,7 +161,6 @@ public class SsrfSocketsHttpHandlerFactoryTests
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
-            proxy: null,
             sslOptions: null));
         HttpResponseMessage response = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.Redirect || response.StatusCode == HttpStatusCode.MovedPermanently);
@@ -193,7 +191,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             automaticDecompression: DecompressionMethods.All,
             proxy: null,
             sslOptions: null,
-            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: hostEntryResolver,
             loggerFactory : null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
@@ -236,7 +234,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             automaticDecompression: DecompressionMethods.All,
             proxy: null,
             sslOptions: null,
-            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: hostEntryResolver,
             loggerFactory: null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
@@ -279,7 +277,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             automaticDecompression: DecompressionMethods.All,
             proxy: null,
             sslOptions: null,
-            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: hostEntryResolver,
             loggerFactory: null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
@@ -322,7 +320,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             automaticDecompression: DecompressionMethods.All,
             proxy: null,
             sslOptions: null,
-            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: hostEntryResolver,
             loggerFactory: null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
@@ -406,7 +404,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             automaticDecompression: DecompressionMethods.All,
             proxy: null,
             sslOptions: null,
-            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: hostEntryResolver,
             loggerFactory: null));
 
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
@@ -447,7 +445,6 @@ public class SsrfSocketsHttpHandlerFactoryTests
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
-            proxy: null,
             sslOptions: null,
             loggerFactory: null));
 
@@ -530,7 +527,6 @@ public class SsrfSocketsHttpHandlerFactoryTests
             failMixedResults: true,
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
-            proxy: null,
             sslOptions: null,
             loggerFactory: null));
 

@@ -60,7 +60,7 @@ Depending on where the exception it thrown, and the type of client it will end u
 If you want to manually check URIs supplied by untrusted you can use the `idunno.Security.Ssrf` class.
 
 ```c#
-if (idunno.Security.Ssrf.IsUnsafeUri(new Uri("https://bad.ssl.fail")))
+if (Ssrf.IsUnsafeUri(new Uri("https://bad.ssl.fail")))
 {
     // Disallow entry of this URI into the system,
     // or log an alert, or whatever you want to do with it.
@@ -70,7 +70,7 @@ if (idunno.Security.Ssrf.IsUnsafeUri(new Uri("https://bad.ssl.fail")))
 If you want to manually check an IP address you can use the `idunno.Security.Ssrf` class.
 
 ```c#
-if (idunno.Security.Ssrf.IsUnsafeIpAddress(IPAddress.Parse("127.0.0.1")))
+if (Ssrf.IsUnsafeIpAddress(IPAddress.Parse("127.0.0.1")))
 {
     // Disallow this IP address from being used in the system,
     // or log an alert, or whatever you want to do with it.
@@ -125,66 +125,32 @@ when calling `SsrfSocketsHttpHandlerFactory.Create()`, or when calling the `IsUn
 
 ## Using Proxies
 
-Proxies can be dangerous they make the outbound request, doing their own DNS resolution and are responsible
-for any SSRF checks. Typically you have no insight on how they are configured, meaning a proxy may do no checks
-at all.This could be used to bypass the SSRF protections provided by this library, and allow an attacker to access
-internal resources that would otherwise be blocked. Even if you perform the checks on outbound URIs and IP addresses
-a proxy will resolve IP addresses on its own, introducing a TOCTOU vulnerability, or it may rewrite the request to
-go to an entirely different destination.
+Proxies can introduce a TOCTOU attack as they make the request to the destination URI, and in doing so
+they perform their own DNS resolution and, potentially comparing the resolution results against their own
+validators.
 
-However during development proxies can be useful for debugging, allowing you to capture outgoing requests and responses,
-and inspect them for testing and debugging purposes. To support the debugging scenario, the library provides the `DebugSsrfHostValidationHandler`
-which allows you to use a proxy for debugging purposes while still enforcing the SSRF protections on the outgoing requests.
-Configuration of a proxy is only meant for debugging during development with a debugging proxy such as
-[Fiddler](https://www.telerik.com/fiddler) or [Burp Suite](https://portswigger.net/burp).
+Support for proxies is provided via the `ProxiedSsrfDelegatingHandler`, which allows you to use a proxy for
+outgoing requests while still enforcing the SSRF protections on the outgoing requests URI, and performing
+the SSRF checks on the resolved IP addresses of the outgoing request URI, however the proxy will perform
+its own DNS resolution which may return different IP addresses to the ones resolved by the SSRF handler.
 
-To capture requests and responses with a proxy for debugging, you use the `DebugSsrfHostValidationHandler`;
+While it is delegating handler, `ProxiedSsrfDelegatingHandler` sets an appropriate `InnerHandler`, configured
+for the proxy URI. This means that you can use it in a message handler pipeline, it must be last in
+the pipeline.
 
-```c#
-using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
-    allowInsecureProtocols: false,
-    allowLoopback: false,
-    failMixedResults: true)
+```
+var proxyUri = new Uri("http://127.0.0.1:8866");
+
+var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+    proxy: new WebProxy(proxyUri),
+);
+using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler))
 {
-    InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-         connectionStrategy: ConnectionStrategy.None,
-         additionalUnsafeNetworks: null,
-         additionalUnsafeIpAddresses: null,
-         connectTimeout: TimeSpan.FromSeconds(1),
-         allowInsecureProtocols: true,
-         allowLoopback: true,
-         failMixedResults: true,
-         allowAutoRedirect: false,
-         automaticDecompression: DecompressionMethods.All,
-         proxy: new WebProxy(new Uri("http://127.0.0.1:8866")),
-         sslOptions: null,
-         loggerFactory: null)
-};
-using (var httpClient = new HttpClient(debugSsrfHostValidationHandler))
-{
-    HttpResponseMessage response = await httpClient.GetAsync("https://www.example.com/");
-    Console.WriteLine($"Response status code: {response.StatusCode}");
-
-    // This request will be blocked by the SSRF protection as it is not an allowed protocol and the host is not in the allowlist.
-    try
-    {
-        response = await httpClient.GetAsync("http://localhost:9999");
-        Console.WriteLine($"Response status code: {response.StatusCode}");
-    }
-    catch (SsrfException ex)
-    {
-        Console.WriteLine(ex.Message );
-    }
+    var response = await httpClient.GetAsync("https://example.com");
 }
 ```
 
-To use the `DebugSsrfHostValidationHandler`, you set the outer
-`allowInsecureProtocols` and `allowLoopback` to match the settings you would normally use without the proxy,
-and then, in the InnerHandler assignment you must match the `allowInsecureProtocols` and `allowLoopback` to suitable
-values for the *proxy* uri. In the example above the proxy is running on `http://127.0.0.1:8866`, so
-`allowInsecureProtocols` is set to `true` and `allowLoopback` is set to `true` on the inner handler,
-`allowInsecureProtocols` is set to `true` and `allowLoopback` is set to `true` on the inner handler,
-but you may have a proxy running on a non-loopback address, or using HTTPS, so the inner handler settings should be adjusted as necessary.
+`ProxiedSsrfDelegatingHandler` takes the same parameters as `SsrfSocketsHttpHandlerFactory.Create()`, with the addition of a `proxy` parameter.
 
 ## Current Build Status
 

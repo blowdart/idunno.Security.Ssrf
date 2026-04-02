@@ -41,6 +41,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -65,9 +66,9 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
-
 
     /// <summary>
     /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
@@ -90,6 +91,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -115,6 +117,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -139,6 +142,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -164,6 +168,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -188,6 +193,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -214,6 +220,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -238,7 +245,34 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
-            loggerFactory : null);
+            asyncHostEntryResolver: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(bool allowInsecureProtocols, ILoggerFactory? loggerFactory)
+    {
+        return Create(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: null,
+            failMixedResults: true,
+            allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            proxy: null,
+            sslOptions: null,
+            asyncHostEntryResolver: null,
+            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -263,31 +297,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
-    }
-    /// <summary>
-    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
-    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
-    /// is not considered unsafe before allowing a connection to be established.
-    /// </summary>
-    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
-    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
-    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
-    public static SocketsHttpHandler Create(bool allowInsecureProtocols, ILoggerFactory? loggerFactory)
-    {
-        return Create(
-            connectionStrategy: ConnectionStrategy.None,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
-            connectTimeout: null,
-            failMixedResults: true,
-            allowInsecureProtocols: allowInsecureProtocols,
-            allowLoopback: false,
-            allowAutoRedirect: false,
-            automaticDecompression: null,
-            proxy: null,
-            sslOptions: null,
-            loggerFactory: loggerFactory);
     }
 
     /// <summary>
@@ -313,6 +324,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -338,6 +350,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -364,6 +377,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -389,6 +403,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -415,6 +430,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -440,6 +456,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -466,6 +483,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -491,6 +509,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -517,6 +536,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -542,6 +562,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -568,6 +589,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -594,6 +616,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -625,6 +648,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -651,9 +675,9 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
-
 
     /// <summary>
     /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
@@ -683,6 +707,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -714,6 +739,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -747,6 +773,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: null,
             proxy: null,
             sslOptions: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -801,7 +828,6 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="failMixedResults">Flag indicating whether to fail when a mixture of safe and unsafe addresses is found. Setting this to <see langword="true"/> will reject the connection if any unsafe addresses are found.</param>
     /// <param name="allowAutoRedirect">Flag indicating whether to allow auto-redirects. Setting this to <see langword="true"/> can introduce security vulnerabilities and should only be enabled if necessary.</param>
     /// <param name="automaticDecompression">The type of decompression to use for automatic decompression of HTTP content. If <see langword="null"/>, defaults to <see cref="DecompressionMethods.All"/>.</param>
-    /// <param name="proxy">An optional custom proxy to use.</param>
     /// <param name="sslOptions">Any <see cref="SslClientAuthenticationOptions" /> to use for client TLS authentication.</param>
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(
@@ -814,7 +840,6 @@ public sealed class SsrfSocketsHttpHandlerFactory
         bool failMixedResults,
         bool allowAutoRedirect,
         DecompressionMethods? automaticDecompression,
-        IWebProxy? proxy,
         SslClientAuthenticationOptions? sslOptions)
     {
         return Create(
@@ -827,9 +852,9 @@ public sealed class SsrfSocketsHttpHandlerFactory
             failMixedResults: failMixedResults,
             allowAutoRedirect: allowAutoRedirect,
             automaticDecompression: automaticDecompression,
-            proxy: proxy,
+            proxy: null,
             sslOptions: sslOptions,
-            hostEntryResolver: null,
+            asyncHostEntryResolver: null,
             loggerFactory: null);
     }
 
@@ -847,7 +872,6 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="failMixedResults">Flag indicating whether to fail when a mixture of safe and unsafe addresses is found. Setting this to <see langword="true"/> will reject the connection if any unsafe addresses are found.</param>
     /// <param name="allowAutoRedirect">Flag indicating whether to allow auto-redirects. Setting this to <see langword="true"/> can introduce security vulnerabilities and should only be enabled if necessary.</param>
     /// <param name="automaticDecompression">The type of decompression to use for automatic decompression of HTTP content. If <see langword="null"/>, defaults to <see cref="DecompressionMethods.All"/>.</param>
-    /// <param name="proxy">An optional custom proxy to use.</param>
     /// <param name="sslOptions">Any <see cref="SslClientAuthenticationOptions" /> to use for client TLS authentication.</param>
     /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
@@ -861,7 +885,6 @@ public sealed class SsrfSocketsHttpHandlerFactory
         bool failMixedResults,
         bool allowAutoRedirect,
         DecompressionMethods? automaticDecompression,
-        IWebProxy? proxy,
         SslClientAuthenticationOptions? sslOptions,
         ILoggerFactory? loggerFactory)
     {
@@ -875,9 +898,9 @@ public sealed class SsrfSocketsHttpHandlerFactory
             failMixedResults: failMixedResults,
             allowAutoRedirect: allowAutoRedirect,
             automaticDecompression: automaticDecompression,
-            proxy: proxy,
+            proxy: null,
             sslOptions: sslOptions,
-            hostEntryResolver: null,
+            asyncHostEntryResolver: null,
             loggerFactory: loggerFactory);
     }
 
@@ -899,7 +922,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             automaticDecompression: options.AutomaticDecompression,
             proxy: options.Proxy,
             sslOptions: options.SslOptions,
-            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: hostEntryResolver,
             loggerFactory: loggerFactory);
     }
 
@@ -915,10 +938,10 @@ public sealed class SsrfSocketsHttpHandlerFactory
         DecompressionMethods? automaticDecompression,
         IWebProxy? proxy,
         SslClientAuthenticationOptions? sslOptions,
-        Func<string, CancellationToken, Task<IPHostEntry>>? hostEntryResolver,
+        Func<string, CancellationToken, Task<IPHostEntry>>? asyncHostEntryResolver,
         ILoggerFactory? loggerFactory)
     {
-        hostEntryResolver ??= s_defaultHostEntryResolver;
+        asyncHostEntryResolver ??= s_defaultHostEntryResolver;
         loggerFactory ??= NullLoggerFactory.Instance;
         ILogger logger = loggerFactory.CreateLogger<SsrfSocketsHttpHandlerFactory>();
 
@@ -960,7 +983,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 {
                     try
                     {
-                        IPHostEntry entry = await hostEntryResolver(context.DnsEndPoint.Host, cancellationToken).ConfigureAwait(false);
+                        IPHostEntry entry = await asyncHostEntryResolver(context.DnsEndPoint.Host, cancellationToken).ConfigureAwait(false);
 
                         if (entry.AddressList is not null)
                         {

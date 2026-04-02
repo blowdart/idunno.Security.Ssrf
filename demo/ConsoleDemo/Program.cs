@@ -147,7 +147,6 @@ static async Task TestWithHttpClient(string uri, bool allowInsecureProtocols = f
             failMixedResults: failMixedResults,
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
-            proxy: null,
             sslOptions: new SslClientAuthenticationOptions()
             {
                 // Ignore SSL errors since some of the test URLs have invalid certificates. Do not do this in production code.
@@ -234,7 +233,6 @@ static async Task TestWithClientWebSocket(string uri, bool allowInsecureProtocol
             failMixedResults: failMixedResults,
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
-            proxy: null,
             sslOptions: new SslClientAuthenticationOptions()
             {
                 // Ignore SSL errors since some of the test URLs have invalid certificates. Do not do this in production code.

@@ -19,7 +19,6 @@ var timingHandler = new TimingHandler()
          failMixedResults: true,
          allowAutoRedirect: false,
          automaticDecompression: DecompressionMethods.All,
-         proxy: null,
          sslOptions: null,
          loggerFactory: null)
 };
@@ -47,7 +46,6 @@ timingHandler = new TimingHandler()
          failMixedResults: true,
          allowAutoRedirect: false,
          automaticDecompression: DecompressionMethods.All,
-         proxy: null,
          sslOptions: null,
          loggerFactory: null)
 };

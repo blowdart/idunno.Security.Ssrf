@@ -5,7 +5,7 @@ using System.Net;
 
 namespace idunno.Security.SsrfTests;
 
-public class DebugSsrfHostValidationHandlerTests
+public class ProxiedSsrfDelegatingHandlerTests
 {
     [Theory]
     [InlineData("http://localhost/")]
@@ -15,26 +15,20 @@ public class DebugSsrfHostValidationHandlerTests
     [InlineData("https://bad.ipv6.ssrf.fail/")]
     public async Task ConnectionThrowsForUnsafeUri(string hostName)
     {
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
-            failMixedResults: true)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Equal(hostName, ex.Uri!.ToString());
@@ -47,26 +41,20 @@ public class DebugSsrfHostValidationHandlerTests
     [InlineData("https://mixed.ipv6.ssrf.fail/")]
     public async Task ConnectionThrowsForHostsThatReturnAMixOfSafeAndUnsafeIPAddresses(string hostName)
     {
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
-            failMixedResults: true)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Equal(hostName, ex.Uri!.ToString());
@@ -78,26 +66,20 @@ public class DebugSsrfHostValidationHandlerTests
     [InlineData("https://mixed.ipv6.ssrf.fail/")]
     public async Task ConnectionContinuesForHostsThatReturnAMixOfSafeAndUnsafeIPAddressesIfFailMixedResultsIsFalse(string hostName)
     {
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
-            failMixedResults: false)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: false,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            failMixedResults: false,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
         Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
 
         // Windows and Linux (and probably Mac) throw different exceptions, so check for the lack
@@ -117,26 +99,20 @@ public class DebugSsrfHostValidationHandlerTests
     [InlineData("https://github.com/")]
     public async Task ConnectionSucceedsForSafeUri(string hostName)
     {
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
-            failMixedResults: true)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
         Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
 
         // Windows and Linux (and probably Mac) throw different exceptions, so check for the lack
@@ -156,26 +132,20 @@ public class DebugSsrfHostValidationHandlerTests
     [InlineData("http://github.com/")]
     public async Task ConnectionThrowsForSafeHostButUnsafeProtocol(string hostName)
     {
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
-            failMixedResults: true)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Equal(hostName, ex.Uri!.ToString());
@@ -186,26 +156,20 @@ public class DebugSsrfHostValidationHandlerTests
     [InlineData("http://github.com/")]
     public async Task ConnectionDoesNotThrowForSafeHostButUnsafeProtocolIfAllowInsecureProtocolIsTrue(string hostName)
     {
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: true,
             allowLoopback: false,
-            failMixedResults: true)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
 
@@ -243,31 +207,22 @@ public class DebugSsrfHostValidationHandlerTests
             };
         }
 
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: [IPAddress.Parse("1.2.3.4")],
-            allowInsecureProtocols: true,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
             allowLoopback: false,
             failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
+            asyncHostEntryResolver: asyncHostEntryResolver,
             hostEntryResolver: hostEntryResolver,
-            asyncHostEntryResolver : asyncHostEntryResolver,
-            loggerFactory: null)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(hostName, ex.Uri!.ToString());
@@ -295,31 +250,22 @@ public class DebugSsrfHostValidationHandlerTests
             };
         }
 
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: [IPAddress.Parse("2606:4700::6812:1b78")],
-            allowInsecureProtocols: true,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
             allowLoopback: false,
             failMixedResults: true,
-            hostEntryResolver: hostEntryResolver,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
-            loggerFactory: null)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(hostName, ex.Uri!.ToString());
@@ -347,31 +293,22 @@ public class DebugSsrfHostValidationHandlerTests
             };
         }
 
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: [IPNetwork.Parse("1.2.3.0/24")],
             additionalUnsafeIpAddresses: null,
-            allowInsecureProtocols: true,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
             allowLoopback: false,
             failMixedResults: true,
-            hostEntryResolver: hostEntryResolver,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
-            loggerFactory: null)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(hostName, ex.Uri!.ToString());
@@ -399,31 +336,22 @@ public class DebugSsrfHostValidationHandlerTests
             };
         }
 
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: [IPNetwork.Parse("2620:1ec::/36")],
             additionalUnsafeIpAddresses: null,
-            allowInsecureProtocols: true,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
             allowLoopback: false,
             failMixedResults: true,
-            hostEntryResolver: hostEntryResolver,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
-            loggerFactory: null)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(hostName, ex.Uri!.ToString());
@@ -458,11 +386,11 @@ public class DebugSsrfHostValidationHandlerTests
             SslOptions = null
         };
 
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(options)
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(options)
         {
             InnerHandler = SsrfSocketsHttpHandlerFactory.Create(options)
         };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(hostName, ex.Uri!.ToString());
@@ -483,31 +411,22 @@ public class DebugSsrfHostValidationHandlerTests
             return new IPHostEntry();
         }
 
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
             failMixedResults: true,
-            hostEntryResolver: hostEntryResolver,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
-            loggerFactory: null)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException asyncEx = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(hostName, asyncEx.Uri!.ToString());
@@ -532,31 +451,20 @@ public class DebugSsrfHostValidationHandlerTests
     [InlineData("https://[::1]/")]
     public async Task ConnectionDoesNotThrowForLoopbackHostWhenAllowLoopbackIsSet(string hostName)
     {
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: true,
             allowLoopback: true,
             failMixedResults: true,
-            hostEntryResolver: null,
-            asyncHostEntryResolver: null,
-            loggerFactory: null)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
 
@@ -588,25 +496,11 @@ public class DebugSsrfHostValidationHandlerTests
             ConnectTimeout = new TimeSpan(0, 0, 1),
             AllowInsecureProtocols = true,
             AllowLoopback = true,
+            Proxy = new WebProxy(new Uri("http://127.0.0.1:9999")),
         };
 
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(options)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(options);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
 
@@ -629,31 +523,20 @@ public class DebugSsrfHostValidationHandlerTests
     [InlineData("http://[::1]/")]
     public async Task ConnectionThrowsForInsecureLoopbackHostWhenAllowLoopbackIsSetButAllowInsecureIsFalse(string hostName)
     {
-        using var debugSsrfHostValidationHandler = new DebugSsrfHostValidationHandler(
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: true,
             failMixedResults: true,
-            hostEntryResolver: null,
-            asyncHostEntryResolver: null,
-            loggerFactory: null)
-        {
-            InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-                 connectionStrategy: ConnectionStrategy.None,
-                 additionalUnsafeNetworks: null,
-                 additionalUnsafeIpAddresses: null,
-                 connectTimeout: TimeSpan.FromSeconds(1),
-                 allowInsecureProtocols: true,
-                 allowLoopback: true,
-                 failMixedResults: true,
-                 allowAutoRedirect: false,
-                 automaticDecompression: DecompressionMethods.All,
-                 proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
-                 sslOptions: null,
-                 loggerFactory: null)
-        };
-        using HttpClient httpClient = new(debugSsrfHostValidationHandler);
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException asyncEx = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(hostName, asyncEx.Uri!.ToString());
