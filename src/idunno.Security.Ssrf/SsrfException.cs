@@ -65,5 +65,9 @@ public class SsrfException : Exception
     /// <summary>
     /// Gets or sets the URI that causes this exception.
     /// </summary>
+    /// <remarks>
+    /// <para>The Uri, if present, may contain sensitive information such as query parameters. Do not include this information in messages to end users, and
+    ///secure any logs that may contain this information.</para>
+    /// </remarks>
     public Uri? Uri { get; set; }
 }

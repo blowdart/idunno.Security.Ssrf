@@ -55,6 +55,14 @@ resolve to both safe and unsafe IP addresses.
 Depending on where the exception it thrown, and the type of client it will end up as the `InnerException` on the
 `HttpRequestException`, `SocketException` or `WebSocketException` thrown by the client.
 
+### Note on SsrfException
+
+`SsrfException` is a custom exception type that inherits from `Exception`. It contains a `Uri` property that holds
+the URI that was being accessed when the exception was thrown.
+
+The URI may contain sensitive information, such as query parameters, so be logs containing exception details
+should be secured and care taken if displaying the contents of the exception avoid displaying the URI to end users.
+
 ## Manual URI and IP checking Helper Methods
 
 If you want to manually check URIs supplied by untrusted you can use the `idunno.Security.Ssrf` class.
