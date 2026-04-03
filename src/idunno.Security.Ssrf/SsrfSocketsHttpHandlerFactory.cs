@@ -804,7 +804,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="options"/> is <see langword="null"/>.</exception>
-    public static SocketsHttpHandler Create(SsrfOptions options, ILoggerFactory loggerFactory)
+    public static SocketsHttpHandler Create(SsrfOptions options, ILoggerFactory? loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
 
