@@ -6,8 +6,22 @@ using System.Net.WebSockets;
 using System.Text;
 
 using idunno.Security;
+using Microsoft.Extensions.Logging;
 
 Console.OutputEncoding = Encoding.UTF8;
+ILoggerFactory? loggerFactory = null;
+
+// Uncomment the following lines to enable logging to the console.
+//loggerFactory = LoggerFactory.Create(configure =>
+//{
+//    configure.AddSimpleConsole(options =>
+//    {
+//        options.IncludeScopes = true;
+//        options.TimestampFormat = "G";
+//        options.UseUtcTimestamp = false;
+//    });
+//    configure.SetMinimumLevel(LogLevel.Debug);
+//});
 
 var proxyUri = new Uri("http://127.0.0.1:8866");
 
@@ -23,7 +37,7 @@ var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
     allowAutoRedirect: false,
     automaticDecompression: DecompressionMethods.All,
     sslOptions: null,
-    loggerFactory: null);
+    loggerFactory: loggerFactory);
 
 Console.WriteLine($"Start proxy running on {proxyUri} and press Enter to continue");
 Console.ReadLine();
@@ -186,7 +200,7 @@ var allowMixedSsrfHostValidationHandler = new ProxiedSsrfDelegatingHandler(
     automaticDecompression: DecompressionMethods.All,
     proxy: new WebProxy(proxyUri),
     sslOptions: null,
-    loggerFactory: null);
+    loggerFactory: loggerFactory);
 using (var httpClient = new HttpClient(allowMixedSsrfHostValidationHandler))
 {
     Uri destinationUri = new("http://mixed.ssrf.fail");

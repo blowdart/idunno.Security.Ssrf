@@ -735,6 +735,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             allowInsecureProtocols: _allowInsecureProtocols,
             allowLoopback: _allowLoopback))
         {
+            Log.UnsafeUri(_logger, requestedUri);
             throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
         }
 
@@ -769,6 +770,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             allowInsecureProtocols: _allowInsecureProtocols,
             allowLoopback: _allowLoopback))
         {
+            Log.UnsafeUri(_logger, requestedUri);
             throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
         }
 
