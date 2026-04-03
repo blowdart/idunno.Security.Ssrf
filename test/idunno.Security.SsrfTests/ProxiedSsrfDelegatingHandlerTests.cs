@@ -541,4 +541,61 @@ public class ProxiedSsrfDelegatingHandlerTests
         SsrfException asyncEx = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
         Assert.Equal(hostName, asyncEx.Uri!.ToString());
     }
+
+    [Theory]
+    [InlineData("https://localhost/")]
+    [InlineData("https://127.0.0.1/")]
+    [InlineData("https://[::1]/")]
+    public async Task LocalHostGetsRejectedEvenWhenProxyUriIsLocalhost(string hostName)
+    {
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://localhost:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+        SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal(hostName, ex.Uri!.ToString());
+    }
+
+    [Theory]
+    [InlineData("https://example.org/")]
+    public async Task SafeUriProceedsWhenProxyUriIsLocalhost(string hostName)
+    {
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://localhost:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+        Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+
+        // Windows and Linux (and probably Mac) throw different exceptions, so check for the lack
+        // of an SSRF exception which indicates the connection was let through the SSRF checks.
+        Assert.NotNull(ex);
+        Assert.IsNotType<SsrfException>(ex);
+
+        while (ex.InnerException is not null)
+        {
+            ex = ex.InnerException;
+            Assert.IsNotType<SsrfException>(ex);
+        }
+    }
 }

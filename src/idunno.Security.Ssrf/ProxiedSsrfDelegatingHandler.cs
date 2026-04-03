@@ -662,14 +662,14 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: webProxy.Address.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase),
-            allowLoopback: webProxy.Address.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase),
+            allowLoopback: webProxy.Address.IsLoopback,
             failMixedResults: failMixedResults,
             allowAutoRedirect: allowAutoRedirect,
             automaticDecompression: automaticDecompression,
             proxy: proxy,
             sslOptions: sslOptions,
             asyncHostEntryResolver: asyncHostEntryResolver,
-            loggerFactory: loggerFactory);
+            loggerFactory: loggerFactory); 
     }
 
     internal ProxiedSsrfDelegatingHandler(
@@ -707,7 +707,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             additionalUnsafeIpAddresses: options.AdditionalUnsafeIpAddresses,
             connectTimeout: options.ConnectTimeout,
             allowInsecureProtocols: webProxy.Address.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase),
-            allowLoopback: webProxy.Address.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase),
+            allowLoopback: webProxy.Address.IsLoopback,
             failMixedResults: options.FailMixedResults,
             allowAutoRedirect: options.AllowAutoRedirect,
             automaticDecompression: options.AutomaticDecompression,
