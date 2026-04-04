@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Net;
 using Microsoft.Extensions.Logging;
 
 namespace idunno.Security;
@@ -25,7 +24,4 @@ internal static partial class Log
 
     [LoggerMessage(EventId = 6, Level = LogLevel.Warning, Message = "Some resolved IP addresses for {uri} are unsafe and failMixedResults is enabled.")]
     public static partial void SomeResolvedIpAddressesUnsafe(ILogger logger, Uri uri);
-
-    [LoggerMessage(EventId = 7, Level = LogLevel.Debug, Message = "Connection failed on {ipAddress} for {uri}.")]
-    public static partial void ConnectionFailed(ILogger logger, IPAddress ipAddress, Uri uri);
 }

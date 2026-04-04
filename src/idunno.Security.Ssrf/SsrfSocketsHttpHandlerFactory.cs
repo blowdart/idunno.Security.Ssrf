@@ -1077,7 +1077,6 @@ public sealed class SsrfSocketsHttpHandlerFactory
                     }
                     catch (SocketException)
                     {
-                        Log.ConnectionFailed(logger, ipAddress, requestedUri);
                         socket.Dispose();
                         continue;
                     }
