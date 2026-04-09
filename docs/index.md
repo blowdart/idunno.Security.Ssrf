@@ -101,7 +101,7 @@ Congratulations, you have an `HttpClient` with protection from SSRF!
 ### Explainers
 
 * [What is SSRF?](docs/ssrf.md)
-* [How does the SSRF handler work?](docs/ssrf.md)
+* [How does the SSRF handler work?](docs/ssrfHandler.md)
 
 ### Advanced Topics
 
