@@ -26,6 +26,6 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler))
 }
 ```
 
-While `ProxiedSsrfDelegatingHandler`is a delegating handler it sets an `InnerHandler`.
+While `ProxiedSsrfDelegatingHandler` is a delegating handler it sets an `InnerHandler`.
 While you can use it in a message handler pipeline, it must be the last handler in
 the pipeline.
