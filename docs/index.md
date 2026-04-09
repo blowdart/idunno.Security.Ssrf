@@ -58,7 +58,7 @@ Let's get your .NET application protected against [Server Side Request Forgery](
 # [Visual Studio Code](#tab/httpClient/vsCode)
 
 1. Open the `Program.cs` file from the Explorer window and cand add the following lines.
-   [!code-csharp[](code/NoSsrf/Program.cs#L6-10)]
+   [!code-csharp[](code/NoSsrf/Program.cs#L6-L10)]
 1. Save the changed file.
 1. Run the project by pressing **F5** or choosing **Start Debugging** under the Run menu.
 
