@@ -102,9 +102,10 @@ then pass that `HttpClient` into
 [`ClientWebSocket.ConnectAsync()`](https://learn.microsoft.com/en-us/dotnet/api/system.net.websockets.clientwebsocket.connectasync)
 via the `invoker` parameter.
 
+```c#
 {
     await webSocket.ConnectAsync(
-        uri: "wss://echo.websocket.org",
+        uri: new Uri("wss://echo.websocket.org"),
         invoker: invoker);
 }
 ```

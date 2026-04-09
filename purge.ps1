@@ -14,7 +14,7 @@ foreach ($folderName in $folderNames) {
 
 $fileNames = 'coverage*.json', 'coverage*.xml', 'coverage*.info', '*.nupkg', '*.snupkg'
 foreach ($fileName in $fileNames) {
-    $files = Get-ChildItem $fileName -recurse
+    $files = Get-ChildItem -Path . -File -Recurse -Filter $fileName -ErrorAction SilentlyContinue
     foreach ($file in $files)
     {
         if (Test-Path $file.FullName)
