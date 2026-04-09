@@ -66,10 +66,11 @@ can only do this within the `HttpClient` or `ClientWebSocket`.
 To be fully protected, you need to validate the destination IP address right before the connection is made.
 The `SsrfSocketsHttpHandlerFactory` class creates a handler that does all this:
 
-{
-    HttpResponseMessage response = await httpClient.GetAsync(
-        new Uri("https://example.com"));
-}
+```c#
+using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create());
+
+HttpResponseMessage response = await httpClient.GetAsync(
+    new Uri("https://example.com"));
 ```
 
 The `Create()` method can has some optional parameters, including
