@@ -37,7 +37,7 @@ which opens an http listener on localhost, and attempts to connect to it, with a
 1. Save the file
 
 
-The application creates a Kestrel web host running on port 3000 which responses with "Hello World". It then sends
+The application creates a Kestrel web host running on port 3000 which responds with "Hello World". It then sends
 test requests with and without SSRF protection.
 
 ---
@@ -63,11 +63,11 @@ test requests with and without SSRF protection.
 What you will see is a request with a plain `HttpClient` being made to http://localhost:3000 with no SSRF protection,
 which works, and gets an HTTP 200 response.
 
-Next the same request is made, but with an `HttpClient` with has the SSRF handler. An exception
-is thrown because the uri is considered unsafe, as it is http and not https.
+Next the same request is made, but with an `HttpClient` that has the SSRF handler. An exception
+is thrown because the URI is considered unsafe, as it is http and not https.
 
-Next the same request is made, but with an `HttpClient `with has the SSRF handler and configured to allow insecure
-protocols and attempts to send the same request, at which point an exception is thrown because the uri is considered unsafe,
+Next the same request is made, but with an `HttpClient` that has the SSRF handler and configured to allow insecure
+protocols and attempts to send the same request, at which point an exception is thrown because the URI is considered unsafe,
 as it is a loopback address.
 
 Finally it creates an `HttpClient` with SSRF protection, allowing insecure protocols, but this time sends the request
