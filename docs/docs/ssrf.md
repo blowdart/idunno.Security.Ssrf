@@ -19,7 +19,7 @@ from the application server and read the responses—sometimes including credent
 
 Checking the IP addresses a host resolves to on ingestion is not enough. The IP addresses that a host name resolves
 to can change with time, an attacker can input, for example, https://badsite.example which, at the time of input resolves
-to 1.2.3.4, then waits for a day and changes the DNs record so now it resolves to 169.254.169.254 and now you have a Time of Check, Time of Use vulnerability (TOCTOU).
+to 1.2.3.4, then waits for a day and changes the DNS record so now it resolves to 169.254.169.254 and now you have a Time of Check, Time of Use vulnerability (TOCTOU).
 
 If you want examples of [SSRF payloads](https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Request%20Forgery)
 (and many other attacks), [swissky’s GitHub repository](https://github.com/swisskyrepo/PayloadsAllTheThings) is a great starting point.
