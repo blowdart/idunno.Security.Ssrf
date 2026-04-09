@@ -103,8 +103,10 @@ then pass that `HttpClient` into
 via the `invoker` parameter.
 
 ```c#
+using (var clientWebSocket = new ClientWebSocket())
+using (var invoker = new HttpClient(SsrfSocketsHttpHandlerFactory.Create()))
 {
-    await webSocket.ConnectAsync(
+    await clientWebSocket.ConnectAsync(
         uri: new Uri("wss://echo.websocket.org"),
         invoker: invoker);
 }
