@@ -33,7 +33,7 @@ if (idunno.Security.Ssrf.IsUnsafeUri(new Uri("http://example.com")))
 
 The check above will fail as, by default, only `https://` and `wss://` URIs are allowed.
 
-## Checking an IP address4
+## Checking an IP address
 
 Next, check whether the IP addresses the URI resolves to are safe. You can resolve the host and
 run each resulting address through `IsUnsafeIpAddress`, which checks whether it falls into any known unsafe network,
