@@ -51,7 +51,7 @@ catch (Exception ex)
         ex = ex.InnerException;
 
         Console.Write(new string(' ', indent));
-        Console.Write($"↳ { ex.GetType().Name} => {ex.Message}");
+        Console.Write($"↳ {ex.GetType().Name} => {ex.Message}");
     }
 }
 

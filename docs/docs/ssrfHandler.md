@@ -73,7 +73,7 @@ HttpResponseMessage response = await httpClient.GetAsync(
     new Uri("https://example.com"));
 ```
 
-The `Create()` method can has some optional parameters, including
+The `Create()` method can have some optional parameters, including
 
 * `connectionStrategy` : prefer IPv4, IPv6 or randomise which order the connections are attempted.
 * `additionalUnsafeNetworks` : add your own IP Networks to the unsafe list.
@@ -95,7 +95,7 @@ and building a list of safe IP addresses. If none are safe, the request fails wi
 Depending on where the exception is thrown, and the type of client it will end up as the `InnerException` on the
 `HttpRequestException`, `SocketException` or `WebSocketException` thrown by the `HttpClient` or `ClientWebSocket`.
 
-## Protecting an ClientWebSocket
+## Protecting a ClientWebSocket
 
 To use it with `ClientWebSocket`, create an `HttpClient` that uses a handler returned from `SsrfSocketsHttpHandlerFactory`,
 then pass that `HttpClient` into
