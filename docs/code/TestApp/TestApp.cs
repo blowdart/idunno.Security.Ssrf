@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env dotnet
+#!/usr/bin/env dotnet
 
 #:sdk Microsoft.NET.Sdk.Web
 #:package idunno.Security.Ssrf@*
