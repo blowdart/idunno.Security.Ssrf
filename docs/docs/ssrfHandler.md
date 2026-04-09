@@ -91,9 +91,9 @@ As this returns a `SocketsHttpHandler`, it must be the final handler in the chai
 It uses a [`SocketsHttpHandler`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.socketshttphandler). `SocketsHttpHandler` (instead of the more typical `HttpClientHandler`) lets you intercept connection establishment
 via [`ConnectCallback`](https://learn.microsoft.com/en-us/dotnet/api/system.net.http.socketshttphandler.connectcallback).
 
-Inside `ConnectCallback` it validates the outbound destination, first checking if the host name and protocol are considered
-unsafe, then, it those checks pass it resolves the name to its IP addresses, checks each resulting IP,
-and builds a list of safe IP addresses. If none are safe the request fails with an `SsrfException`. 
+Inside `ConnectCallback` it validates the outbound destination, first checking whether the host name and protocol are considered
+unsafe and, if those checks pass, resolving the name to its IP addresses, checking each resulting IP,
+and building a list of safe IP addresses. If none are safe, the request fails with an `SsrfException`.
 Depending on where the exception is thrown, and the type of client it will end up as the `InnerException` on the
 `HttpRequestException`, `SocketException` or `WebSocketException` thrown by the `HttpClient` or `ClientWebSocket`.
 
