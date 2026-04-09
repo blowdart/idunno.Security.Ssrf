@@ -9,11 +9,14 @@ A .NET 8, 9 and 10 library to help mitigate Server Side Request Forgery (SSRF) v
 [![GitHub Tag](https://img.shields.io/github/v/tag/blowdart/idunno.Security.Ssrf)](https://github.com/blowdart/idunno.Security.Ssrf/tags)
 [![NuGet Version](https://img.shields.io/nuget/vpre/idunno.Security.Ssrf)](https://www.nuget.org/packages/idunno.Security.Ssrf/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/idunno.Security.Ssrf)](https://www.nuget.org/packages/idunno.Security.Ssrf/)
+[![Documentation deployment](https://img.shields.io/github/deployments/blowdart/idunno.Security.Ssrf/github-pages?label=documentation)](https://ssrf.idunno.dev)
+
 
 ## Getting Started
 
-Add the `idunno.Security.Ssrf` package to your project, and then when you create an `HttpClient`
-pass an instance of the handler in the constructor to add the handler to the message handler pipeline.
+Add the `idunno.Security.Ssrf` package to your project, then, when you create an `HttpClient`
+pass an create a handler with `SsrfSocketsHttpHandlerFactory.Create()` and pass it in as
+the handler parameter of the `HttpClient` constructor.
 
 ```c#
 using (var httpClient = new HttpClient(
@@ -23,84 +26,32 @@ using (var httpClient = new HttpClient(
 }
 ```
 
-If you want to protect a `ClientWebSocket` you pass a an instance of the handler in as the invoker parameter of
-`ConnectAsync(Uri uri, System.Net.Http.HttpMessageInvoker? invoker, System.Threading.CancellationToken cancellationToken);`.
+If you want to protect a `ClientWebSocket` create an `HttpClient` with a handler created by `SsrfSocketsHttpHandlerFactory.Create()`,
+and pass it in as the `invoker` parameter of the
+`ConnectAsync();`.
 
 ```c#
-using (var webSocket = new ClientWebSocket())
+using (var clientWebSocket = new ClientWebSocket())
 using (var invoker = new HttpClient(
     SsrfSocketsHttpHandlerFactory.Create()))
 {
-    await webSocket.ConnectAsync(
+    await clientWebSocket.ConnectAsync(
         uri: new Uri("wss://echo.websocket.org"),
         invoker: invoker);
 }
 ```
 
-If the SSRF handler finds an unsafe host, or a host that resolves to an IP unsafe address it will throw an `SsrfException`.
+If the SSRF handler encounters anything unsafe it will throw an `SsrfException`.
 
-If the SSRF handler finds an unsafe protocol, (i.e. http://, ws://) it will throw an `SsrfException`, unless
-the `allowInsecureProtocols` parameter is set to `true` when calling `SsrfSocketsHttpHandlerFactory.Create()`.
-It will always throw when it encounters an non-HTTP/HTTPS/WS/WSS protocol, even if `allowInsecureProtocols` is set to `true`.
-
-Extra unsafe IP address ranges can be provided using the `additionalUnsafeNetworks` parameter.
-
-If the SSRF handler finds a mixture of safe and unsafe IP addresses for a host it will throw an `SsrfException` unless the
-`failMixedResults` parameter is set to `false` when calling `SsrfSocketsHttpHandlerFactory.Create()`.
-If `failMixedResults` is set to `false` then the handler will allow the request to proceed to any safe IP addresses
-discovered during DNS resolution, and will ignore any unsafe IP addresses discovered.
-This is not recommended, but it is provided as an option for scenarios where a host may legitimately
-resolve to both safe and unsafe IP addresses.
-
-Depending on where the exception it thrown, and the type of client it will end up as the `InnerException` on the
-`HttpRequestException`, `SocketException` or `WebSocketException` thrown by the client.
-
-### Note on SsrfException
-
-`SsrfException` is a custom exception type that inherits from `Exception`. It contains a `Uri` property that holds
-the URI that was being accessed when the exception was thrown.
-
-The URI may contain sensitive information, such as query parameters, so be logs containing exception details
-should be secured and care taken if displaying the contents of the exception avoid displaying the URI to end users.
-
-## Manual URI and IP checking Helper Methods
-
-If you want to manually check URIs supplied by untrusted you can use the `idunno.Security.Ssrf` class.
-
-```c#
-if (Ssrf.IsUnsafeUri(new Uri("https://bad.ssl.fail")))
-{
-    // Disallow entry of this URI into the system,
-    // or log an alert, or whatever you want to do with it.
-}
-```
-
-If you want to manually check an IP address you can use the `idunno.Security.Ssrf` class.
-
-```c#
-if (Ssrf.IsUnsafeIpAddress(IPAddress.Parse("127.0.0.1")))
-{
-    // Disallow this IP address from being used in the system,
-    // or log an alert, or whatever you want to do with it.
-}
-```
-
-If you want to perform both checks you can use the `IsUnsafe` method, which will check both the URI and the resolved IP addresses.
-
-Note these checks are performed within `SsrfSocketsHttpHandlerFactory.Create()` during the creation of an outgoing connection,
-so you don't need to call them yourself if you're using the handler.
-
-**DO NOT** solely rely on the `IsUnsafeUri` method for validating URIs. This would create a Time of Check /
-Time of Use (TOCTOU) vulnerability, as the DNS entry for the URI could be modified after validation but before use.
-Use the message handler for `HttpClient` and `ClientWebSocket` to ensure that resolved IP addresses are checked against the block list as an
-outgoing request is made.
+You can read the full documentation at https://ssrf.idunno.dev/
 
 ## Key Features
 
 * Mitigates Common SSRF vulnerabilities in .NET applications that use `HttpClient` or `ClientWebSocket`.
-* Supports both IPv4 and IPv6 addresses, including loopback, link-local, and private address ranges.
+* Supports both IPv4 and IPv6 addresses.
 * Allows for extra IP ranges and individual addresses to be added to the default block list.
-* `SsrfOptions` class allows for configuration of the handler, for `IOptions` pattern support.
+
+If you want to perform both checks you can use the `IsUnsafe` method, which will check both the URI and the resolved IP addresses.
 
 ## What is SSRF / Do I need this?
 
@@ -125,39 +76,29 @@ In addition the default lists of [known bad IP networks and IP addresses](https:
 If you are accepting user input that is used to make outgoing HTTP requests, or WebSocket connections, then you should be
 mitigating SSRF vulnerabilities in your application, and this library can help you do that.
 
-## Special casing loopback/localhost
+## Manual URI and IP checking Helper Methods
 
-By default, loopback/localhost addresses are considered unsafe by the handler, and will cause an `SsrfException` to be thrown if encountered.
-However if you have a legitimate reason to allow them to be accessed, you can set the `allowLoopback` parameter to `true`
-when calling `SsrfSocketsHttpHandlerFactory.Create()`, or when calling the `IsUnsafe`, `IsUnsafeUri` or `IsUnsafeIpAddress` methods.
+If you want to manually check URIs supplied by untrusted you can use the `idunno.Security.Ssrf` class.
 
-## Using Proxies
-
-Proxies can introduce a TOCTOU attack as they make the request to the destination URI, and in doing so
-they perform their own DNS resolution and, potentially comparing the resolution results against their own
-validators.
-
-Support for proxies is provided via the `ProxiedSsrfDelegatingHandler`, which allows you to use a proxy for
-outgoing requests while still enforcing the SSRF protections on the outgoing requests URI, and performing
-the SSRF checks on the resolved IP addresses of the outgoing request URI, however the proxy will perform
-its own DNS resolution which may return different IP addresses to the ones resolved by the SSRF handler.
-
-While it is a delegating handler, `ProxiedSsrfDelegatingHandler` sets an appropriate `InnerHandler`, configured
-for the proxy URI. This means that you can use it in a message handler pipeline, it must be last in
-the pipeline.
-
-```
-var proxyUri = new Uri("http://127.0.0.1:8866");
-
-var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
-    proxy: new WebProxy(proxyUri));
-using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler))
+```c#
+if (Ssrf.IsUnsafeUri(new Uri("https://bad.ssl.fail")))
 {
-    var response = await httpClient.GetAsync("https://example.com");
+    // Disallow entry of this URI into the system,
+    // or log an alert, or whatever you want to do with it.
 }
 ```
 
-`ProxiedSsrfDelegatingHandler` takes the same parameters as `SsrfSocketsHttpHandlerFactory.Create()`, with the addition of a `proxy` parameter.
+If you want to manually check an IP address you can use the `idunno.Security.Ssrf` class.
+
+```c#
+if (Ssrf.IsUnsafeIpAddress(IPAddress.Parse("127.0.0.1")))
+{
+    // Disallow this IP address from being used in the system,
+    // or log an alert, or whatever you want to do with it.
+}
+```
+
+
 
 ## Current Build Status
 

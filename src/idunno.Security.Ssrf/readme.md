@@ -5,8 +5,8 @@ A .NET library to help mitigate Server Side Request Forgery (SSRF) vulnerabiliti
 Key Features
 
 * Mitigates common SSRF vulnerabilities in .NET applications that use `HttpClient` or `ClientWebSocket`.
-* Supports both IPv4 and IPv6 addresses, including loopback, link-local, and private address ranges.
-* Allows for extra IP ranges to be added to the default block list.
+* Supports both IPv4 and IPv6 addresses.
+* Allows for extra IP ranges and addresses to be added to the default block list.
 
 ## Getting Started
 
@@ -14,31 +14,29 @@ Add the `idunno.Security.Ssrf` package to your project, and then when you create
 to the message handler pipeline.
 
 ```c#
-using (var httpClient = new HttpClient(idunno.Security.SsrfSocketsHttpHandlerFactory.Create()))
+using (var httpClient = new HttpClient(SsrfSocketsHttpHandlerFactory.Create()))
 {
     _ = await httpClient.GetAsync(new Uri("bad.ssl.fail")).ConfigureAwait(false);
 }
 ```
 
 If you want to protect a `ClientWebSocket` you can pass a an instance of the handler in as the invoker parameter of
-`ConnectAsync(Uri uri, System.Net.Http.HttpMessageInvoker? invoker, System.Threading.CancellationToken cancellationToken);`.
+`ConnectAsync();`.
 
 ```c#
 
-using (var webSocket = new ClientWebSock())
-using (var httpClient = new HttpClient(idunno.Security.SsrfSocketsHttpHandlerFactory.Create()))
+using (var clientWebSocket = new ClientWebSocket())
+using (var httpClient = new HttpClient(SsrfSocketsHttpHandlerFactory.Create()))
 {
-    await webSocket.ConnectAsync(
+    await clientWebSocket.ConnectAsync(
         uri: new Uri("wss://echo.websocket.org"),
         invoker: httpClient);
 }
 ```
 
-If the SSRF check finds an unsafe host, or a host that resolves to an unsafe address it will throw an `SsrfException`.
-Depending on where the exception it thrown, and the type of client it will end up as the `InnerException` on the
-`HttpRequestException`, `SocketException` or `WebSocketException` thrown by the client.
+If the SSRF handler encounters anything unsafe it will throw an `SsrfException`.
 
-Please see the full [README](https://github.com/blowdart/idunno.Security.Ssrf/blob/main/readme.md) for more details on how to use
-this nupkg.
+Please see the full [README](https://github.com/blowdart/idunno.Security.Ssrf/blob/main/readme.md) and the
+[documentation](https://ssrf.idunno.dev/) for more details
 
 The [CHANGELOG](https://github.com/blowdart/idunno.Security.Ssrf/blob/main/CHANGELOG.md) has a full a list of changes in each version.
