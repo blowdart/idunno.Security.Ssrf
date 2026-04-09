@@ -1,0 +1,63 @@
+﻿{
+    "$schema": "https://raw.githubusercontent.com/dotnet/docfx/main/schemas/docfx.schema.json",
+    "metadata": [
+        {
+            "src": [
+                {
+                    "src": "../src",
+                    "files": [
+                        "idunno.Security.Ssrf/**/idunno.Security.Ssrf.dll"
+                    ]
+                }
+            ],
+            "dest": "api",
+            "outputFormat": "apiPage",
+            "disableDefaultFilter": false,
+            "properties": {
+                "TargetFramework": "net10.0"
+            }
+        }
+    ],
+    "build": {
+        "content": [
+            {
+                "files": [
+                    "**/*.{md,yml}"
+                ],
+                "exclude": [
+                    "_site/**"
+                ]
+            }
+        ],
+        "resource": [
+            {
+                "files": [
+                    "**/images/**",
+                    "**/media/**",
+                    "**/code/*.cs"
+                ]
+            },
+            {
+                "files": [
+                    "favicon.png",
+                    "docicon.png"
+                ]
+            }
+        ],
+        "output": "_site",
+        "template": [
+            "default",
+            "modern"
+        ],
+        "globalMetadata": {
+            "_appName": "idunno.Security.Ssrf",
+            "_appTitle": "idunno.Security.Ssrf Documentation",
+            "_appFooter": "&copy; Barry Dorrans",
+            "_enableSearch": true,
+            "_appFaviconPath": "favicon.png",
+            "_appLogoPath": "docicon.png",
+            "_enableNewTab": "true",
+            "pdf": false
+        }
+    }
+}

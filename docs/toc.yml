@@ -1,0 +1,12 @@
+﻿items:
+- name: Getting Started
+  href: index.md
+- name: Documentation
+  items:
+  - href: docs/ssrf.md
+  - href: docs/ssrfHandler.md
+  - href: docs/configuration.md
+  - href: docs/usingProxies.md
+  - href: docs/sampleBadApplication.md
+- name: API
+  href: api/toc.yml
