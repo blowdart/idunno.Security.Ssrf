@@ -30,6 +30,8 @@ ILoggerFactory? loggerFactory = null;
 Console.WriteLine();
 Console.WriteLine("HttpClient Tests (allowInsecureProtocols = true)");
 Console.WriteLine("------------------------------------------------");
+await TestWithHttpClient("http://loopback.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
+
 await TestWithHttpClient("http://private10_8.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 await TestWithHttpClient("http://private172_16_12.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 await TestWithHttpClient("http://private192_168_16.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
@@ -300,7 +302,6 @@ static async Task TestWithClientWebSocket(string uri, bool allowInsecureProtocol
                     errorMessage = $"{ex.GetType().Name} => {innerException.GetType().Name}: {innerException.Message}";
                 }
             }
-
         }
         catch (TaskCanceledException ex)
         {

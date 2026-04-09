@@ -142,7 +142,7 @@ outgoing requests while still enforcing the SSRF protections on the outgoing req
 the SSRF checks on the resolved IP addresses of the outgoing request URI, however the proxy will perform
 its own DNS resolution which may return different IP addresses to the ones resolved by the SSRF handler.
 
-While it is delegating handler, `ProxiedSsrfDelegatingHandler` sets an appropriate `InnerHandler`, configured
+While it is a delegating handler, `ProxiedSsrfDelegatingHandler` sets an appropriate `InnerHandler`, configured
 for the proxy URI. This means that you can use it in a message handler pipeline, it must be last in
 the pipeline.
 
@@ -150,8 +150,7 @@ the pipeline.
 var proxyUri = new Uri("http://127.0.0.1:8866");
 
 var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
-    proxy: new WebProxy(proxyUri),
-);
+    proxy: new WebProxy(proxyUri));
 using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler))
 {
     var response = await httpClient.GetAsync("https://example.com");
