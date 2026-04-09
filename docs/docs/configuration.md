@@ -10,8 +10,8 @@ add to the built-in unsafe lists. For example
 
 ```c#
 using (var httpClient = new HttpClient(
-    SsrfSocketsHttpHanderFactory.Create(
-        additionalUnsafeNetworks: :
+    SsrfSocketsHttpHandlerFactory.Create(
+        additionalUnsafeNetworks:
         [
             IPNetwork.Parse("104.16.0.0/12"),
             IPNetwork.Parse("2620:1ec::/36")
@@ -19,7 +19,7 @@ using (var httpClient = new HttpClient(
         additionalUnsafeIpAddresses:
         [
             IPAddress.Parse("2606:4700::6812:1b78"),
-            IPAddress.Parse("104.18.26.120)
+            IPAddress.Parse("104.18.26.120")
         ])))
 {
     HttpResponseMessage response = await httpClient.GetAsync(
