@@ -105,6 +105,6 @@ Congratulations, you have an `HttpClient` with protection from SSRF!
 
 ### Advanced Topics
 
-* [Configuration](docs/configuration.md)
+* [Configing the handler](docs/configuration.md)
 * [Using Proxy Servers](docs/usingProxies.md)
 * [Testing the SSRF handler works as expected](docs/sampleBadApplication.md)

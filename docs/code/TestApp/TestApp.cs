@@ -4,6 +4,7 @@
 #:package idunno.Security.Ssrf@*
 #:property PublishAot=false
 using System.Text;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using idunno.Security;
 
@@ -12,6 +13,7 @@ Console.OutputEncoding = Encoding.UTF8;
 string hostUrl = "http://localhost:3000";
 
 var builder = WebApplication.CreateSlimBuilder(args);
+builder.Logging.ClearProviders();
 var app = builder.Build();
 app.Urls.Add(hostUrl);
 app.MapGet("/", async context =>
@@ -19,6 +21,14 @@ app.MapGet("/", async context =>
     await context.Response.WriteAsync("Hello World!");
 });
 await app.StartAsync().ConfigureAwait(false);
+
+Console.Write($"Kestrel listening on ");
+foreach (var url in app.Urls)
+{
+    Console.Write($"{url} ");
+}
+Console.WriteLine();
+Console.WriteLine();
 
 try
 {
@@ -45,6 +55,8 @@ catch (Exception ex)
     }
 }
 
+Console.WriteLine();
+
 try
 {
     using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create()))
@@ -69,6 +81,8 @@ catch (Exception ex)
         Console.WriteLine($"↳ {ex.GetType().Name} => {ex.Message}");
     }
 }
+
+Console.WriteLine();
 
 try
 {
@@ -95,8 +109,9 @@ catch (Exception ex)
     }
 }
 
-hostUrl = "http://loopback.ssrf.fail:3000";
+Console.WriteLine();
 
+hostUrl = "http://loopback.ssrf.fail:3000";
 try
 {
     using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(allowInsecureProtocols: true)))
