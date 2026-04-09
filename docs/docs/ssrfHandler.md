@@ -64,11 +64,8 @@ can only do this within the `HttpClient` or `ClientWebSocket`.
 ## Protecting an HttpClient
 
 To be fully protected, you need to validate the destination IP address right before the connection is made.
-The `SsrfSocketsHttpHanderFactory` class creates a handler that does all this:
+The `SsrfSocketsHttpHandlerFactory` class creates a handler that does all this:
 
-```c#
-using (var httpClient = new HttpClient(
-    SsrfSocketsHttpHanderFactory.Create()))
 {
     HttpResponseMessage response = await httpClient.GetAsync(
         new Uri("https://example.com"));
@@ -99,14 +96,11 @@ Depending on where the exception is thrown, and the type of client it will end u
 
 ## Protecting an ClientWebSocket
 
-To use it with `ClientWebSocket`, create an `HttpClient` that uses a handler returned from `SsrfSocketsHttpHanderFactory`,
+To use it with `ClientWebSocket`, create an `HttpClient` that uses a handler returned from `SsrfSocketsHttpHandlerFactory`,
 then pass that `HttpClient` into
 [`ClientWebSocket.ConnectAsync()`](https://learn.microsoft.com/en-us/dotnet/api/system.net.websockets.clientwebsocket.connectasync)
 via the `invoker` parameter.
 
-```c#
-using (var webSocket = new ClientWebSocket())
-using (var invoker = new HttpClient(SsrfSocketsHttpHanderFactory.Create()))
 {
     await webSocket.ConnectAsync(
         uri: "wss://echo.websocket.org",

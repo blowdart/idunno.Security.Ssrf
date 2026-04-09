@@ -1,4 +1,4 @@
-﻿# Configurating the handler
+﻿# Configuring the handler
 
 ## Adding extra unsafe IP Networks and addresses
 
@@ -34,7 +34,7 @@ You may have some `http` or `ws` URIs you need to access. You can mark those pro
 
 ## Allowing loopback connections
 
-You have have a need for your application to talk to itself, or another application on a different port on the loopback
+You may have a need for your application to talk to itself, or another application on a different port on the loopback
 addresses. You can allow this using the `allowLoopback` parameter.
 
 ## Connection strategies
@@ -45,14 +45,14 @@ safe IP addresses using the `connectionStrategy` parameter. There are four flags
 * `None` - the default connection strategy that tries each IP in the order the resolution presented them,
 * `Ipv4Preferred` - try IPv4 addresses first, before IPv6 addresses, this is mutually exclusive from `Ipv6Preferred`
 * `Ipv6Preferred` - try IPv6 addresses first, before IPv4 addresses, this is mutually exclusive from `Ipv4Preferred`
-* `Random` - shuffle the returned IP addresses randomly, before connecting. This can be combined with Ipv4Preferred` and `Ipv6Preferred`.
+* `Random` - shuffle the returned IP addresses randomly, before connecting. This can be combined with `Ipv4Preferred` and `Ipv6Preferred`.
 
 ## Allowing mixed results
 
 If you have a truly weird setup you may wish to allow a connection to continue if the IP address list returned
-during name resolution returns a mixture of safe and unsafe IP addresses. If you set the `allowInsecureProtocols`
-parameter to `true` all unsafe addresses will be removed form the potential connection list, and, if any safe IP addresses
-remain a connection will be attempted to each. Such a strange DNS setup could be an indicator of attack, so use
+during name resolution returns a mixture of safe and unsafe IP addresses. If you set the `failMixedResults`
+parameter to `false` all unsafe addresses will be removed from the potential connection list, and, if any safe IP addresses
+remain, a connection will be attempted to each. Such a strange DNS setup could be an indicator of attack, so use
 this option with care, as it may introduce an SSRF vulnerability.
 
 ## Other configuration parameters
