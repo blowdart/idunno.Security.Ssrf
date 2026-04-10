@@ -341,6 +341,20 @@ public class SsrfSocketsHttpHandlerFactoryTests
     [Fact]
     public async Task ConnectionFailsWhenOptionsAreUsed()
     {
+        static async Task<IPHostEntry> hostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("2606:4700::6812:218"),
+                    IPAddress.Parse("2606:4700::6812:318"),
+                    IPAddress.Parse("104.18.3.24"),
+                    IPAddress.Parse("104.18.2.24"),
+                ]
+            };
+        }
+
         SsrfOptions options = new()
         {
             ConnectionStrategy = ConnectionStrategy.None,
@@ -354,7 +368,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
                 IPAddress.Parse("2606:4700::6812:218"),
                 IPAddress.Parse("2606:4700::6812:318"),
                 IPAddress.Parse("104.18.3.24"),
-                IPAddress.Parse("104.18.2.24"),
+                IPAddress.Parse("104.18.2.24")
             ],
             ConnectTimeout = new TimeSpan(0, 0, 5),
             AllowInsecureProtocols = false,
@@ -365,7 +379,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             SslOptions = null
         };
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(options));
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(options, loggerFactory:null, hostEntryResolver: hostEntryResolver));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync("https://example.org", cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)

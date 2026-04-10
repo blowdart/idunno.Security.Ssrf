@@ -360,6 +360,34 @@ public class ProxiedSsrfDelegatingHandlerTests
     [Fact]
     public async Task ConnectionFailsWhenOptionsAreUsed()
     {
+        static IPHostEntry hostEntryResolver(string uri)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("2606:4700::6812:218"),
+                    IPAddress.Parse("2606:4700::6812:318"),
+                    IPAddress.Parse("104.18.3.24"),
+                    IPAddress.Parse("104.18.2.24"),
+                ]
+            };
+        }
+
+        static async Task<IPHostEntry> asyncHostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("2606:4700::6812:218"),
+                    IPAddress.Parse("2606:4700::6812:318"),
+                    IPAddress.Parse("104.18.3.24"),
+                    IPAddress.Parse("104.18.2.24"),
+                ]
+            };
+        }
+
         string hostName = "https://example.org/";
 
         SsrfOptions options = new()
@@ -386,7 +414,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             SslOptions = null
         };
 
-        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(options)
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(options, loggerFactory: null, hostEntryResolver: hostEntryResolver, asyncHostEntryResolver: asyncHostEntryResolver)
         {
             InnerHandler = SsrfSocketsHttpHandlerFactory.Create(options)
         };
