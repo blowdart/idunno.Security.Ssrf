@@ -1,4 +1,7 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Licensed under the MIT License.
+
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
