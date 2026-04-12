@@ -24,4 +24,7 @@ internal static partial class Log
 
     [LoggerMessage(EventId = 6, Level = LogLevel.Warning, Message = "Some resolved IP addresses for {uri} are unsafe and failMixedResults is enabled.")]
     public static partial void SomeResolvedIpAddressesUnsafe(ILogger logger, Uri uri);
+
+    [LoggerMessage(EventId = 7, Level = LogLevel.Debug, Message = "IP address checks for {uri} bypassed as the it matches an entry in the allowed hostnames list.")]
+    public static partial void ChecksBypassedForAllowedHostnames(ILogger logger, Uri uri);
 }

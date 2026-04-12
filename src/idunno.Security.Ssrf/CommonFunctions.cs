@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 using Microsoft.Extensions.Logging;
@@ -12,12 +13,13 @@ internal static class CommonFunctions
     private static readonly Func<string, CancellationToken, Task<IPHostEntry>> s_defaultAsyncHostEntryResolver = Dns.GetHostEntryAsync;
     private static readonly Func<string, IPHostEntry> s_defaultHostEntryResolver = Dns.GetHostEntry;
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "Suggested fix is language preview feature in some versions.")]
-    internal static async Task<List<IPAddress>> ResolveAndReturnSafeIPAddressesAsync(
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
+    [SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "Suggested fix is language preview feature in some versions.")]
+    internal static async Task<IPAddress[]> ResolveAndReturnSafeIPAddressesAsync(
         Uri uri,
         ICollection<IPNetwork>? additionalUnsafeNetworks,
         ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        ICollection<string>? allowedHostnames,
         bool allowLoopback,
         bool failMixedResults,
         ILogger logger,
@@ -26,7 +28,16 @@ internal static class CommonFunctions
     {
         ArgumentNullException.ThrowIfNull(uri);
         IPAddress[] resolvedIpAddresses = await ResolveAsync(uri, logger, hostEntryResolver, cancellationToken).ConfigureAwait(false);
-        return GetSafeIPAddresses(uri, resolvedIpAddresses, additionalUnsafeNetworks, additionalUnsafeIpAddresses, allowLoopback, failMixedResults, logger);
+
+        if (Ssrf.IsInAllowedHostnames(uri, allowedHostnames))
+        {
+            Log.ChecksBypassedForAllowedHostnames(logger, uri);
+            return resolvedIpAddresses;
+        }
+        else
+        {
+            return GetSafeIPAddresses(uri, resolvedIpAddresses, additionalUnsafeNetworks, additionalUnsafeIpAddresses, allowLoopback, failMixedResults, logger);
+        }
     }
 
     internal static async Task<IPAddress[]> ResolveAsync(
@@ -71,10 +82,11 @@ internal static class CommonFunctions
         return resolvedIpAddresses;
     }
 
-    internal static List<IPAddress> ResolveAndReturnSafeIPAddresses(
+    internal static IPAddress[] ResolveAndReturnSafeIPAddresses(
         Uri uri,
         ICollection<IPNetwork>? additionalUnsafeNetworks,
         ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        ICollection<string>? allowedHostnames,
         bool allowLoopback,
         bool failMixedResults,
         ILogger logger,
@@ -82,7 +94,16 @@ internal static class CommonFunctions
     {
         ArgumentNullException.ThrowIfNull(uri);
         IPAddress[] resolvedIpAddresses = Resolve(uri, logger, hostEntryResolver);
-        return GetSafeIPAddresses(uri, resolvedIpAddresses, additionalUnsafeNetworks, additionalUnsafeIpAddresses, allowLoopback, failMixedResults, logger);
+
+        if (Ssrf.IsInAllowedHostnames(uri, allowedHostnames))
+        {
+            Log.ChecksBypassedForAllowedHostnames(logger, uri);
+            return resolvedIpAddresses;
+        }
+        else
+        {
+            return GetSafeIPAddresses(uri, resolvedIpAddresses, additionalUnsafeNetworks, additionalUnsafeIpAddresses, allowLoopback, failMixedResults, logger);
+        }
     }
 
     internal static IPAddress[] Resolve(
@@ -126,9 +147,9 @@ internal static class CommonFunctions
         return resolvedIpAddresses;
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "Suggested fix is language preview feature in some versions.")]
-    private static List<IPAddress> GetSafeIPAddresses(
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
+    [SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "Suggested fix is language preview feature in some versions.")]
+    private static IPAddress[] GetSafeIPAddresses(
         Uri uri,
         IPAddress[] resolvedIpAddresses,
         ICollection<IPNetwork>? additionalUnsafeNetworks,
@@ -137,6 +158,8 @@ internal static class CommonFunctions
         bool failMixedResults,
         ILogger logger)
     {
+        // Specify an initial capacity for the list of safe IP addresses based on the number of resolved addresses
+        // to avoid multiple resizes as safe addresses are added to the list.
         List<IPAddress> safeResolvedIPAddresses = new(resolvedIpAddresses.Length);
 
         foreach (IPAddress ipAddress in resolvedIpAddresses)
@@ -168,6 +191,6 @@ internal static class CommonFunctions
             throw new SsrfException(uri, $"Connection blocked as some resolved addresses are unsafe.");
         }
 
-        return safeResolvedIPAddresses;
+        return [.. safeResolvedIPAddresses];
     }
 }

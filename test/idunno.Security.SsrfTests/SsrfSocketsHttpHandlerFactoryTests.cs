@@ -14,10 +14,10 @@ public class SsrfSocketsHttpHandlerFactoryTests
     [InlineData("https://bad.ssrf.fail/")]
     [InlineData("https://bad.ipv4.ssrf.fail/")]
     [InlineData("https://bad.ipv6.ssrf.fail/")]
-    public async Task ConnectionThrowsForUnsafeUri(string hostName)
+    public async Task ConnectionThrowsForUnsafeUri(string uri)
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(connectTimeout: new TimeSpan(0,0,5)));
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
 
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -31,19 +31,19 @@ public class SsrfSocketsHttpHandlerFactoryTests
         }
 
         Assert.IsType<SsrfException>(innermostException);
-        Assert.Equal(hostName, ((SsrfException)ex.InnerException!).Uri!.ToString());
+        Assert.Equal(uri, ((SsrfException)ex.InnerException!).Uri!.ToString());
     }
 
     [Theory]
     [InlineData("https://mixed.ssrf.fail/")]
     [InlineData("https://mixed.ipv4.ssrf.fail/")]
     [InlineData("https://mixed.ipv6.ssrf.fail/")]
-    public async Task ConnectionThrowsForHostsThatReturnAMixOfSafeAndUnsafeIPAddresses(string hostName)
+    public async Task ConnectionThrowsForHostsThatReturnAMixOfSafeAndUnsafeIPAddresses(string uri)
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(connectTimeout: new TimeSpan(0, 0, 5)));
         try
         {
-            _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
+            _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
         }
         catch (Exception ex)
         {
@@ -64,7 +64,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             }
 
             Assert.IsType<SsrfException>(innermostException);
-            Assert.Equal(hostName, ((SsrfException)ex.InnerException!).Uri!.ToString());
+            Assert.Equal(uri, ((SsrfException)ex.InnerException!).Uri!.ToString());
         }
     }
 
@@ -72,7 +72,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
     [InlineData("https://mixed.ssrf.fail/")]
     [InlineData("https://mixed.ipv4.ssrf.fail/")]
     [InlineData("https://mixed.ipv6.ssrf.fail/")]
-    public async Task ConnectionContinuesForHostsThatReturnAMixOfSafeAndUnsafeIPAddressesIfFailMixedResultsIsFalse(string hostName)
+    public async Task ConnectionContinuesForHostsThatReturnAMixOfSafeAndUnsafeIPAddressesIfFailMixedResultsIsFalse(string uri)
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
@@ -88,7 +88,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
 
         try
         {
-           _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
+           _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
         }
         catch (Exception ex)
         {
@@ -117,20 +117,20 @@ public class SsrfSocketsHttpHandlerFactoryTests
     [Theory]
     [InlineData("https://example.org/")]
     [InlineData("https://github.com/")]
-    public async Task ConnectionSucceedsForSafeUri(string hostName)
+    public async Task ConnectionSucceedsForSafeUri(string uri)
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(connectTimeout: new TimeSpan(0, 0, 5)));
-        HttpResponseMessage response = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
+        HttpResponseMessage response = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(response.IsSuccessStatusCode);
     }
 
     [Theory]
     [InlineData("http://example.org/")]
     [InlineData("http://github.com/")]
-    public async Task ConnectionThrowsForSafeHostButUnsafeProtocol(string hostName)
+    public async Task ConnectionThrowsForSafeHostButUnsafeProtocol(string uri)
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create());
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
         {
@@ -143,13 +143,13 @@ public class SsrfSocketsHttpHandlerFactoryTests
         }
 
         Assert.IsType<SsrfException>(innermostException);
-        Assert.Equal(hostName, ((SsrfException)innermostException).Uri!.ToString());
+        Assert.Equal(uri, ((SsrfException)innermostException).Uri!.ToString());
     }
 
     [Theory]
     [InlineData("http://example.org/")]
     [InlineData("http://github.com/")]
-    public async Task ConnectionDoesNotThrowForSafeHostButUnsafeProtocolIfAllowInsecureProtocolIsTrue(string hostName)
+    public async Task ConnectionDoesNotThrowForSafeHostButUnsafeProtocolIfAllowInsecureProtocolIsTrue(string uri)
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
@@ -162,13 +162,13 @@ public class SsrfSocketsHttpHandlerFactoryTests
             allowAutoRedirect: false,
             automaticDecompression: DecompressionMethods.All,
             sslOptions: null));
-        HttpResponseMessage response = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
+        HttpResponseMessage response = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
         Assert.True(response.IsSuccessStatusCode || response.StatusCode == HttpStatusCode.Redirect || response.StatusCode == HttpStatusCode.MovedPermanently);
     }
 
     [Theory]
     [InlineData("https://example.org/")]
-    public async Task ConnectionFailsForSafeUriWhichResolveToAdditionalUnsafeIpv4Addresses(string hostName)
+    public async Task ConnectionFailsForSafeUriWhichResolveToAdditionalUnsafeIpv4Addresses(string uri)
     {
         static async Task<IPHostEntry> hostEntryResolver(string uri, CancellationToken cancellationToken)
         {
@@ -179,10 +179,11 @@ public class SsrfSocketsHttpHandlerFactoryTests
             };
         }
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: [IPAddress.Parse("1.2.3.4")],
+            allowedHostnames: null,
             connectTimeout: new TimeSpan(0, 0, 5),
             allowInsecureProtocols: true,
             allowLoopback: false,
@@ -193,7 +194,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
             loggerFactory : null));
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
         {
@@ -206,12 +207,12 @@ public class SsrfSocketsHttpHandlerFactoryTests
         }
 
         Assert.IsType<SsrfException>(innermostException);
-        Assert.Equal(hostName, ((SsrfException)innermostException).Uri!.ToString());
+        Assert.Equal(uri, ((SsrfException)innermostException).Uri!.ToString());
     }
 
     [Theory]
     [InlineData("https://example.org/")]
-    public async Task ConnectionFailsForSafeUriWhichResolveToAdditionalUnsafeIpv6Addresses(string hostName)
+    public async Task ConnectionFailsForSafeUriWhichResolveToAdditionalUnsafeIpv6Addresses(string uri)
     {
         static async Task<IPHostEntry> hostEntryResolver(string uri, CancellationToken cancellationToken)
         {
@@ -222,10 +223,11 @@ public class SsrfSocketsHttpHandlerFactoryTests
             };
         }
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: [IPAddress.Parse("2606:4700::6812:1b78")],
+            allowedHostnames: null,
             connectTimeout: new TimeSpan(0, 0, 5),
             allowInsecureProtocols: true,
             allowLoopback: false,
@@ -236,7 +238,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
             loggerFactory: null));
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
         {
@@ -249,12 +251,12 @@ public class SsrfSocketsHttpHandlerFactoryTests
         }
 
         Assert.IsType<SsrfException>(innermostException);
-        Assert.Equal(hostName, ((SsrfException)innermostException).Uri!.ToString());
+        Assert.Equal(uri, ((SsrfException)innermostException).Uri!.ToString());
     }
 
     [Theory]
     [InlineData("https://example.org/")]
-    public async Task ConnectionFailsForSafeUriWhichResolveToIPWithinAdditionalUnsafeIpv4Networks(string hostName)
+    public async Task ConnectionFailsForSafeUriWhichResolveToIPWithinAdditionalUnsafeIpv4Networks(string uri)
     {
         static async Task<IPHostEntry> hostEntryResolver(string uri, CancellationToken cancellationToken)
         {
@@ -265,10 +267,11 @@ public class SsrfSocketsHttpHandlerFactoryTests
             };
         }
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: [IPNetwork.Parse("1.2.3.0/24")],
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: new TimeSpan(0, 0, 5),
             allowInsecureProtocols: true,
             allowLoopback: false,
@@ -279,7 +282,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
             loggerFactory: null));
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
         {
@@ -292,12 +295,12 @@ public class SsrfSocketsHttpHandlerFactoryTests
         }
 
         Assert.IsType<SsrfException>(innermostException);
-        Assert.Equal(hostName, ((SsrfException)innermostException).Uri!.ToString());
+        Assert.Equal(uri, ((SsrfException)innermostException).Uri!.ToString());
     }
 
     [Theory]
     [InlineData("https://example.org/")]
-    public async Task ConnectionFailsForSafeUriWhichResolveToIPWithinAdditionalUnsafeIpv6Networks(string hostName)
+    public async Task ConnectionFailsForSafeUriWhichResolveToIPWithinAdditionalUnsafeIpv6Networks(string uri)
     {
         static async Task<IPHostEntry> hostEntryResolver(string uri, CancellationToken cancellationToken)
         {
@@ -308,10 +311,11 @@ public class SsrfSocketsHttpHandlerFactoryTests
             };
         }
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: [IPNetwork.Parse("2620:1ec::/36")],
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: new TimeSpan(0, 0, 5),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -322,7 +326,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
             loggerFactory: null));
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
         {
@@ -335,7 +339,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
         }
 
         Assert.IsType<SsrfException>(innermostException);
-        Assert.Equal(hostName, ((SsrfException)innermostException).Uri!.ToString());
+        Assert.Equal(uri, ((SsrfException)innermostException).Uri!.ToString());
     }
 
     [Fact]
@@ -379,7 +383,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             SslOptions = null
         };
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(options, loggerFactory:null, hostEntryResolver: hostEntryResolver));
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.InternalCreate(options, loggerFactory:null, hostEntryResolver: hostEntryResolver));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync("https://example.org", cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -399,17 +403,18 @@ public class SsrfSocketsHttpHandlerFactoryTests
     [Fact]
     public async Task ConnectionFailsWhenDnsResolutionReturnsNoIpAddresses()
     {
-        string hostName = "https://example.org/";
+        string uri = "https://example.org/";
 
         static async Task<IPHostEntry> hostEntryResolver(string uri, CancellationToken cancellationToken)
         {
             return new IPHostEntry();
         }
 
-        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: [IPNetwork.Parse("2620:1ec::/36")],
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: new TimeSpan(0, 0, 5),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -421,7 +426,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             asyncHostEntryResolver: hostEntryResolver,
             loggerFactory: null));
 
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
 
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -435,7 +440,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
         }
 
         Assert.IsType<SsrfException>(innermostException);
-        Assert.Equal(hostName, ((SsrfException)innermostException).Uri!.ToString());
+        Assert.Equal(uri, ((SsrfException)innermostException).Uri!.ToString());
     }
 
     [Theory]
@@ -447,7 +452,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
     [InlineData("https://127.255.255.254/")]
     [InlineData("http://[::1]/")]
     [InlineData("https://[::1]/")]
-    public async Task ConnectionDoesNotThrowForLoopbackHostWhenAllowLoopbackIsSet(string hostName)
+    public async Task ConnectionDoesNotThrowForLoopbackHostWhenAllowLoopbackIsSet(string uri)
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
@@ -463,7 +468,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             loggerFactory: null));
 
         Exception? ex = await Record.ExceptionAsync(async () => {
-            await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
+            await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
         });
 
         Assert.NotNull(ex);
@@ -492,7 +497,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
     [InlineData("https://127.255.255.254/")]
     [InlineData("http://[::1]/")]
     [InlineData("https://[::1]/")]
-    public async Task ConnectionDoesNotThrowForLoopbackHostWhenAllowLoopbackIsSetInOptions(string hostName)
+    public async Task ConnectionDoesNotThrowForLoopbackHostWhenAllowLoopbackIsSetInOptions(string uri)
     {
         SsrfOptions options = new()
         {
@@ -504,7 +509,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
         using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(options));
 
         Exception? ex = await Record.ExceptionAsync(async () => {
-            await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
+            await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
         });
 
         Assert.NotNull(ex);
@@ -529,7 +534,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
     [InlineData("http://127.0.0.1/")]
     [InlineData("http://127.255.255.254/")]
     [InlineData("http://[::1]/")]
-    public async Task ConnectionThrowsForInsecureLoopbackHostWhenAllowLoopbackIsSetButAllowInsecureIsFalse(string hostName)
+    public async Task ConnectionThrowsForInsecureLoopbackHostWhenAllowLoopbackIsSetButAllowInsecureIsFalse(string uri)
     {
         using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
@@ -545,7 +550,7 @@ public class SsrfSocketsHttpHandlerFactoryTests
             loggerFactory: null));
 
         Exception? ex = await Record.ExceptionAsync(async () => {
-            await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken);
+            await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
         });
 
         Assert.NotNull(ex);
@@ -564,4 +569,411 @@ public class SsrfSocketsHttpHandlerFactoryTests
 
         Assert.IsType<SsrfException>(innermostException);
     }
+
+    [Fact]
+    public async Task ConnectionIsAllowedForIndividualAllowedDomainsEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://example.com");
+        var allowedHostNames = new List<string> { "example.com", "test.com" };
+
+        static async Task<IPHostEntry> hostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.InternalCreate(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: new TimeSpan(0, 0, 5),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: null,
+            sslOptions: null,
+            asyncHostEntryResolver: hostEntryResolver,
+            loggerFactory: null));
+        {
+            // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            Exception? innermostException = ex;
+            while (innermostException.InnerException is not null)
+            {
+                innermostException = innermostException.InnerException;
+
+                if (innermostException is SsrfException)
+                {
+                    break;
+                }
+            }
+
+            Assert.IsNotType<SsrfException>(innermostException);
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsAllowedForAWildCardAllowedDomainsEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://database.example.localhost");
+        var allowedHostNames = new List<string> { "*.localhost" };
+
+        static async Task<IPHostEntry> hostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.InternalCreate(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: new TimeSpan(0, 0, 5),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: null,
+            sslOptions: null,
+            asyncHostEntryResolver: hostEntryResolver,
+            loggerFactory: null));
+        {
+            // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            Exception? innermostException = ex;
+            while (innermostException.InnerException is not null)
+            {
+                innermostException = innermostException.InnerException;
+
+                if (innermostException is SsrfException)
+                {
+                    break;
+                }
+            }
+
+            Assert.IsNotType<SsrfException>(innermostException);
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsStoppedAWildCardAllowedDomainsIfTheHostIsNotCoveredByTheWildcard()
+    {
+        var uri = new Uri("https://example.localhost");
+        var allowedHostNames = new List<string> { "*.example.localhost" };
+
+        static async Task<IPHostEntry> hostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.InternalCreate(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: new TimeSpan(0, 0, 5),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: null,
+            sslOptions: null,
+            asyncHostEntryResolver: hostEntryResolver,
+            loggerFactory: null));
+        {
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            Exception? innermostException = ex;
+            while (innermostException.InnerException is not null)
+            {
+                innermostException = innermostException.InnerException;
+
+                if (innermostException is SsrfException)
+                {
+                    break;
+                }
+            }
+
+            Assert.IsType<SsrfException>(innermostException);
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsAllowedWithWildCardAllowedDomainsAndASpecificEntryToCoverTheHostEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://example.localhost");
+        var allowedHostNames = new List<string> { "*.example.localhost", "example.localhost" };
+
+        static async Task<IPHostEntry> hostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.InternalCreate(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: new TimeSpan(0, 0, 5),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: null,
+            sslOptions: null,
+            asyncHostEntryResolver: hostEntryResolver,
+            loggerFactory: null));
+        {
+            // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            Exception? innermostException = ex;
+            while (innermostException.InnerException is not null)
+            {
+                innermostException = innermostException.InnerException;
+
+                if (innermostException is SsrfException)
+                {
+                    break;
+                }
+            }
+
+            Assert.IsNotType<SsrfException>(innermostException);
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsAllowedForIndividualAllowedDomainsInOptionsEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://loopback.ssrf.fail");
+        var allowedHostNames = new List<string> { "loopback.ssrf.fail"};
+
+        SsrfOptions options = new()
+        {
+            AllowedHostnames = allowedHostNames,
+            ConnectTimeout = new TimeSpan(0, 0, 5),
+            AutomaticDecompression = DecompressionMethods.All,
+        };
+
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(options));
+        {
+            // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            Exception? innermostException = ex;
+            while (innermostException.InnerException is not null)
+            {
+                innermostException = innermostException.InnerException;
+
+                if (innermostException is SsrfException)
+                {
+                    break;
+                }
+            }
+
+            Assert.IsNotType<SsrfException>(innermostException);
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsAllowedForAWildCardAllowedDomainsInOptionsEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://loopback.ssrf.fail");
+        var allowedHostNames = new List<string> { "*.ssrf.fail" };
+
+        SsrfOptions options = new()
+        {
+            AllowedHostnames = allowedHostNames,
+            ConnectTimeout = new TimeSpan(0, 0, 5),
+            AutomaticDecompression = DecompressionMethods.All,
+        };
+
+
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(options));
+        {
+            // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            Exception? innermostException = ex;
+            while (innermostException.InnerException is not null)
+            {
+                innermostException = innermostException.InnerException;
+
+                if (innermostException is SsrfException)
+                {
+                    break;
+                }
+            }
+
+            Assert.IsNotType<SsrfException>(innermostException);
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsStoppedWithAWildCardAllowedDomainsInOptionsIfTheHostIsNotCoveredByTheWildcard()
+    {
+        var uri = new Uri("https://loopback.ssrf.fail");
+        var allowedHostNames = new List<string> { "*.loopback.ssrf.fail" };
+
+        SsrfOptions options = new()
+        {
+            AllowedHostnames = allowedHostNames,
+            ConnectTimeout = new TimeSpan(0, 0, 5),
+            AutomaticDecompression = DecompressionMethods.All,
+        };
+
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(options));
+        {
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            Exception? innermostException = ex;
+            while (innermostException.InnerException is not null)
+            {
+                innermostException = innermostException.InnerException;
+
+                if (innermostException is SsrfException)
+                {
+                    break;
+                }
+            }
+
+            Assert.IsType<SsrfException>(innermostException);
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsAllowedWithWildCardAllowedDomainsAndASpecificEntryToCoverTheHostInOptionsEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://loopback.ssrf.fail");
+        var allowedHostNames = new List<string> { "*.loopback.ssrf.fail", "loopback.ssrf.fail" };
+
+        SsrfOptions options = new()
+        {
+            AllowedHostnames = allowedHostNames,
+            ConnectTimeout = new TimeSpan(0, 0, 5),
+            AutomaticDecompression = DecompressionMethods.All,
+        };
+
+        using HttpClient httpClient = new(SsrfSocketsHttpHandlerFactory.Create(options));
+        {
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            Exception? innermostException = ex;
+            while (innermostException.InnerException is not null)
+            {
+                innermostException = innermostException.InnerException;
+
+                if (innermostException is SsrfException)
+                {
+                    break;
+                }
+            }
+
+            Assert.IsNotType<SsrfException>(innermostException);
+        }
+    }
+
+    [Fact]
+    public void SortIpAddressListByFamilySortsCorrectlyForIpV4Addresses()
+    {
+        IPAddress[] addresses = [
+            IPAddress.Parse("::1"),
+            IPAddress.Parse("127.0.0.1")
+        ];
+
+        SsrfSocketsHttpHandlerFactory.SortIpAddressListByFamily(addresses, AddressFamily.InterNetwork);
+
+        Assert.Equal(IPAddress.Parse("127.0.0.1"), addresses[0]);
+        Assert.Equal(IPAddress.Parse("::1"), addresses[1]);
+    }
+
+    [Fact]
+    public void SortIpAddressListByFamilySortsCorrectlyForIpV6Addresses()
+    {
+        IPAddress[] addresses = [
+            IPAddress.Parse("::1"),
+            IPAddress.Parse("127.0.0.1")
+        ];
+
+        SsrfSocketsHttpHandlerFactory.SortIpAddressListByFamily(addresses, AddressFamily.InterNetworkV6);
+
+        Assert.Equal(IPAddress.Parse("::1"), addresses[0]);
+        Assert.Equal(IPAddress.Parse("127.0.0.1"), addresses[1]);
+    }
+
 }

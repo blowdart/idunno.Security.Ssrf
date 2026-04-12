@@ -19,6 +19,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -45,6 +46,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -70,6 +72,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -103,6 +106,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -136,6 +140,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -160,6 +165,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: true,
             allowLoopback: false,
@@ -211,6 +217,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: [IPAddress.Parse("1.2.3.4")],
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -255,6 +262,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: [IPAddress.Parse("2606:4700::6812:1b78")],
             connectTimeout: TimeSpan.FromSeconds(1),
+            allowedHostnames: null,
             allowInsecureProtocols: false,
             allowLoopback: false,
             failMixedResults: true,
@@ -297,6 +305,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: [IPNetwork.Parse("1.2.3.0/24")],
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -340,6 +349,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: [IPNetwork.Parse("2620:1ec::/36")],
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -443,6 +453,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -483,6 +494,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: true,
             allowLoopback: true,
@@ -555,6 +567,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: true,
@@ -580,6 +593,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -603,6 +617,7 @@ public class ProxiedSsrfDelegatingHandlerTests
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -624,6 +639,436 @@ public class ProxiedSsrfDelegatingHandlerTests
         {
             ex = ex.InnerException;
             Assert.IsNotType<SsrfException>(ex);
+        }
+    }
+
+    /// ---------------
+    ///
+
+    [Fact]
+    public async Task ConnectionIsAllowedForIndividualAllowedDomainsEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://example.com");
+        var allowedHostNames = new List<string> { "example.com", "test.com" };
+
+        static async Task<IPHostEntry> asyncHostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        static IPHostEntry hostEntryResolver(string uri)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://localhost:9999")),
+            sslOptions: null,
+            asyncHostEntryResolver: asyncHostEntryResolver,
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+        {
+            // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
+            Exception? ex = await Record.ExceptionAsync(async () => { await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken); });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            while (ex.InnerException is not null)
+            {
+                Assert.IsNotType<SsrfException>(ex.InnerException);
+                ex = ex.InnerException;
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsAllowedForAWildCardAllowedDomainsEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://database.example.localhost");
+        var allowedHostNames = new List<string> { "*.localhost" };
+
+        static async Task<IPHostEntry> asyncHostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        static IPHostEntry hostEntryResolver(string uri)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://localhost:9999")),
+            sslOptions: null,
+            asyncHostEntryResolver: asyncHostEntryResolver,
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+        {
+            // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            while (ex.InnerException is not null)
+            {
+                Assert.IsNotType<SsrfException>(ex.InnerException);
+                ex = ex.InnerException;
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsStoppedAWildCardAllowedDomainsIfTheHostIsNotCoveredByTheWildcard()
+    {
+        var uri = new Uri("https://example.localhost");
+        var allowedHostNames = new List<string> { "*.example.localhost" };
+
+        static async Task<IPHostEntry> asyncHostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        static IPHostEntry hostEntryResolver(string uri)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://localhost:9999")),
+            sslOptions: null,
+            asyncHostEntryResolver: asyncHostEntryResolver,
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+        {
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsType<SsrfException>(ex);
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsAllowedWithWildCardAllowedDomainsAndASpecificEntryToCoverTheHostEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://example.localhost");
+        var allowedHostNames = new List<string> { "*.example.localhost", "example.localhost" };
+
+        static async Task<IPHostEntry> asyncHostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        static IPHostEntry hostEntryResolver(string uri)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ]
+            };
+        }
+
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://localhost:9999")),
+            sslOptions: null,
+            asyncHostEntryResolver: asyncHostEntryResolver,
+            hostEntryResolver: hostEntryResolver,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+        {
+            // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            while (ex.InnerException is not null)
+            {
+                Assert.IsNotType<SsrfException>(ex.InnerException);
+                ex = ex.InnerException;
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsAllowedForIndividualAllowedDomainsInOptionsEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://loopback.ssrf.fail");
+        var allowedHostNames = new List<string> { "loopback.ssrf.fail" };
+
+        SsrfOptions options = new()
+        {
+            AllowedHostnames = allowedHostNames,
+            ConnectTimeout = new TimeSpan(0, 0, 5),
+            AutomaticDecompression = DecompressionMethods.All,
+        };
+
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://localhost:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+        {
+            // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            while (ex.InnerException is not null)
+            {
+                Assert.IsNotType<SsrfException>(ex.InnerException);
+                ex = ex.InnerException;
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsAllowedForAWildCardAllowedDomainsInOptionsEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://loopback.ssrf.fail");
+        var allowedHostNames = new List<string> { "*.ssrf.fail" };
+
+        SsrfOptions options = new()
+        {
+            AllowedHostnames = allowedHostNames,
+            ConnectTimeout = new TimeSpan(0, 0, 5),
+            AutomaticDecompression = DecompressionMethods.All,
+        };
+
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://localhost:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+        {
+            // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            while (ex.InnerException is not null)
+            {
+                Assert.IsNotType<SsrfException>(ex.InnerException);
+                ex = ex.InnerException;
+            }
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsStoppedWithAWildCardAllowedDomainsInOptionsIfTheHostIsNotCoveredByTheWildcard()
+    {
+        var uri = new Uri("https://loopback.ssrf.fail");
+        var allowedHostNames = new List<string> { "*.loopback.ssrf.fail" };
+
+        SsrfOptions options = new()
+        {
+            AllowedHostnames = allowedHostNames,
+            ConnectTimeout = new TimeSpan(0, 0, 5),
+            AutomaticDecompression = DecompressionMethods.All,
+        };
+
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://localhost:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+        {
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsType<SsrfException>(ex);
+        }
+    }
+
+    [Fact]
+    public async Task ConnectionIsAllowedWithWildCardAllowedDomainsAndASpecificEntryToCoverTheHostInOptionsEvenIfTheyResolveToAnUnsafeIPAddress()
+    {
+        var uri = new Uri("https://loopback.ssrf.fail");
+        var allowedHostNames = new List<string> { "*.loopback.ssrf.fail", "loopback.ssrf.fail" };
+
+        SsrfOptions options = new()
+        {
+            AllowedHostnames = allowedHostNames,
+            ConnectTimeout = new TimeSpan(0, 0, 5),
+            AutomaticDecompression = DecompressionMethods.All,
+        };
+
+        using var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeNetworks: null,
+            additionalUnsafeIpAddresses: null,
+            allowedHostnames: allowedHostNames,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            failMixedResults: true,
+            allowAutoRedirect: false,
+            automaticDecompression: DecompressionMethods.All,
+            proxy: new WebProxy(new Uri("http://localhost:9999")),
+            sslOptions: null,
+            loggerFactory: null);
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+
+        {
+            Exception? ex = await Record.ExceptionAsync(async () => {
+                await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
+            });
+
+            Assert.NotNull(ex);
+            Assert.IsNotType<SsrfException>(ex);
+
+            Exception? innermostException = ex;
+            while (innermostException.InnerException is not null)
+            {
+                innermostException = innermostException.InnerException;
+
+                if (innermostException is SsrfException)
+                {
+                    break;
+                }
+            }
+
+            Assert.IsNotType<SsrfException>(innermostException);
         }
     }
 }

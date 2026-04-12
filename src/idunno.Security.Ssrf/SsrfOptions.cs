@@ -14,7 +14,7 @@ public record SsrfOptions
     /// <summary>
     /// Gets or sets the strategy used to establish connections to resolved IP addresses for a given host.
     /// </summary>
-    public ConnectionStrategy ConnectionStrategy { get; set; }
+    public ConnectionStrategy ConnectionStrategy { get; set; } = ConnectionStrategy.None;
 
     /// <summary>
     /// Gets an optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe.
@@ -69,4 +69,16 @@ public record SsrfOptions
     /// Gets or sets a flag indicating whether to allow loopback addresses (e.g. localhost, 127.0.0.1, ::1). Defaults to <see langword="false"/>.
     /// </summary>
     public bool AllowLoopback { get; set; }
+
+    /// <summary>
+    /// Gets or sets an optional collection of hostnames that are allowed to bypass SSRF IP address protections.
+    /// This can be used to allow specific trusted hosts names.
+    /// Wild cards are supported only at the start of the hostname, and must be followed by a dot
+    /// (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
+    /// </summary>
+    /// <remarks>
+    /// <para>This list does not affect the evaluation of the URI scheme, loopback status, or other built-in SSRF protections.</para>
+    /// <para>The list is considered trusted data. No validation is performed on it. Do not use user-controlled input to build the list.</para>
+    /// </remarks>
+    public ICollection<string>? AllowedHostnames { get; init; } = [];
 }

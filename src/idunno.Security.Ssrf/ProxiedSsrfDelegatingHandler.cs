@@ -21,6 +21,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
     private readonly ICollection<IPNetwork>? _additionalUnsafeNetworks;
     private readonly ICollection<IPAddress>? _additionalUnsafeIpAddresses;
+    private readonly ICollection<string>? _allowedHostnames;
     private readonly bool _allowInsecureProtocols;
     private readonly bool _allowLoopback;
     private readonly bool _failMixedResults;
@@ -41,6 +42,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -79,6 +81,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -117,6 +120,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -157,6 +161,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -195,6 +200,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -235,6 +241,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -273,6 +280,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: false,
@@ -314,6 +322,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: false,
@@ -355,6 +364,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: allowLoopback,
@@ -398,6 +408,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: allowLoopback,
@@ -439,6 +450,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -482,6 +494,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -514,6 +527,12 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
     /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
     /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
+    /// <param name="allowedHostnames">
+    ///     An optional collection of hostnames that are allowed to bypass SSRF IP address protections.
+    ///     This can be used to allow specific trusted hosts names.
+    ///     Wild cards are supported only at the start of the hostname, and must be followed by a dot
+    ///     (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
+    /// </param>
     /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
     /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
     /// <param name="allowLoopback">Flag indicating whether loopback addresses will be allowed or rejected.</param>
@@ -529,6 +548,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         ConnectionStrategy connectionStrategy,
         ICollection<IPNetwork>? additionalUnsafeNetworks,
         ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        ICollection<string>? allowedHostnames,
         TimeSpan? connectTimeout,
         bool allowInsecureProtocols,
         bool allowLoopback,
@@ -541,6 +561,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: allowedHostnames,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: allowLoopback,
@@ -624,6 +645,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         ConnectionStrategy connectionStrategy,
         ICollection<IPNetwork>? additionalUnsafeNetworks,
         ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        ICollection<string>? allowedHostnames,
         TimeSpan? connectTimeout,
         bool allowInsecureProtocols,
         bool allowLoopback,
@@ -647,6 +669,15 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _additionalUnsafeNetworks = additionalUnsafeNetworks;
         _additionalUnsafeIpAddresses = additionalUnsafeIpAddresses;
+        if (allowedHostnames is null)
+        {
+            _allowedHostnames = [webProxy.Address.Host];
+        }
+        else if (!allowedHostnames.Contains(webProxy.Address.Host))
+        {
+            _allowedHostnames = allowedHostnames;
+            _allowedHostnames.Add(webProxy.Address.Host);
+        }
         _allowInsecureProtocols = allowInsecureProtocols;
         _allowLoopback = allowLoopback;
         _failMixedResults = failMixedResults;
@@ -656,19 +687,20 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         loggerFactory ??= NullLoggerFactory.Instance;
         _logger = loggerFactory.CreateLogger<ProxiedSsrfDelegatingHandler>();
 
-        InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-            connectionStrategy: connectionStrategy,
-            additionalUnsafeNetworks: additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+        InnerHandler = SsrfSocketsHttpHandlerFactory.InternalCreate(
+            connectionStrategy:connectionStrategy,
+            additionalUnsafeNetworks: _additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: _additionalUnsafeIpAddresses,
+            allowedHostnames: _allowedHostnames,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: webProxy.Address.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase),
             allowLoopback: webProxy.Address.IsLoopback,
-            failMixedResults: failMixedResults,
+            failMixedResults: _failMixedResults,
             allowAutoRedirect: allowAutoRedirect,
             automaticDecompression: automaticDecompression,
             proxy: proxy,
             sslOptions: sslOptions,
-            asyncHostEntryResolver: asyncHostEntryResolver,
+            asyncHostEntryResolver: _asyncHostEntryResolver,
             loggerFactory: loggerFactory); 
     }
 
@@ -692,6 +724,15 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _additionalUnsafeNetworks = options.AdditionalUnsafeNetworks;
         _additionalUnsafeIpAddresses = options.AdditionalUnsafeIpAddresses;
+        if (options.AllowedHostnames is null)
+        {
+            _allowedHostnames = [webProxy.Address.Host];
+        }
+        else if (!options.AllowedHostnames.Contains(webProxy.Address.Host))
+        {
+            _allowedHostnames = options.AllowedHostnames;
+            _allowedHostnames.Add(webProxy.Address.Host);
+        }
         _allowInsecureProtocols = options.AllowInsecureProtocols;
         _allowLoopback = options.AllowLoopback;
         _failMixedResults = options.FailMixedResults;
@@ -701,14 +742,15 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         loggerFactory ??= NullLoggerFactory.Instance;
         _logger = loggerFactory.CreateLogger<ProxiedSsrfDelegatingHandler>();
 
-        InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
+        InnerHandler = SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: options.ConnectionStrategy,
-            additionalUnsafeNetworks: options.AdditionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: options.AdditionalUnsafeIpAddresses,
+            additionalUnsafeNetworks: _additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: _additionalUnsafeIpAddresses,
+            allowedHostnames: _allowedHostnames,
             connectTimeout: options.ConnectTimeout,
             allowInsecureProtocols: webProxy.Address.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase),
             allowLoopback: webProxy.Address.IsLoopback,
-            failMixedResults: options.FailMixedResults,
+            failMixedResults: _failMixedResults,
             allowAutoRedirect: options.AllowAutoRedirect,
             automaticDecompression: options.AutomaticDecompression,
             proxy: options.Proxy,
@@ -743,6 +785,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             uri: requestedUri,
             additionalUnsafeNetworks: _additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: _additionalUnsafeIpAddresses,
+            allowedHostnames: _allowedHostnames,
             allowLoopback: _allowLoopback,
             failMixedResults: _failMixedResults,
             logger: _logger,
@@ -778,6 +821,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             uri: requestedUri,
             additionalUnsafeNetworks: _additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: _additionalUnsafeIpAddresses,
+            allowedHostnames: _allowedHostnames,
             allowLoopback: _allowLoopback,
             failMixedResults: _failMixedResults,
             logger: _logger,

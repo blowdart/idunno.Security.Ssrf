@@ -46,7 +46,7 @@ public class IsUnsafeUriTests
     [Theory]
     [InlineData(@"ftp://example.com")]
     [InlineData(@"telnet://exampe.com")]
-    [InlineData(@"ms-teams://exampe.com")]
+    [InlineData(@"ms-teams://example.com")]
     public void ReturnsTrueForUnsafeProtocols(string uriAsString)
     {
         Uri uri = new(uriAsString);

@@ -30,6 +30,7 @@ var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
     connectionStrategy: ConnectionStrategy.None,
     additionalUnsafeNetworks: null,
     additionalUnsafeIpAddresses: null,
+    allowedHostnames: null,
     connectTimeout: TimeSpan.FromSeconds(1),
     allowInsecureProtocols: false,
     allowLoopback: false,
@@ -192,6 +193,7 @@ var allowMixedSsrfHostValidationHandler = new ProxiedSsrfDelegatingHandler(
     connectionStrategy: ConnectionStrategy.None,
     additionalUnsafeNetworks: null,
     additionalUnsafeIpAddresses: null,
+    allowedHostnames: null,
     connectTimeout: TimeSpan.FromSeconds(1),
     allowInsecureProtocols: true, // Must allow insecure protocols for the proxy itself to work.
     allowLoopback: true, // Must allow loopback for the proxy itself to work.

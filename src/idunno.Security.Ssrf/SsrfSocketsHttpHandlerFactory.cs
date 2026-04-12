@@ -32,10 +32,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create()
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
@@ -57,10 +58,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
@@ -82,10 +84,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
@@ -108,10 +111,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
@@ -133,10 +137,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(TimeSpan connectTimeout)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -159,10 +164,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(TimeSpan connectTimeout, ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -184,10 +190,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ICollection<IPNetwork> additionalUnsafeNetworks)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -211,10 +218,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ICollection<IPNetwork> additionalUnsafeNetworks, ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: false,
@@ -236,10 +244,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(bool allowInsecureProtocols)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: allowInsecureProtocols,
@@ -262,10 +271,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(bool allowInsecureProtocols, ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: allowInsecureProtocols,
@@ -288,10 +298,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(bool allowInsecureProtocols, bool allowLoopback)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: allowInsecureProtocols,
@@ -315,10 +326,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(bool allowInsecureProtocols, bool allowLoopback, ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: null,
             failMixedResults: true,
             allowInsecureProtocols: allowInsecureProtocols,
@@ -341,10 +353,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, TimeSpan connectTimeout)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             failMixedResults: true,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
@@ -368,10 +381,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, TimeSpan connectTimeout, ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             failMixedResults: true,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
@@ -394,10 +408,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ICollection<IPNetwork> additionalUnsafeNetworks, TimeSpan connectTimeout)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             failMixedResults: true,
             allowInsecureProtocols: false,
@@ -421,9 +436,10 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ICollection<IPNetwork> additionalUnsafeNetworks, TimeSpan connectTimeout, ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
+            allowedHostnames: null,
             additionalUnsafeIpAddresses: null,
             connectTimeout: connectTimeout,
             failMixedResults: true,
@@ -447,10 +463,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ICollection<IPAddress> additionalUnsafeIpAddresses, TimeSpan connectTimeout)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             failMixedResults: true,
             allowInsecureProtocols: false,
@@ -474,10 +491,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ICollection<IPAddress> additionalUnsafeIpAddresses, TimeSpan connectTimeout, ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             failMixedResults: true,
             allowInsecureProtocols: false,
@@ -500,10 +518,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, ICollection<IPNetwork> additionalUnsafeNetworks)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             allowInsecureProtocols: false,
             allowLoopback: false,
             allowAutoRedirect: false,
@@ -527,10 +546,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, ICollection<IPNetwork> additionalUnsafeNetworks, ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             allowInsecureProtocols: false,
             allowLoopback: false,
             failMixedResults: true,
@@ -553,10 +573,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, ICollection<IPAddress> additionalUnsafeIpAddresses)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: null,
             allowInsecureProtocols: false,
             allowLoopback: false,
             failMixedResults: true,
@@ -580,10 +601,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, ICollection<IPAddress> additionalUnsafeIpAddresses, ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: null,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: null,
             allowInsecureProtocols: false,
             allowLoopback: false,
             failMixedResults: true,
@@ -607,10 +629,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, ICollection<IPNetwork> additionalUnsafeNetworks, ICollection<IPAddress> additionalUnsafeIpAddresses)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: null,
             allowInsecureProtocols: false,
             allowLoopback: false,
             failMixedResults: true,
@@ -639,8 +662,9 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ICollection<IPAddress> additionalUnsafeIpAddresses,
         ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
+            allowedHostnames: null,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
             allowInsecureProtocols: false,
@@ -666,10 +690,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     public static SocketsHttpHandler Create(ConnectionStrategy connectionStrategy, ICollection<IPNetwork> additionalUnsafeNetworks, TimeSpan connectTimeout)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -698,10 +723,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
         TimeSpan connectTimeout,
         ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: null,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
             failMixedResults: true,
@@ -730,10 +756,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ICollection<IPAddress> additionalUnsafeIpAddresses,
         TimeSpan connectTimeout)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -764,10 +791,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
         TimeSpan connectTimeout,
         ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: false,
             allowLoopback: false,
@@ -792,7 +820,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        return Create(
+        return InternalCreate(
             options: options,
             hostEntryResolver: null,
             loggerFactory: null);
@@ -811,7 +839,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
     {
         ArgumentNullException.ThrowIfNull(options);
 
-        return Create(
+        return InternalCreate(
             options: options,
             hostEntryResolver: null,
             loggerFactory: loggerFactory);
@@ -845,10 +873,63 @@ public sealed class SsrfSocketsHttpHandlerFactory
         DecompressionMethods? automaticDecompression,
         SslClientAuthenticationOptions? sslOptions)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: null,
+            connectTimeout: connectTimeout,
+            allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: allowLoopback,
+            failMixedResults: failMixedResults,
+            allowAutoRedirect: allowAutoRedirect,
+            automaticDecompression: automaticDecompression,
+            proxy: null,
+            sslOptions: sslOptions,
+            asyncHostEntryResolver: null,
+            loggerFactory: null);
+    }
+
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
+    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
+    /// <param name="allowedHostnames">
+    ///     An optional collection of hostnames that are allowed to bypass SSRF IP address protections.
+    ///     This can be used to allow specific trusted hosts names.
+    ///     Wild cards are supported only at the start of the hostname, and must be followed by a dot
+    ///     (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
+    /// </param>
+    /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
+    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowLoopback">Flag indicating whether loopback addresses will be allowed or rejected.</param>
+    /// <param name="failMixedResults">Flag indicating whether to fail when a mixture of safe and unsafe addresses is found. Setting this to <see langword="true"/> will reject the connection if any unsafe addresses are found.</param>
+    /// <param name="allowAutoRedirect">Flag indicating whether to allow auto-redirects. Setting this to <see langword="true"/> can introduce security vulnerabilities and should only be enabled if necessary.</param>
+    /// <param name="automaticDecompression">The type of decompression to use for automatic decompression of HTTP content. If <see langword="null"/>, defaults to <see cref="DecompressionMethods.All"/>.</param>
+    /// <param name="sslOptions">Any <see cref="SslClientAuthenticationOptions" /> to use for client TLS authentication.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(
+        ConnectionStrategy connectionStrategy,
+        ICollection<IPNetwork>? additionalUnsafeNetworks,
+        ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        ICollection<string>? allowedHostnames,
+        TimeSpan? connectTimeout,
+        bool allowInsecureProtocols,
+        bool allowLoopback,
+        bool failMixedResults,
+        bool allowAutoRedirect,
+        DecompressionMethods? automaticDecompression,
+        SslClientAuthenticationOptions? sslOptions)
+    {
+        return InternalCreate(
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: allowedHostnames,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: allowLoopback,
@@ -891,10 +972,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
         SslClientAuthenticationOptions? sslOptions,
         ILoggerFactory? loggerFactory)
     {
-        return Create(
+        return InternalCreate(
             connectionStrategy: connectionStrategy,
             additionalUnsafeNetworks: additionalUnsafeNetworks,
             additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: null,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: allowLoopback,
@@ -907,16 +989,71 @@ public sealed class SsrfSocketsHttpHandlerFactory
             loggerFactory: loggerFactory);
     }
 
-    internal static SocketsHttpHandler Create(
+    /// <summary>
+    /// Builds a <see cref="SocketsHttpHandler"/> with SSRF protections implemented in the
+    /// <see cref="SocketsHttpHandler.ConnectCallback"/>. The handler will attempt to resolve the target host to an IP address and validate that each resolved address
+    /// is not considered unsafe before allowing a connection to be established.
+    /// </summary>
+    /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
+    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
+    /// <param name="allowedHostnames">
+    ///     An optional collection of hostnames that are allowed to bypass SSRF IP address protections.
+    ///     This can be used to allow specific trusted hosts names.
+    ///     Wild cards are supported only at the start of the hostname, and must be followed by a dot
+    ///     (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
+    /// </param>
+    /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
+    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowLoopback">Flag indicating whether loopback addresses will be allowed or rejected.</param>
+    /// <param name="failMixedResults">Flag indicating whether to fail when a mixture of safe and unsafe addresses is found. Setting this to <see langword="true"/> will reject the connection if any unsafe addresses are found.</param>
+    /// <param name="allowAutoRedirect">Flag indicating whether to allow auto-redirects. Setting this to <see langword="true"/> can introduce security vulnerabilities and should only be enabled if necessary.</param>
+    /// <param name="automaticDecompression">The type of decompression to use for automatic decompression of HTTP content. If <see langword="null"/>, defaults to <see cref="DecompressionMethods.All"/>.</param>
+    /// <param name="sslOptions">Any <see cref="SslClientAuthenticationOptions" /> to use for client TLS authentication.</param>
+    /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    public static SocketsHttpHandler Create(
+        ConnectionStrategy connectionStrategy,
+        ICollection<IPNetwork>? additionalUnsafeNetworks,
+        ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        ICollection<string>? allowedHostnames,
+        TimeSpan? connectTimeout,
+        bool allowInsecureProtocols,
+        bool allowLoopback,
+        bool failMixedResults,
+        bool allowAutoRedirect,
+        DecompressionMethods? automaticDecompression,
+        SslClientAuthenticationOptions? sslOptions,
+        ILoggerFactory? loggerFactory)
+    {
+        return InternalCreate(
+            connectionStrategy: connectionStrategy,
+            additionalUnsafeNetworks: additionalUnsafeNetworks,
+            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            allowedHostnames: allowedHostnames,
+            connectTimeout: connectTimeout,
+            allowInsecureProtocols: allowInsecureProtocols,
+            allowLoopback: allowLoopback,
+            failMixedResults: failMixedResults,
+            allowAutoRedirect: allowAutoRedirect,
+            automaticDecompression: automaticDecompression,
+            proxy: null,
+            sslOptions: sslOptions,
+            asyncHostEntryResolver: null,
+            loggerFactory: loggerFactory);
+    }
+
+    internal static SocketsHttpHandler InternalCreate(
         SsrfOptions options,
         Func<string, CancellationToken, Task<IPHostEntry>>? hostEntryResolver,
         ILoggerFactory? loggerFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
-        return Create(
+        return InternalCreate(
             connectionStrategy: options.ConnectionStrategy,
             additionalUnsafeNetworks: options.AdditionalUnsafeNetworks,
             additionalUnsafeIpAddresses: options.AdditionalUnsafeIpAddresses,
+            allowedHostnames: options.AllowedHostnames,
             connectTimeout: options.ConnectTimeout,
             allowInsecureProtocols: options.AllowInsecureProtocols,
             failMixedResults: options.FailMixedResults,
@@ -929,10 +1066,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
             loggerFactory: loggerFactory);
     }
 
-    internal static SocketsHttpHandler Create(
+    internal static SocketsHttpHandler InternalCreate(
         ConnectionStrategy connectionStrategy,
         ICollection<IPNetwork>? additionalUnsafeNetworks,
         ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        ICollection<string>? allowedHostnames,
         TimeSpan? connectTimeout,
         bool allowInsecureProtocols,
         bool allowLoopback,
@@ -965,8 +1103,6 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 // This may result in additional latency for connections due to DNS lookups, but is necessary as caching would introduce a TOCTOU (Time of Check to Time of Use)
                 // vulnerability where an attacker could change the resolved IP address after validation but before connection.
 
-                IPAddress[] resolvedIpAddresses = [];
-
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
 
                 if (Ssrf.IsUnsafeUri(
@@ -978,99 +1114,50 @@ public sealed class SsrfSocketsHttpHandlerFactory
                     throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
                 }
 
-                if (IPAddress.TryParse(context.DnsEndPoint.Host, out IPAddress? parsedAddress))
-                {
-                    resolvedIpAddresses = [parsedAddress];
-                }
-                else
-                {
-                    try
-                    {
-                        IPHostEntry entry = await asyncHostEntryResolver(context.DnsEndPoint.Host, cancellationToken).ConfigureAwait(false);
+                IPAddress[] resolvedIpAddresses = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
+                        uri: requestedUri,
+                        additionalUnsafeNetworks: additionalUnsafeNetworks,
+                        additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+                        allowedHostnames: allowedHostnames,
+                        allowLoopback: allowLoopback,
+                        failMixedResults: failMixedResults,
+                        logger: logger,
+                        hostEntryResolver: asyncHostEntryResolver,
+                        cancellationToken: cancellationToken).ConfigureAwait(false);
 
-                        if (entry.AddressList is not null)
-                        {
-                            resolvedIpAddresses = entry.AddressList;
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
-                        Log.DnsResolutionException(logger, requestedUri, ex);
-                        throw new SsrfException(requestedUri, $"Connection blocked as host could not be resolved.", inner: ex);
-                    }
-                }
 
                 // If no IP addresses were resolved, early exit and block the connection as this is could be potential SSRF attack where the attacker is attempting to connect to a non-existent or internal host that is not resolvable through DNS.
-                if (resolvedIpAddresses.Length == 0)
+                if (resolvedIpAddresses.Length== 0)
                 {
                     Log.DnsResolutionFailed(logger, requestedUri);
                     throw new SsrfException(requestedUri, $"Connection blocked as host could not be resolved to any IP addresses.");
                 }
 
-                // Pare down the list of resolved IP addresses to just the safe addresses by applying the built-in and additional unsafe IP and network rules.
-
-                // Specify an initial capacity for the list of safe IP addresses based on the number of resolved addresses
-                // to avoid multiple resizes as safe addresses are added to the list.
-                List<IPAddress> safeResolvedIPAddresses = new(resolvedIpAddresses.Length);
-
-#pragma warning disable S3267 // Loops should be simplified with "LINQ" expressions - avoids delegate allocation on hot path
-                foreach (IPAddress ipAddress in resolvedIpAddresses)
-                {
-                    if (!Ssrf.IsUnsafeIpAddress(
-                        ipAddress: ipAddress,
-                        additionalUnsafeNetworks: additionalUnsafeNetworks,
-                        additionalUnsafeIpAddresses:
-                        additionalUnsafeIpAddresses,
-                        allowLoopback: allowLoopback))
-                    {
-                        safeResolvedIPAddresses.Add(ipAddress);
-                    }
-                }
-#pragma warning restore S3267
-
-                // If no safe IP addresses remain after filtering, block the connection as all resolved addresses are unsafe.
-                // If some safe addresses remain but others were filtered out as unsafe, the behavior will depend on the value of the failMixedResults flag.
-                if (safeResolvedIPAddresses.Count == 0)
-                {
-                    Log.AllResolvedIpAddressesUnsafe(logger, requestedUri);
-                    throw new SsrfException(requestedUri, $"Connection blocked as all resolved addresses are unsafe.");
-                }
-
-                // If failMixedResults is set to true, block the connection if any unsafe addresses were found, even if some safe addresses remain.
-                // This is a more conservative approach that errs on the side of blocking potentially unsafe connections, but may cause connectivity
-                // issues if there are misconfigurations in DNS or the additional unsafe lists.
-                if (failMixedResults && safeResolvedIPAddresses.Count != resolvedIpAddresses.Length)
-                {
-                    Log.SomeResolvedIpAddressesUnsafe(logger, requestedUri);
-                    throw new SsrfException(requestedUri, $"Connection blocked as some resolved addresses are unsafe.");
-                }
-
                 // Reorder the list of safe IP addresses based on the specified connection strategy, if there are multiple addresses to choose from.
-                if (safeResolvedIPAddresses.Count > 1)
+                if (resolvedIpAddresses.Length > 1)
                 {
                     if (connectionStrategy.HasFlag(ConnectionStrategy.Random))
                     {
                         // Shuffle in place O(n) in-place vs linq based O(n log n) OrderBy + new list allocation.
-                        for (int i = safeResolvedIPAddresses.Count - 1; i > 0; i--)
+                        for (int i = resolvedIpAddresses.Length - 1; i > 0; i--)
                         {
                             int j = RandomNumberGenerator.GetInt32(0, i + 1);
-                            (safeResolvedIPAddresses[i], safeResolvedIPAddresses[j]) = (safeResolvedIPAddresses[j], safeResolvedIPAddresses[i]);
+                            (resolvedIpAddresses[i], resolvedIpAddresses[j]) = (resolvedIpAddresses[j], resolvedIpAddresses[i]);
                         }
                     }
 
                     if (connectionStrategy.HasFlag(ConnectionStrategy.Ipv4Preferred))
                     {
-                        SortIpAddressListByFamily(safeResolvedIPAddresses, AddressFamily.InterNetwork);
+                        SortIpAddressListByFamily(resolvedIpAddresses, AddressFamily.InterNetwork);
                     }
                     else if (connectionStrategy.HasFlag(ConnectionStrategy.Ipv6Preferred))
                     {
-                        SortIpAddressListByFamily(safeResolvedIPAddresses, AddressFamily.InterNetworkV6);
+                        SortIpAddressListByFamily(resolvedIpAddresses, AddressFamily.InterNetworkV6);
                     }
                 }
 
                 // Attempt to connect to each safe IP address until a successful connection is made.
-                foreach (IPAddress ipAddress in safeResolvedIPAddresses)
+                foreach (IPAddress ipAddress in resolvedIpAddresses)
                 {
                     Socket socket = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                     try
@@ -1118,18 +1205,21 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// Moves all addresses matching <paramref name="preferredFamily"/> to the front of
     /// the list while preserving relative order within each group.
     /// </summary>
-    private static void SortIpAddressListByFamily(List<IPAddress> addresses, AddressFamily preferredFamily)
+    internal static void SortIpAddressListByFamily(IPAddress[] addresses, AddressFamily preferredFamily)
     {
         int insertIndex = 0;
-        for (int i = 0; i < addresses.Count; i++)
+        for (int i = 0; i < addresses.Length; i++)
         {
             if (addresses[i].AddressFamily == preferredFamily)
             {
                 if (i != insertIndex)
                 {
                     IPAddress preferred = addresses[i];
-                    addresses.RemoveAt(i);
-                    addresses.Insert(insertIndex, preferred);
+                    for (int j = i; j > insertIndex; j--)
+                    {
+                        addresses[j] = addresses[j - 1];
+                    }
+                    addresses[insertIndex] = preferred;
                 }
 
                 insertIndex++;
