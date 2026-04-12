@@ -1,4 +1,4 @@
-﻿# Configuring the handler
+# Configuring the handler
 
 ## Adding extra unsafe IP Networks and addresses
 
@@ -26,6 +26,18 @@ using (var httpClient = new HttpClient(
         new Uri("https://example.com"));
 }
 ```
+
+## Safe listing host names
+
+The `allowedHostnames` parameter allows you to specify host names that are safe to connect to, even if they resolve to unsafe IP addresses.
+This is useful for cases where you have a known safe host that may resolve to an IP address within an unsafe range, such as a local development environment
+or a trusted internal service.
+
+`allowedHostnames` supports wildcard patterns, so you can specify a pattern like `*.example.localhost`
+to allow all subdomains of `example.localhost`.This can be particularly useful for allowing access to
+a range of services within a trusted domain without having to list each one individually. Wildcard patterns only
+apply to the leftmost part of the hostname, so `*.example.localhost` would match `service1.example.localhost`
+and `live.database.example.localhost`, but not `example.localhost` itself.
 
 ## Allowing HTTP and WS URIs
 
@@ -60,3 +72,11 @@ this option with care, as it may introduce an SSRF vulnerability.
 The typical configuration parameters you would use in a handler, `automaticDecompression`, `allowAutoRedirect`, and
 `sslOptions` are present. Both `allowAutoRedirect`, and `sslOptions` can introduce vulnerabilities if used, do
 not use them unless you must. For instructions on using a proxy see [Using Proxies](usingProxies.md).
+
+> [!Tip]
+> Each of the configuration parameters has an equivalent property on the `SsrfOptions` class,
+> so you can also configure the handler by creating an instance of `SsrfOptions` and passing it to
+> `SsrfSocketsHttpHandlerFactory.Create` method or the constructor on `ProxiedSsrfDelegatingHandler`.
+> 
+> This can be useful if you want to reuse the same configuration across multiple handlers or
+> if you prefer to configure the options separately from the handler creation.

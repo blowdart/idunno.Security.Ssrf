@@ -57,6 +57,7 @@
   </Folder>
   <Folder Name="/docs/code/TestApp/">
     <File Path="docs/code/TestApp/Directory.Packages.Props" />
+    <File Path="docs/code/TestApp/nuget.config" />
     <File Path="docs/code/TestApp/TestApp.cs" />
   </Folder>
   <Folder Name="/docs/docs/">

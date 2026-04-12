@@ -1,4 +1,16 @@
-﻿## 3.0.0 - 2026-04-04
+## 4.0.0 - In Development
+
+### Added
+
+* Add `allowedHostnames` parameter to constructions and property in `SsrfOptions` to enable safe listing of host names,
+  including support for wildcard patterns ([#7](https://github.com/blowdart/idunno.Security.Ssrf/issues/7)) ([blowdart](https://github.com/blowdart))
+
+### Changed
+
+* **Breaking** Removed multiple overloads in favour of two `Create` methods, with defaults, on `SsrfSocketsHttpHandlerFactory`.
+* **Breaking** Removed multiple constructors in favour of two constructors, with defaults, on `ProxiedSsrfDelegatingHandler`.
+
+## 3.0.0 - 2026-04-04
 
 ### Added
 

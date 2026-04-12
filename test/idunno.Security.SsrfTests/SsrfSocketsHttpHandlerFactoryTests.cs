@@ -1,4 +1,4 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Net;
@@ -976,4 +976,50 @@ public class SsrfSocketsHttpHandlerFactoryTests
         Assert.Equal(IPAddress.Parse("127.0.0.1"), addresses[1]);
     }
 
+    [Fact]
+    public void SortIpAddressListByFamilySortsCorrectlyForMultipleIpV4Addresses()
+    {
+        IPAddress[] addresses = [
+            IPAddress.Parse("127.0.0.2"),
+            IPAddress.Parse("::1"),
+            IPAddress.Parse("127.0.0.1")
+        ];
+
+        SsrfSocketsHttpHandlerFactory.SortIpAddressListByFamily(addresses, AddressFamily.InterNetwork);
+
+        Assert.Equal(IPAddress.Parse("::1"), addresses[2]);
+    }
+
+    [Fact]
+    public void SortIpAddressListByFamilySortsCorrectlyForIpMultipleV6Addresses()
+    {
+        IPAddress[] addresses = [
+            IPAddress.Parse("::1"),
+            IPAddress.Parse("127.0.0.1"),
+            IPAddress.Parse("::2"),
+        ];
+
+        SsrfSocketsHttpHandlerFactory.SortIpAddressListByFamily(addresses, AddressFamily.InterNetworkV6);
+
+        Assert.Equal(IPAddress.Parse("127.0.0.1"), addresses[2]);
+    }
+
+
+    [Fact]
+    public void SortIpAddressListByFamilySortsCorrectlyForIpMultipleAddresses()
+    {
+        IPAddress[] addresses = [
+            IPAddress.Parse("::1"),
+            IPAddress.Parse("127.0.0.1"),
+            IPAddress.Parse("127.0.0.2"),
+            IPAddress.Parse("::2"),
+        ];
+
+        SsrfSocketsHttpHandlerFactory.SortIpAddressListByFamily(addresses, AddressFamily.InterNetworkV6);
+
+        Assert.Equal(AddressFamily.InterNetworkV6, addresses[0].AddressFamily);
+        Assert.Equal(AddressFamily.InterNetworkV6, addresses[1].AddressFamily);
+        Assert.Equal(AddressFamily.InterNetwork, addresses[2].AddressFamily);
+        Assert.Equal(AddressFamily.InterNetwork, addresses[3].AddressFamily);
+    }
 }
