@@ -2,10 +2,10 @@ name: 'Dependency Review'
 
 on:
   workflow_dispatch:
+  push:
+    branches: ["**"]
   pull_request:
-    branches:
-      - 'main'
-      - 'version/*'
+    branches: ["**"]
 
 permissions:
   contents: read

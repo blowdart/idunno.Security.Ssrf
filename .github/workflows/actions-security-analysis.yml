@@ -3,10 +3,12 @@ name: GitHub Actions Security Analysis
 on:
   workflow_dispatch:
   push:
-    branches: ["main"]
+    branches: ["**"]
+    paths: [".github/workflows/**"]
+
   pull_request:
     branches: ["**"]
-
+    paths: [".github/workflows/**"]
 permissions: {}
 
 jobs:
