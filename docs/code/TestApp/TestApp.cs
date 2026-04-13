@@ -144,19 +144,10 @@ hostUrl = "http://loopback.ssrf.fail:3000";
 try
 {
     using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(
-
-            connectionStrategy: ConnectionStrategy.None,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
             allowedHostnames: ["*.ssrf.fail"],
             connectTimeout: new TimeSpan(0, 0, 5),
             allowInsecureProtocols: true,
-            allowLoopback: false,
-            failMixedResults: true,
-            allowAutoRedirect: false,
-            automaticDecompression: DecompressionMethods.All,
-            sslOptions: null,
-            loggerFactory: null)))
+            automaticDecompression: DecompressionMethods.All)))
     {
         Console.WriteLine($"Making request to {hostUrl} with the SSRF handler, safe listing *.ssrf.fail and allowing insecure protocols");
         var getResult = await client.GetAsync(hostUrl);
