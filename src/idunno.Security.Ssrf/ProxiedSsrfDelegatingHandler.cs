@@ -311,19 +311,27 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
         }
 
-        _ = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
-            uri: requestedUri,
-            additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
-            additionalUnsafeIPAddresses: _additionalUnsafeIPAddresses,
-            allowedHostnames: _allowedHostnames,
-            safeIPNetworks: _safeIPNetworks,
-            safeIPAddresses: _safeIPAddresses,
-            allowLoopback: _allowLoopback,
-            failMixedResults: _failMixedResults,
-            logger: _logger,
-            metrics: _metrics,
-            asyncHostEntryResolver: _asyncHostEntryResolver,
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        try
+        {
+            _ = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
+                uri: requestedUri,
+                additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
+                additionalUnsafeIPAddresses: _additionalUnsafeIPAddresses,
+                allowedHostnames: _allowedHostnames,
+                safeIPNetworks: _safeIPNetworks,
+                safeIPAddresses: _safeIPAddresses,
+                allowLoopback: _allowLoopback,
+                failMixedResults: _failMixedResults,
+                logger: _logger,
+                metrics: _metrics,
+                asyncHostEntryResolver: _asyncHostEntryResolver,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (SsrfException)
+        {
+            _metrics.IncrementBlockedRequests();
+            throw;
+        }
 
         return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
     }
@@ -352,6 +360,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
         }
 
+        try
+        {
         _ = CommonFunctions.ResolveAndReturnSafeIPAddresses(
             uri: requestedUri,
             additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
@@ -364,6 +374,12 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             logger: _logger,
             metrics: _metrics,
             hostEntryResolver: _hostEntryResolver);
+        }
+        catch (SsrfException)
+        {
+            _metrics.IncrementBlockedRequests();
+            throw;
+        }
 
         return base.Send(request, cancellationToken);
     }
