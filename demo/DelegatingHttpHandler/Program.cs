@@ -1,4 +1,4 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Net;
@@ -11,8 +11,8 @@ var timingHandler = new TimingHandler()
 {
     InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
          connectionStrategy: ConnectionStrategy.None,
-         additionalUnsafeNetworks: null,
-         additionalUnsafeIpAddresses: null,
+         additionalUnsafeIPNetworks: null,
+         additionalUnsafeIPAddresses: null,
          connectTimeout: TimeSpan.FromSeconds(1),
          allowInsecureProtocols: false,
          allowLoopback: false,
@@ -33,8 +33,8 @@ timingHandler = new TimingHandler()
 {
     InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
          connectionStrategy: ConnectionStrategy.None,
-         additionalUnsafeNetworks: null,
-         additionalUnsafeIpAddresses: [
+         additionalUnsafeIPNetworks: null,
+         additionalUnsafeIPAddresses: [
              IPAddress.Parse("2606:4700::6812:1b78"),
              IPAddress.Parse("2606:4700::6812:1a78"),
              IPAddress.Parse("104.18.27.120"),

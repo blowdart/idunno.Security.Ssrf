@@ -1,4 +1,4 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Net;
@@ -20,13 +20,13 @@ public record SsrfOptions
     /// Gets an optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe.
     /// This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.
     /// </summary>
-    public ICollection<IPNetwork> AdditionalUnsafeNetworks { get; init; } = [];
+    public ICollection<IPNetwork> AdditionalUnsafeIPNetworks { get; init; } = [];
 
     /// <summary>
     /// Gets an optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe.
     /// This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.
     /// </summary>
-    public ICollection<IPAddress> AdditionalUnsafeIpAddresses { get; init; } = [];
+    public ICollection<IPAddress> AdditionalUnsafeIPAddresses { get; init; } = [];
 
     /// <summary>
     /// Gets or sets the timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.
@@ -71,7 +71,7 @@ public record SsrfOptions
     public bool AllowLoopback { get; set; }
 
     /// <summary>
-    /// Gets or sets an optional collection of hostnames that are allowed to bypass SSRF IP address protections.
+    /// Gets or a collection of hostnames that are allowed to bypass SSRF IP address protections.
     /// This can be used to allow specific trusted hosts names.
     /// Wild cards are supported only at the start of the hostname, and must be followed by a dot
     /// (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
@@ -81,4 +81,30 @@ public record SsrfOptions
     /// <para>The list is considered trusted data. No validation is performed on it. Do not use user-controlled input to build the list.</para>
     /// </remarks>
     public ICollection<string>? AllowedHostnames { get; init; } = [];
+
+    /// <summary>
+    /// Gets a collection of IP networks to consider safe, which can be used to allow specific safe ranges that would otherwise be blocked by the unsafe checks.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    ///   Careless use of this option can lead to security vulnerabilities by allowing potentially unsafe IP addresses or networks
+    ///   to be considered safe. Use with caution and constrain the values specified to the smallest networks needed.
+    ///   Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address is contained in a safe network, it will be considered safe
+    ///   even if it would otherwise be blocked by the unsafe checks.
+    /// </para>
+    /// </remarks>
+    public ICollection<IPNetwork>? SafeIPNetworks { get; init; } = [];
+
+    /// <summary>
+    /// Gets a collection of IP addresses to consider safe, which can be used to allow specific safe addresses that would otherwise be blocked by the unsafe checks.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    ///   Careless use of this option can lead to security vulnerabilities by allowing potentially unsafe IP addresses or networks
+    ///   to be considered safe. Use with caution and constrain the values specified to the smallest amount of IP addresses needed.
+    ///   Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address is contained in a safe network, it will be considered safe
+    ///   even if it would otherwise be blocked by the unsafe checks.
+    ///</para>
+    /// </remarks>
+    public ICollection<IPAddress>? SafeIPAddresses { get; init; } = [];
 }

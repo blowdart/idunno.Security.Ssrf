@@ -30,14 +30,16 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// is not considered unsafe before allowing a connection to be established.
     /// </summary>
     /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
-    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
-    /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
+    /// <param name="additionalUnsafeIPNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="additionalUnsafeIPAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
     /// <param name="allowedHostnames">
     ///     An optional collection of hostnames that are allowed to bypass SSRF IP address protections.
     ///     This can be used to allow specific trusted hosts names.
     ///     Wild cards are supported only at the start of the hostname, and must be followed by a dot
     ///     (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
     /// </param>
+    /// <param name="safeIPNetworks">Optional additional IP networks to consider safe, which can be used to allow specific safe ranges that would otherwise be blocked by the unsafe checks.</param>
+    /// <param name="safeIPAddresses">Optional additional IP addresses to consider safe, which can be used to allow specific safe addresses that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
     /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
     /// <param name="allowLoopback">Flag indicating whether loopback addresses will be allowed or rejected.</param>
@@ -47,11 +49,21 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="sslOptions">Any <see cref="SslClientAuthenticationOptions" /> to use for client TLS authentication.</param>
     /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
+    /// <remarks>
+    /// <para>
+    ///   Careless use of <paramref name="safeIPNetworks"/> and <paramref name="safeIPAddresses"/> can lead to security vulnerabilities by allowing potentially unsafe IP addresses or networks
+    ///   to be considered safe. Use with caution and constrain the values specified to the smallest network range or individual IP addresses needed.
+    ///   Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address matches both a safe and unsafe address, or is within a safe network,
+    ///   it will be considered safe.
+    ///</para>
+    /// </remarks>
     public static SocketsHttpHandler Create(
         ConnectionStrategy connectionStrategy = ConnectionStrategy.None,
-        ICollection<IPNetwork>? additionalUnsafeNetworks = null,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses = null,
+        ICollection<IPNetwork>? additionalUnsafeIPNetworks = null,
+        ICollection<IPAddress>? additionalUnsafeIPAddresses = null,
         ICollection<string>? allowedHostnames = null,
+        ICollection<IPNetwork>? safeIPNetworks = null,
+        ICollection<IPAddress>? safeIPAddresses = null,
         TimeSpan? connectTimeout = null,
         bool allowInsecureProtocols = false,
         bool allowLoopback = false,
@@ -63,9 +75,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
     {
         return InternalCreate(
             connectionStrategy: connectionStrategy,
-            additionalUnsafeNetworks: additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+            additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
             allowedHostnames: allowedHostnames,
+            safeIPNetworks: safeIPNetworks,
+            safeIPAddresses: safeIPAddresses,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: allowLoopback,
@@ -105,9 +119,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ArgumentNullException.ThrowIfNull(options);
         return InternalCreate(
             connectionStrategy: options.ConnectionStrategy,
-            additionalUnsafeNetworks: options.AdditionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: options.AdditionalUnsafeIpAddresses,
+            additionalUnsafeIPNetworks: options.AdditionalUnsafeIPNetworks,
+            additionalUnsafeIPAddresses: options.AdditionalUnsafeIPAddresses,
             allowedHostnames: options.AllowedHostnames,
+            safeIPNetworks: options.SafeIPNetworks,
+            safeIPAddresses: options.SafeIPAddresses,
             connectTimeout: options.ConnectTimeout,
             allowInsecureProtocols: options.AllowInsecureProtocols,
             failMixedResults: options.FailMixedResults,
@@ -122,9 +138,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
 
     internal static SocketsHttpHandler InternalCreate(
         ConnectionStrategy connectionStrategy,
-        ICollection<IPNetwork>? additionalUnsafeNetworks,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        ICollection<IPNetwork>? additionalUnsafeIPNetworks,
+        ICollection<IPAddress>? additionalUnsafeIPAddresses,
         ICollection<string>? allowedHostnames,
+        ICollection<IPNetwork>? safeIPNetworks,
+        ICollection<IPAddress>? safeIPAddresses,
         TimeSpan? connectTimeout,
         bool allowInsecureProtocols,
         bool allowLoopback,
@@ -170,13 +188,15 @@ public sealed class SsrfSocketsHttpHandlerFactory
 
                 IPAddress[] resolvedIpAddresses = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
                         uri: requestedUri,
-                        additionalUnsafeNetworks: additionalUnsafeNetworks,
-                        additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+                        additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+                        additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
                         allowedHostnames: allowedHostnames,
+                        safeIPNetworks: safeIPNetworks,
+                        safeIPAddresses: safeIPAddresses,
                         allowLoopback: allowLoopback,
                         failMixedResults: failMixedResults,
                         logger: logger,
-                        hostEntryResolver: asyncHostEntryResolver,
+                        asyncHostEntryResolver: asyncHostEntryResolver,
                         cancellationToken: cancellationToken).ConfigureAwait(false);
 
 

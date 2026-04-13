@@ -5,18 +5,18 @@
 You may have some extra unsafe endpoints within your infrastructure which, for whatever reason are not within the
 [default unsafe IP ranges](https://github.com/blowdart/idunno.Security.Ssrf/blob/main/src/idunno.Security.Ssrf/Ssrf.cs#L16).
 
-When building the handler you can use the optional `additionalUnsafeNetworks` and `additionalUnsafeIpAddresses` to
+When building the handler you can use the optional `additionalUnsafeIPNetworks` and `additionalUnsafeIPAddresses` to
 add to the built-in unsafe lists. For example
 
 ```c#
 using (var httpClient = new HttpClient(
     SsrfSocketsHttpHandlerFactory.Create(
-        additionalUnsafeNetworks:
+        additionalUnsafeIPNetworks:
         [
             IPNetwork.Parse("104.16.0.0/12"),
             IPNetwork.Parse("2620:1ec::/36")
         ],
-        additionalUnsafeIpAddresses:
+        additionalUnsafeIPAddresses:
         [
             IPAddress.Parse("2606:4700::6812:1b78"),
             IPAddress.Parse("104.18.26.120")
@@ -38,6 +38,20 @@ to allow all subdomains of `example.localhost`.This can be particularly useful f
 a range of services within a trusted domain without having to list each one individually. Wildcard patterns only
 apply to the leftmost part of the hostname, so `*.example.localhost` would match `service1.example.localhost`
 and `live.database.example.localhost`, but not `example.localhost` itself.
+
+## Safe listing IP addresses and networks
+
+The `safeIPAddresses` and `safeIPNetworks` parameters allow you to specify individual IP addresses and networks
+that are safe to connect to, even if they would normally be considered unsafe.
+This is useful for cases where you have a known safe IP address or network that may fall within an unsafe range,
+such as a local development environment or a trusted internal service.
+
+> [!Warning]
+> Careless use of `safeIPNetworks`and `safeIPAddresses` can lead to security vulnerabilities by allowing
+> genuinely  unsafe IP addresses or network to be considered safe.
+> Use with caution and constrain the values specified to the smallest network range or individual IP addresses needed.
+> Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address matches
+> both a safe and unsafe address, or is within a safe network, it will be considered safe.
 
 ## Allowing HTTP and WS URIs
 

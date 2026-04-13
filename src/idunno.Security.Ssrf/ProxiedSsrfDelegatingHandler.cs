@@ -20,9 +20,11 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     private static readonly Func<string, CancellationToken, Task<IPHostEntry>> s_defaultAsyncHostEntryResolver = Dns.GetHostEntryAsync;
     private static readonly Func<string, IPHostEntry> s_defaultHostEntryResolver = Dns.GetHostEntry;
 
-    private readonly ICollection<IPNetwork>? _additionalUnsafeNetworks;
-    private readonly ICollection<IPAddress>? _additionalUnsafeIpAddresses;
+    private readonly ICollection<IPNetwork>? _additionalUnsafeIPNetworks;
+    private readonly ICollection<IPAddress>? _additionalUnsafeIPAddresses;
     private readonly ICollection<string>? _allowedHostnames;
+    private readonly ICollection<IPNetwork>? _safeIPNetworks;
+    private readonly ICollection<IPAddress>? _safeIPAddresses;
     private readonly bool _allowInsecureProtocols;
     private readonly bool _allowLoopback;
     private readonly bool _failMixedResults;
@@ -37,14 +39,16 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     /// </summary>
     /// <param name="proxy">The proxy to use.</param>
     /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
-    /// <param name="additionalUnsafeNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
-    /// <param name="additionalUnsafeIpAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
+    /// <param name="additionalUnsafeIPNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
+    /// <param name="additionalUnsafeIPAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
     /// <param name="allowedHostnames">
     ///     An optional collection of hostnames that are allowed to bypass SSRF IP address protections.
     ///     This can be used to allow specific trusted hosts names.
     ///     Wild cards are supported only at the start of the hostname, and must be followed by a dot
     ///     (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
     /// </param>
+    /// <param name="safeIPNetworks">Optional additional IP networks to consider safe, which can be used to allow specific safe ranges that would otherwise be blocked by the unsafe checks.</param>
+    /// <param name="safeIPAddresses">Optional additional IP addresses to consider safe, which can be used to allow specific safe addresses that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
     /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
     /// <param name="allowLoopback">Flag indicating whether loopback addresses will be allowed or rejected.</param>
@@ -55,12 +59,22 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
     /// <exception cref="ArgumentNullException">Thrown if the provided <paramref name="proxy"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Thrown if the provided <paramref name="proxy"/> contains an invalid proxy configuration.</exception>
+    /// <remarks>
+    /// <para>
+    ///   Careless use of <paramref name="safeIPNetworks"/> and <paramref name="safeIPAddresses"/> can lead to security vulnerabilities by allowing potentially unsafe IP addresses or networks
+    ///   to be considered safe. Use with caution and constrain the values specified to the smallest network range or individual IP addresses needed.
+    ///   Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address matches both a safe and unsafe address, or is within a safe network,
+    ///   it will be considered safe.
+    ///</para>
+    /// </remarks>
     public ProxiedSsrfDelegatingHandler(
         IWebProxy proxy,
         ConnectionStrategy connectionStrategy = ConnectionStrategy.None,
-        ICollection<IPNetwork>? additionalUnsafeNetworks = null,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses = null,
+        ICollection<IPNetwork>? additionalUnsafeIPNetworks = null,
+        ICollection<IPAddress>? additionalUnsafeIPAddresses = null,
         ICollection<string>? allowedHostnames = null,
+        ICollection<IPNetwork>? safeIPNetworks = null,
+        ICollection<IPAddress>? safeIPAddresses = null,
         TimeSpan? connectTimeout = null,
         bool allowInsecureProtocols = false,
         bool allowLoopback = false,
@@ -71,9 +85,11 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         ILoggerFactory? loggerFactory = null) : this(
             proxy: proxy,
             connectionStrategy: connectionStrategy,
-            additionalUnsafeNetworks: additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+            additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
             allowedHostnames: allowedHostnames,
+            safeIPNetworks: safeIPNetworks,
+            safeIPAddresses: safeIPAddresses,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: allowLoopback,
@@ -129,9 +145,11 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     internal ProxiedSsrfDelegatingHandler(
         IWebProxy proxy,
         ConnectionStrategy connectionStrategy,
-        ICollection<IPNetwork>? additionalUnsafeNetworks,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        ICollection<IPNetwork>? additionalUnsafeIPNetworks,
+        ICollection<IPAddress>? additionalUnsafeIPAddresses,
         ICollection<string>? allowedHostnames,
+        ICollection<IPNetwork>? safeIPNetworks,
+        ICollection<IPAddress>? safeIPAddresses,
         TimeSpan? connectTimeout,
         bool allowInsecureProtocols,
         bool allowLoopback,
@@ -153,8 +171,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
         }
 
-        _additionalUnsafeNetworks = additionalUnsafeNetworks;
-        _additionalUnsafeIpAddresses = additionalUnsafeIpAddresses;
+        _additionalUnsafeIPNetworks = additionalUnsafeIPNetworks;
+        _additionalUnsafeIPAddresses = additionalUnsafeIPAddresses;
         if (allowedHostnames is null)
         {
             _allowedHostnames = [webProxy.Address.Host];
@@ -164,6 +182,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             _allowedHostnames = allowedHostnames;
             _allowedHostnames.Add(webProxy.Address.Host);
         }
+        _safeIPNetworks = safeIPNetworks;
+        _safeIPAddresses = safeIPAddresses;
         _allowInsecureProtocols = allowInsecureProtocols;
         _allowLoopback = allowLoopback;
         _failMixedResults = failMixedResults;
@@ -175,9 +195,11 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         InnerHandler = SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy:connectionStrategy,
-            additionalUnsafeNetworks: _additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: _additionalUnsafeIpAddresses,
+            additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
+            additionalUnsafeIPAddresses: _additionalUnsafeIPAddresses,
             allowedHostnames: _allowedHostnames,
+            safeIPNetworks: _safeIPNetworks,
+            safeIPAddresses: _safeIPAddresses,
             connectTimeout: connectTimeout,
             allowInsecureProtocols: webProxy.Address.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase),
             allowLoopback: webProxy.Address.IsLoopback,
@@ -208,8 +230,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             throw new ArgumentException("The WebProxy instance in the options.Proxy property must have a non-null Address property.", nameof(options));
         }
 
-        _additionalUnsafeNetworks = options.AdditionalUnsafeNetworks;
-        _additionalUnsafeIpAddresses = options.AdditionalUnsafeIpAddresses;
+        _additionalUnsafeIPNetworks = options.AdditionalUnsafeIPNetworks;
+        _additionalUnsafeIPAddresses = options.AdditionalUnsafeIPAddresses;
         if (options.AllowedHostnames is null)
         {
             _allowedHostnames = [webProxy.Address.Host];
@@ -219,6 +241,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             _allowedHostnames = options.AllowedHostnames;
             _allowedHostnames.Add(webProxy.Address.Host);
         }
+        _safeIPNetworks = options.SafeIPNetworks;
+        _safeIPAddresses = options.SafeIPAddresses;
         _allowInsecureProtocols = options.AllowInsecureProtocols;
         _allowLoopback = options.AllowLoopback;
         _failMixedResults = options.FailMixedResults;
@@ -230,9 +254,11 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         InnerHandler = SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: options.ConnectionStrategy,
-            additionalUnsafeNetworks: _additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: _additionalUnsafeIpAddresses,
+            additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
+            additionalUnsafeIPAddresses: _additionalUnsafeIPAddresses,
             allowedHostnames: _allowedHostnames,
+            safeIPNetworks: _safeIPNetworks,
+            safeIPAddresses: _safeIPAddresses,
             connectTimeout: options.ConnectTimeout,
             allowInsecureProtocols: webProxy.Address.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase),
             allowLoopback: webProxy.Address.IsLoopback,
@@ -269,13 +295,15 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _ = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
             uri: requestedUri,
-            additionalUnsafeNetworks: _additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: _additionalUnsafeIpAddresses,
+            additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
+            additionalUnsafeIPAddresses: _additionalUnsafeIPAddresses,
             allowedHostnames: _allowedHostnames,
+            safeIPNetworks: _safeIPNetworks,
+            safeIPAddresses: _safeIPAddresses,
             allowLoopback: _allowLoopback,
             failMixedResults: _failMixedResults,
             logger: _logger,
-            hostEntryResolver: _asyncHostEntryResolver,
+            asyncHostEntryResolver: _asyncHostEntryResolver,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
         return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
@@ -305,9 +333,11 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _ = CommonFunctions.ResolveAndReturnSafeIPAddresses(
             uri: requestedUri,
-            additionalUnsafeNetworks: _additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: _additionalUnsafeIpAddresses,
+            additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
+            additionalUnsafeIPAddresses: _additionalUnsafeIPAddresses,
             allowedHostnames: _allowedHostnames,
+            safeIPNetworks: _safeIPNetworks,
+            safeIPAddresses: _safeIPAddresses,
             allowLoopback: _allowLoopback,
             failMixedResults: _failMixedResults,
             logger: _logger,

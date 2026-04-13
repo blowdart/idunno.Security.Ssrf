@@ -1,4 +1,4 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Net;
@@ -141,8 +141,8 @@ static async Task TestWithHttpClient(string uri, bool allowInsecureProtocols = f
     using (var httpClient = new HttpClient(
         SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(1),
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: false,
@@ -227,8 +227,8 @@ static async Task TestWithClientWebSocket(string uri, bool allowInsecureProtocol
     using (var clientWebSocket = new ClientWebSocket())
     using (var invoker = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(3),
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: false,

@@ -1,11 +1,11 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Net;
 
 namespace idunno.Security.SsrfTests;
 
-public class IsUnsafeIpAddressTests
+public class IsUnsafeIpAddress
 {
     [Theory]
     [InlineData("104.18.26.120")]
@@ -26,12 +26,12 @@ public class IsUnsafeIpAddressTests
     {
         Assert.True(Ssrf.IsUnsafeIpAddress(
             ipAddress: IPAddress.Parse(ipAddressAsString),
-            additionalUnsafeNetworks:
+            additionalUnsafeIPNetworks:
             [
                 IPNetwork.Parse("104.16.0.0/12"),
                 IPNetwork.Parse("2620:1ec::/36"),
             ],
-            additionalUnsafeIpAddresses: null));
+            additionalUnsafeIPAddresses: null));
     }
 
     [Theory]
@@ -43,8 +43,8 @@ public class IsUnsafeIpAddressTests
     {
         Assert.True(Ssrf.IsUnsafeIpAddress(
             ipAddress: IPAddress.Parse(ipAddressAsString),
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses:
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses:
             [
                 IPAddress.Parse("104.18.26.120"),
                 IPAddress.Parse("104.18.27.120"),
@@ -62,12 +62,12 @@ public class IsUnsafeIpAddressTests
     {
         Assert.True(Ssrf.IsUnsafeIpAddress(
             ipAddress: IPAddress.Parse(ipAddressAsString),
-            additionalUnsafeNetworks:
+            additionalUnsafeIPNetworks:
             [
                 IPNetwork.Parse("104.16.0.0/12"),
                 IPNetwork.Parse("2620:1ec::/36"),
             ],
-            additionalUnsafeIpAddresses:
+            additionalUnsafeIPAddresses:
             [
                 IPAddress.Parse("104.18.26.120"),
                 IPAddress.Parse("104.18.27.120"),
@@ -324,8 +324,33 @@ public class IsUnsafeIpAddressTests
     {
         Assert.False(Ssrf.IsUnsafeIpAddress(
             ipAddress: IPAddress.Parse(ipAddressAsString),
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
             allowLoopback: true));
+    }
+
+
+    [Fact]
+    public void ReturnsFalseForDefaultUnsafeAddressIfItIsInTheSafeIpAddressesCollection()
+    {
+        Assert.False(Ssrf.IsUnsafeIpAddress(
+            ipAddress: IPAddress.Parse("127.0.0.1"),
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            safeIPNetworks: null,
+            safeIPAddresses: [IPAddress.Parse("127.0.0.1")],
+            allowLoopback: false));
+    }
+
+    [Fact]
+    public void ReturnsFalseForDefaultUnsafeAddressIfItIsWithinANetworkSpecifiedInSafeNetworksCollection()
+    {
+        Assert.False(Ssrf.IsUnsafeIpAddress(
+            ipAddress: IPAddress.Parse("127.0.0.1"),
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            safeIPNetworks: [IPNetwork.Parse("127.0.0.0/8")],
+            safeIPAddresses: null,
+            allowLoopback: false));
     }
 }

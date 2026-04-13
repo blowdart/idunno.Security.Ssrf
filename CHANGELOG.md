@@ -7,8 +7,13 @@
 
 ### Changed
 
-* **Breaking** Removed multiple overloads in favour of two `Create` methods, with defaults, on `SsrfSocketsHttpHandlerFactory`.
-* **Breaking** Removed multiple constructors in favour of two constructors, with defaults, on `ProxiedSsrfDelegatingHandler`.
+* **Breaking** Removed multiple overloads in favor of two `Create` methods, with defaults, on `SsrfSocketsHttpHandlerFactory`.
+* **Breaking** Removed multiple constructors in favor of two constructors, with defaults, on `ProxiedSsrfDelegatingHandler`.
+* **Breaking** Changed casing of `AdditionalUnsafeIpAddresses` property to `AdditionalUnsafeIPAddresses` in options to match .NET's casing.
+* **Breaking** Changed casing of `additionalUnsafeIpAddresses` property to `additionalUnsafeIPAddresses` parameters to match .NET's casing.
+
+* **Breaking** Changed `additionalUnsafeNetworks` parameter name to `additionalUnsafeIPNetworks` to match .NET's naming.
+
 
 ## 3.0.0 - 2026-04-04
 
