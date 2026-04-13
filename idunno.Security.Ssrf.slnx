@@ -62,6 +62,7 @@
   </Folder>
   <Folder Name="/docs/docs/">
     <File Path="docs/docs/configuration.md" />
+    <File Path="docs/docs/metrics.md" />
     <File Path="docs/docs/sampleBadApplication.md" />
     <File Path="docs/docs/ssrf.md" />
     <File Path="docs/docs/ssrfHandler.md" />

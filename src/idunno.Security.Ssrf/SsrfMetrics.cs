@@ -68,18 +68,18 @@ public sealed class SsrfMetrics
     private void CreateCounters(Meter meter)
     {
         _blockedRequests = meter.CreateCounter<long>(
-            name: $"{MeterName.ToLowerInvariant()}.total.blocked",
+            name: $"{MeterName.ToLowerInvariant()}.blocked.requests.total",
             description: "Number of requests blocked due to SSRF detection.",
             unit: "{requests}");
 
         _unsafeUri = meter.CreateCounter<long>(
-            name: $"{MeterName.ToLowerInvariant()}.total.unsafe_uri",
-            description: "Number of unsafe URIs blocked.",
+            name: $"{MeterName.ToLowerInvariant()}.unsafe.uri.total",
+            description: "Number of unsafe URIs detected.",
             unit: "{uris}");
 
         _unsafeIPAddress = meter.CreateCounter<long>(
-            name: $"{MeterName.ToLowerInvariant()}.total.unsafe_ip_address",
-            description: "Number of unsafe IP addresses blocked.",
+            name: $"{MeterName.ToLowerInvariant()}.unsafe.ip_address.total",
+            description: "Number of unsafe IP addresses detected.",
             unit: "{ip_addresses}");
     }
 }
