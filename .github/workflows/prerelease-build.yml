@@ -18,7 +18,7 @@ env:
   DOTNET_GENERATE_ASPNET_CERTIFICATE: false
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
-  NUPKG_DIRECTORY: ${{ github.workspace}}/nupkgs
+  NUPKG_DIRECTORY: ${{ github.workspace }}/nupkgs
 
 permissions:
   contents: read
@@ -125,8 +125,8 @@ jobs:
     - name: 'Attest signed nupkg'
       uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
       with:
-        subject-path: ${{ env:NUPKG_DIRECTORY }}
-        sbom-path: ${{ env:NUPKG_DIRECTORY }}/manifest.spdx.json
+        subject-path: '${{ env:NUPKG_DIRECTORY }}'
+        sbom-path: '${{ env:NUPKG_DIRECTORY }}/manifest.spdx.json'
 
     - name: 'List artifact directory'
       shell: pwsh
