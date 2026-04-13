@@ -1,4 +1,4 @@
-﻿name: Pre-release Build, Test, Sign, Publish
+name: Pre-release Build, Test, Sign, Publish
 on:
   workflow_dispatch:
     inputs:
@@ -63,8 +63,8 @@ jobs:
       run: > 
         Get-ChildItem -Path ${env:NUPKG_DIRECTORY} -Filter *.nupkg -Force | ForEach-Object { 
           Expand-Archive $_.FullName "$($_.DirectoryName)/$($_.Basename)" -Force 
-          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json" -Destination "${env:NUPKG_DIRECTORY}/$($_.Basename).spdx.json"
-          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json.sha256" -Destination "${env:NUPKG_DIRECTORY}/$($_.Basename).spdx.json.sha256"
+          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json" -Destination "${env:NUPKG_DIRECTORY}/manifest.spdx.json"
+          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json.sha256" -Destination "${env:NUPKG_DIRECTORY}/manifest.spdx.json.sha256"
           Remove-Item "$($_.DirectoryName)/$($_.Basename)" -Force -Recurse }
 
     - name: 'List artifact directory'
@@ -79,13 +79,6 @@ jobs:
         name: build-artifacts
         path: ${{ env.NUPKG_DIRECTORY }}/*
         retention-days: 7
-
-    - name: Attest build artifacts
-      uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
-      with:
-        subject-name: build-artifacts
-        subject-digest: sha256:${{ steps.upload.outputs.artifact-digest }}
-
 
   sign:
     name: Sign
@@ -122,7 +115,13 @@ jobs:
     - name: Sign
       shell: pwsh
       run: >
-        ./sign/sign code trusted-signing *.nupkg --base-directory ${env:NUPKG_DIRECTORY} -tse "${{ secrets.AZURE_TRUSTEDSIGNING_ENDPOINT }}" -tsa "${{ secrets.AZURE_TRUSTEDSIGNING_ACCOUNT }}" -tscp "${{ secrets.AZURE_TRUSTEDSIGNING_CERTIFICATEPROFILE }}"
+        ./sign/sign code trusted-signing idunno.Security.Ssrf.*.nupkg --base-directory ${env:NUPKG_DIRECTORY} -tse "${{ secrets.AZURE_TRUSTEDSIGNING_ENDPOINT }}" -tsa "${{ secrets.AZURE_TRUSTEDSIGNING_ACCOUNT }}" -tscp "${{ secrets.AZURE_TRUSTEDSIGNING_CERTIFICATEPROFILE }}"
+
+    - name: 'Attest signed nupkg'
+      uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
+      with:
+        subject-path: ${env:NUPKG_DIRECTORY}/idunno.Security.Ssrf.*.nupkg
+        sbom-path: ${env:NUPKG_DIRECTORY}/manifest.spdx.json
 
     - name: Upload signed nupkgs to artifacts
       uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
@@ -131,12 +130,6 @@ jobs:
         name: signed-artifacts
         path: ${{env.NUPKG_DIRECTORY}}/*
         retention-days: 7
-
-    - name: Attest signed artifacts
-      uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32 # v4.1.0
-      with:
-        subject-name: signed-artifacts
-        subject-digest: sha256:${{ steps.upload.outputs.artifact-digest }}
 
   publish:
     name: Publish
