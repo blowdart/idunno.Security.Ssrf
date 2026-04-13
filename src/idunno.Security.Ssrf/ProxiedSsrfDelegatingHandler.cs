@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Security;
 using Microsoft.Extensions.Logging;
@@ -32,6 +33,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     private readonly Func<string, CancellationToken, Task<IPHostEntry>> _asyncHostEntryResolver;
 
     private readonly ILogger _logger;
+    private readonly SsrfMetrics _metrics;
 
     /// <summary>
     /// Creates a new instance of <see cref="ProxiedSsrfDelegatingHandler"/> with the specified configuration, with an inner handler created by <see cref="SsrfSocketsHttpHandlerFactory"/>.
@@ -57,6 +59,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     /// <param name="automaticDecompression">The type of decompression to use for automatic decompression of HTTP content. If <see langword="null"/>, defaults to <see cref="DecompressionMethods.All"/>.</param>
     /// <param name="sslOptions">Any <see cref="SslClientAuthenticationOptions" /> to use for client TLS authentication.</param>
     /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <param name="meterFactory">An optional <see cref="IMeterFactory"/> to use for metrics. If not provided, a default <see cref="SsrfMetrics"/> instance will be used with a shared meter.</param>
     /// <exception cref="ArgumentNullException">Thrown if the provided <paramref name="proxy"/> is <see langword="null"/>.</exception>
     /// <exception cref="ArgumentException">Thrown if the provided <paramref name="proxy"/> contains an invalid proxy configuration.</exception>
     /// <remarks>
@@ -82,7 +85,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         bool allowAutoRedirect = false,
         DecompressionMethods? automaticDecompression = null,
         SslClientAuthenticationOptions? sslOptions = null,
-        ILoggerFactory? loggerFactory = null) : this(
+        ILoggerFactory? loggerFactory = null,
+        IMeterFactory? meterFactory = null) : this(
             proxy: proxy,
             connectionStrategy: connectionStrategy,
             additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
@@ -99,7 +103,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             sslOptions: sslOptions,
             hostEntryResolver: null,
             asyncHostEntryResolver: null,
-            loggerFactory: loggerFactory)
+            loggerFactory: loggerFactory,
+            meterFactory: meterFactory)
     {
         ArgumentNullException.ThrowIfNull(proxy);
 
@@ -119,15 +124,18 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     /// </summary>
     /// <param name="options">The <see cref="SsrfOptions"/> containing the configuration for the handler.</param>
     /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <param name="meterFactory">An optional <see cref="IMeterFactory"/> to use for metrics. If not provided, a default <see cref="SsrfMetrics"/> instance will be used with a shared meter.</param>
     /// <exception cref="ArgumentException">Thrown if the provided <paramref name="options"/> contains an invalid proxy configuration.</exception>
     /// <exception cref="ArgumentNullException">Thrown if the provided <paramref name="options"/> or its Proxy property is <see langword="null"/>.</exception>
     public ProxiedSsrfDelegatingHandler(
         SsrfOptions options,
-        ILoggerFactory? loggerFactory = null) : this(
+        ILoggerFactory? loggerFactory = null,
+        IMeterFactory? meterFactory = null) : this(
             options,
             hostEntryResolver: null,
             asyncHostEntryResolver: null,
-            loggerFactory: loggerFactory)
+            loggerFactory: loggerFactory,
+            meterFactory: meterFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(options.Proxy);
@@ -159,7 +167,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         SslClientAuthenticationOptions? sslOptions,
         Func<string, IPHostEntry>? hostEntryResolver,
         Func<string, CancellationToken, Task<IPHostEntry>>? asyncHostEntryResolver,
-        ILoggerFactory? loggerFactory)
+        ILoggerFactory? loggerFactory,
+        IMeterFactory? meterFactory)
     {
         if (proxy is not WebProxy webProxy)
         {
@@ -193,6 +202,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         loggerFactory ??= NullLoggerFactory.Instance;
         _logger = loggerFactory.CreateLogger<ProxiedSsrfDelegatingHandler>();
 
+        _metrics = new SsrfMetrics(meterFactory);
+
         InnerHandler = SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy:connectionStrategy,
             additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
@@ -209,14 +220,16 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             proxy: proxy,
             sslOptions: sslOptions,
             asyncHostEntryResolver: _asyncHostEntryResolver,
-            loggerFactory: loggerFactory); 
+            loggerFactory: loggerFactory,
+            meterFactory: meterFactory); 
     }
 
     internal ProxiedSsrfDelegatingHandler(
         SsrfOptions options,
         Func<string, IPHostEntry>? hostEntryResolver,
         Func<string, CancellationToken, Task<IPHostEntry>>? asyncHostEntryResolver,
-        ILoggerFactory? loggerFactory)
+        ILoggerFactory? loggerFactory,
+        IMeterFactory? meterFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
 
@@ -252,6 +265,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         loggerFactory ??= NullLoggerFactory.Instance;
         _logger = loggerFactory.CreateLogger<ProxiedSsrfDelegatingHandler>();
 
+        _metrics = new SsrfMetrics(meterFactory);
+
         InnerHandler = SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: options.ConnectionStrategy,
             additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
@@ -268,7 +283,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             proxy: options.Proxy,
             sslOptions: options.SslOptions,
             asyncHostEntryResolver: asyncHostEntryResolver,
-            loggerFactory: loggerFactory);
+            loggerFactory: loggerFactory,
+            meterFactory: meterFactory);
     }
 
     /// <summary>Sends an HTTP request to the inner handler to send to the server as an asynchronous operation.</summary>
@@ -287,9 +303,11 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         if (Ssrf.IsUnsafeUri(
             uri: request.RequestUri,
             allowInsecureProtocols: _allowInsecureProtocols,
-            allowLoopback: _allowLoopback))
+            allowLoopback: _allowLoopback,
+            metrics: _metrics))
         {
             Log.UnsafeUri(_logger, requestedUri);
+            _metrics.IncrementBlockedRequests();
             throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
         }
 
@@ -303,6 +321,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             allowLoopback: _allowLoopback,
             failMixedResults: _failMixedResults,
             logger: _logger,
+            metrics: _metrics,
             asyncHostEntryResolver: _asyncHostEntryResolver,
             cancellationToken: cancellationToken).ConfigureAwait(false);
 
@@ -325,9 +344,11 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         if (Ssrf.IsUnsafeUri(
             uri: request.RequestUri,
             allowInsecureProtocols: _allowInsecureProtocols,
-            allowLoopback: _allowLoopback))
+            allowLoopback: _allowLoopback,
+            metrics: _metrics))
         {
             Log.UnsafeUri(_logger, requestedUri);
+            _metrics.IncrementBlockedRequests();
             throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
         }
 
@@ -341,6 +362,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             allowLoopback: _allowLoopback,
             failMixedResults: _failMixedResults,
             logger: _logger,
+            metrics: _metrics,
             hostEntryResolver: _hostEntryResolver);
 
         return base.Send(request, cancellationToken);

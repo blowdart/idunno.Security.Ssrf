@@ -166,7 +166,8 @@ public class ProxiedSsrfDelegatingHandler
             sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
             hostEntryResolver: hostEntryResolver,
-            loggerFactory: null);
+            loggerFactory: null,
+            meterFactory: null);
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
@@ -212,7 +213,8 @@ public class ProxiedSsrfDelegatingHandler
             sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
             hostEntryResolver: hostEntryResolver,
-            loggerFactory: null);
+            loggerFactory: null,
+            meterFactory: null);
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
@@ -258,7 +260,8 @@ public class ProxiedSsrfDelegatingHandler
             sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
             hostEntryResolver: hostEntryResolver,
-            loggerFactory: null);
+            loggerFactory: null,
+            meterFactory: null);
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
@@ -304,7 +307,8 @@ public class ProxiedSsrfDelegatingHandler
             sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
             hostEntryResolver: hostEntryResolver,
-            loggerFactory: null);
+            loggerFactory: null,
+            meterFactory: null);
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
@@ -371,6 +375,7 @@ public class ProxiedSsrfDelegatingHandler
         using var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
             options:options,
             loggerFactory: null,
+            meterFactory: null,
             hostEntryResolver: hostEntryResolver,
             asyncHostEntryResolver: asyncHostEntryResolver)
         {
@@ -414,7 +419,8 @@ public class ProxiedSsrfDelegatingHandler
             sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
             hostEntryResolver: hostEntryResolver,
-            loggerFactory: null);
+            loggerFactory: null,
+            meterFactory: null);
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException asyncEx = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
@@ -635,7 +641,8 @@ public class ProxiedSsrfDelegatingHandler
             sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
             hostEntryResolver: hostEntryResolver,
-            loggerFactory: null);
+            loggerFactory: null,
+            meterFactory: null);
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
         {
             // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
@@ -699,7 +706,8 @@ public class ProxiedSsrfDelegatingHandler
             sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
             hostEntryResolver: hostEntryResolver,
-            loggerFactory: null);
+            loggerFactory: null,
+            meterFactory: null);
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
         {
             // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
@@ -765,7 +773,8 @@ public class ProxiedSsrfDelegatingHandler
             sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
             hostEntryResolver: hostEntryResolver,
-            loggerFactory: null);
+            loggerFactory: null,
+            meterFactory: null);
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
         {
             Exception? ex = await Record.ExceptionAsync(async () => {
@@ -824,7 +833,8 @@ public class ProxiedSsrfDelegatingHandler
             sslOptions: null,
             asyncHostEntryResolver: asyncHostEntryResolver,
             hostEntryResolver: hostEntryResolver,
-            loggerFactory: null);
+            loggerFactory: null,
+            meterFactory: null);
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
         {
             // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.

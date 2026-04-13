@@ -1,6 +1,7 @@
 // Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Diagnostics;
 using System.Net;
 using System.Net.Security;
 using System.Net.WebSockets;
@@ -24,8 +25,20 @@ ILoggerFactory? loggerFactory = null;
 //    configure.SetMinimumLevel(LogLevel.Debug);
 //});
 
+// Set addMetricsDelay to true to add in a pause at the beginning of the run to allow attaching a profiler or metrics listener before any requests are made.
+bool addMetricsDelay = false;
+
 #pragma warning disable S1075 // URIs should not be hardcoded
 #pragma warning disable CA1303 // Do not pass literals as localized parameters
+
+if (addMetricsDelay)
+{
+    Process currentProcess = Process.GetCurrentProcess();
+    Console.WriteLine("Delaying for 30 seconds to allow time to attach a profiler...");
+    Console.WriteLine($"e.g. dotnet counters monitor --process-id {currentProcess.Id} --counters {SsrfMetrics.MeterName}");
+    Console.WriteLine();
+    await Task.Delay(TimeSpan.FromSeconds(30)).ConfigureAwait(true);
+}
 
 Console.WriteLine();
 Console.WriteLine("HttpClient Tests (allowInsecureProtocols = true)");
@@ -82,6 +95,14 @@ await TestWithHttpClient("http://mixed.ipv4.ssrf.fail", allowInsecureProtocols: 
 await TestWithHttpClient("http://bad.ipv4.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 
 Console.WriteLine();
+Console.WriteLine("allowInsecureProtocols = false");
+Console.WriteLine("-----------------------------");
+
+await TestWithHttpClient("http://good.ipv4.ssrf.fail", allowInsecureProtocols: false, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://mixed.ipv4.ssrf.fail", allowInsecureProtocols: false, loggerFactory: loggerFactory).ConfigureAwait(false);
+await TestWithHttpClient("http://bad.ipv4.ssrf.fail", allowInsecureProtocols: false, loggerFactory: loggerFactory).ConfigureAwait(false);
+
+Console.WriteLine();
 Console.WriteLine("IPv6");
 Console.WriteLine("----");
 
@@ -129,6 +150,12 @@ await TestWithClientWebSocket("ws://good.ssrf.fail", allowInsecureProtocols: tru
 await TestWithClientWebSocket("ws://mixed.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 await TestWithClientWebSocket("ws://bad.ssrf.fail", allowInsecureProtocols: true, loggerFactory: loggerFactory).ConfigureAwait(false);
 
+
+if (addMetricsDelay)
+{
+    Console.WriteLine("Delaying for 30 seconds to allow time for profile metrics collection to finish.");
+    await Task.Delay(TimeSpan.FromSeconds(30));
+}
 
 #pragma warning restore CA1303 // Do not pass literals as localized parameters
 #pragma warning restore S1075 // URIs should not be hardcoded

@@ -433,6 +433,7 @@ public class IsUnsafe
             safeIPNetworks: null,
             safeIPAddresses: null,
             hostEntryResolver: emptyResolver,
+            metrics: null,
             cancellationToken: TestContext.Current.CancellationToken));
     }
 
@@ -451,6 +452,7 @@ public class IsUnsafe
             allowedHostnames: null,
             safeIPNetworks: null,
             safeIPAddresses: null,
+            metrics: null,
             hostEntryResolver: null,
             cancellationToken: TestContext.Current.CancellationToken));
     }
@@ -468,9 +470,10 @@ public class IsUnsafe
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
             allowedHostnames: null,
-            hostEntryResolver: null,
             safeIPNetworks: null,
             safeIPAddresses: null,
+            metrics: null,
+            hostEntryResolver: null,
             cancellationToken: TestContext.Current.CancellationToken));
     }
 
@@ -495,6 +498,7 @@ public class IsUnsafe
             allowedHostnames: ["*.example.localhost"],
             safeIPNetworks: null,
             safeIPAddresses: null,
+            metrics: null,
             hostEntryResolver: hostEntryResolver,
             cancellationToken: TestContext.Current.CancellationToken));
     }

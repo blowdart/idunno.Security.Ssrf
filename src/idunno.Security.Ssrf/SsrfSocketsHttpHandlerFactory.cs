@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
@@ -48,6 +49,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="automaticDecompression">The type of decompression to use for automatic decompression of HTTP content. If <see langword="null"/>, defaults to <see cref="DecompressionMethods.All"/>.</param>
     /// <param name="sslOptions">Any <see cref="SslClientAuthenticationOptions" /> to use for client TLS authentication.</param>
     /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <param name="meterFactory">An optional <see cref="IMeterFactory"/> to use for metrics. If not provided, a default <see cref="Meter"/>will be used.</param>
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     /// <remarks>
     /// <para>
@@ -71,7 +73,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
         bool allowAutoRedirect = false,
         DecompressionMethods? automaticDecompression = null,
         SslClientAuthenticationOptions? sslOptions = null,
-        ILoggerFactory? loggerFactory = null)
+        ILoggerFactory? loggerFactory = null,
+        IMeterFactory? meterFactory = null)
     {
         return InternalCreate(
             connectionStrategy: connectionStrategy,
@@ -89,7 +92,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
             proxy: null,
             sslOptions: sslOptions,
             asyncHostEntryResolver: null,
-            loggerFactory: loggerFactory);
+            loggerFactory: loggerFactory,
+            meterFactory: meterFactory);
     }
 
     /// <summary>
@@ -99,22 +103,28 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// </summary>
     /// <param name="options">The <see cref="SsrfOptions"/> to use for configuring the handler.</param>
     /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
+    /// <param name="meterFactory">An optional <see cref="IMeterFactory"/> to use for metrics. If not provided, a default <see cref="Meter"/>will be used.</param>
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="options"/> is <see langword="null"/>.</exception>
-    public static SocketsHttpHandler Create(SsrfOptions options, ILoggerFactory? loggerFactory = null)
+    public static SocketsHttpHandler Create(
+        SsrfOptions options,
+        ILoggerFactory? loggerFactory = null,
+        IMeterFactory? meterFactory = null)
     {
         ArgumentNullException.ThrowIfNull(options);
 
         return InternalCreate(
             options: options,
             hostEntryResolver: null,
-            loggerFactory: loggerFactory);
+            loggerFactory: loggerFactory,
+            meterFactory: meterFactory);
     }
 
     internal static SocketsHttpHandler InternalCreate(
         SsrfOptions options,
         Func<string, CancellationToken, Task<IPHostEntry>>? hostEntryResolver,
-        ILoggerFactory? loggerFactory)
+        ILoggerFactory? loggerFactory,
+        IMeterFactory? meterFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
         return InternalCreate(
@@ -133,7 +143,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
             proxy: options.Proxy,
             sslOptions: options.SslOptions,
             asyncHostEntryResolver: hostEntryResolver,
-            loggerFactory: loggerFactory);
+            loggerFactory: loggerFactory,
+            meterFactory: meterFactory);
     }
 
     internal static SocketsHttpHandler InternalCreate(
@@ -152,11 +163,13 @@ public sealed class SsrfSocketsHttpHandlerFactory
         IWebProxy? proxy,
         SslClientAuthenticationOptions? sslOptions,
         Func<string, CancellationToken, Task<IPHostEntry>>? asyncHostEntryResolver,
-        ILoggerFactory? loggerFactory)
+        ILoggerFactory? loggerFactory,
+        IMeterFactory? meterFactory)
     {
         asyncHostEntryResolver ??= s_defaultHostEntryResolver;
         loggerFactory ??= NullLoggerFactory.Instance;
         ILogger logger = loggerFactory.CreateLogger<SsrfSocketsHttpHandlerFactory>();
+        SsrfMetrics metrics = new(meterFactory);
 
         SocketsHttpHandler handler = new()
         {
@@ -180,13 +193,19 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 if (Ssrf.IsUnsafeUri(
                     uri: requestedUri,
                     allowInsecureProtocols: allowInsecureProtocols,
-                    allowLoopback: allowLoopback))
+                    allowLoopback: allowLoopback,
+                    metrics: metrics))
                 {
                     Log.UnsafeUri(logger, requestedUri);
+                    metrics.IncrementBlockedRequests();
                     throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
                 }
 
-                IPAddress[] resolvedIpAddresses = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
+                IPAddress[] resolvedIpAddresses;
+
+                try
+                {
+                    resolvedIpAddresses = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
                         uri: requestedUri,
                         additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
                         additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
@@ -196,14 +215,21 @@ public sealed class SsrfSocketsHttpHandlerFactory
                         allowLoopback: allowLoopback,
                         failMixedResults: failMixedResults,
                         logger: logger,
+                        metrics: metrics,
                         asyncHostEntryResolver: asyncHostEntryResolver,
                         cancellationToken: cancellationToken).ConfigureAwait(false);
-
+                }
+                catch (SsrfException)
+                {
+                    metrics.IncrementBlockedRequests();
+                    throw;
+                }
 
                 // If no IP addresses were resolved, early exit and block the connection as this is could be potential SSRF attack where the attacker is attempting to connect to a non-existent or internal host that is not resolvable through DNS.
-                if (resolvedIpAddresses.Length== 0)
+                if (resolvedIpAddresses.Length == 0)
                 {
                     Log.DnsResolutionFailed(logger, requestedUri);
+                    metrics.IncrementBlockedRequests();
                     throw new SsrfException(requestedUri, $"Connection blocked as host could not be resolved to any IP addresses.");
                 }
 

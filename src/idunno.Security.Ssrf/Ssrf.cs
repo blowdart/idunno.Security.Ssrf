@@ -94,23 +94,32 @@ public static class Ssrf
     /// <param name="uri">The <see cref="Uri"/> to evaluate.</param>
     /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
     /// <param name="allowLoopback">Flag indicating whether localhost URIs will be allowed or rejected.</param>
+    /// <param name="metrics">Optional <see cref="SsrfMetrics"/> instance to report metrics on unsafe evaluations of <paramref name="uri" />.</param>
     /// <returns><see langword="true"/> if the <paramref name="uri" /> is considered unsafe; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
     public static bool IsUnsafeUri(
         Uri uri,
         bool allowInsecureProtocols = false,
-        bool allowLoopback = false)
+        bool allowLoopback = false,
+        SsrfMetrics? metrics = null)
     {
         ArgumentNullException.ThrowIfNull(uri);
 
-        if (!uri.IsAbsoluteUri ||
-            uri.IsUnc)
+        if (!uri.IsAbsoluteUri)
         {
+            metrics?.IncrementUnsafeUri(reason: "absolute_uri");
+            return true;
+        }
+
+        if (uri.IsUnc)
+        {
+            metrics?.IncrementUnsafeUri(reason: "unc_uri");
             return true;
         }
 
         if (uri.IsLoopback && !allowLoopback)
         {
+            metrics?.IncrementUnsafeUri(reason: "loopback_uri");
             return true;
         }
 
@@ -118,16 +127,24 @@ public static class Ssrf
             uri.HostNameType != UriHostNameType.IPv4 &&
             uri.HostNameType != UriHostNameType.IPv6)
         {
+            metrics?.IncrementUnsafeUri(reason: "unknown_host__name_type");
             return true;
         }
 
         // Uri class already normalizes scheme to lower case, so we can do a simple ordinal comparison here.
-        return uri.Scheme switch
+        bool isUnsafe = uri.Scheme switch
         {
             "https" or "wss" => false,
             "http" or "ws" when allowInsecureProtocols => false,
             _ => true
         };
+
+        if (isUnsafe)
+        {
+            metrics?.IncrementUnsafeUri(reason: uri.Scheme);
+        }
+
+        return isUnsafe;
     }
 
     /// <summary>
@@ -140,6 +157,7 @@ public static class Ssrf
     /// <param name="safeIPNetworks">Optional additional IP networks to consider safe, which can be used to allow specific safe ranges that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="safeIPAddresses">Optional additional IP addresses to consider safe, which can be used to allow specific safe addresses that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="allowLoopback">Indicates whether localhost addresses should be considered safe.</param>
+    /// <param name="metrics">Optional <see cref="SsrfMetrics"/> instance to report metrics on unsafe evaluations of <paramref name="ipAddress" />.</param>
     /// <returns><see langword="true"/> if the <paramref name="ipAddress" /> is considered unsafe; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/>.</exception>
     /// <remarks>
@@ -156,7 +174,8 @@ public static class Ssrf
         ICollection<IPAddress>? additionalUnsafeIPAddresses = null,
         ICollection<IPNetwork>? safeIPNetworks = null,
         ICollection<IPAddress>? safeIPAddresses = null,
-        bool allowLoopback = false)
+        bool allowLoopback = false,
+        SsrfMetrics? metrics = null)
     {
         ArgumentNullException.ThrowIfNull(ipAddress);
 
@@ -192,39 +211,44 @@ public static class Ssrf
 
         if (additionalUnsafeIPAddresses is not null && additionalUnsafeIPAddresses.Contains(ipAddress))
         {
+            metrics?.IncrementUnsafeIPAddress(reason: "in_additional_unsafe_ip_addresses");
             return true;
         }
 
         // Block IPv6 unspecified address (::), IPv4 0.0.0.0 is covered by the 0.0.0.0/8 range.
         if (ipAddress.Equals(IPAddress.IPv6None))
         {
+            metrics?.IncrementUnsafeIPAddress(reason: "ipv6_none");
             return true;
         }
 
         // Block loopback: IPv4 127/8 and IPv6 ::1.
         if (IPAddress.IsLoopback(ipAddress))
         {
+            metrics?.IncrementUnsafeIPAddress(reason: "loopback");
             return true;
+        }
+
+        if (additionalUnsafeIPNetworks is not null)
+        {
+            foreach (IPNetwork network in additionalUnsafeIPNetworks)
+            {
+                if (network.Contains(ipAddress))
+                {
+                    metrics?.IncrementUnsafeIPAddress(reason: "in_additional_unsafe_ip_networks");
+                    return true;
+                }
+            }
         }
 
         if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
         {
-            if (additionalUnsafeIPNetworks is not null)
-            {
-                foreach (IPNetwork network in additionalUnsafeIPNetworks)
-                {
-                    if (network.BaseAddress.AddressFamily == AddressFamily.InterNetwork &&
-                        network.Contains(ipAddress))
-                    {
-                        return true;
-                    }
-                }
-            }
 
             foreach (IPNetwork network in s_ipv4UnsafeRanges)
             {
                 if (network.Contains(ipAddress))
                 {
+                    metrics?.IncrementUnsafeIPAddress(reason: "in_default_blocks");
                     return true;
                 }
             }
@@ -234,30 +258,27 @@ public static class Ssrf
 
         if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
         {
-            if (ipAddress.IsIPv6Multicast ||
-                ipAddress.IsIPv6LinkLocal ||
-                ipAddress.IsIPv6SiteLocal ||
-                ipAddress.IsIPv6UniqueLocal)
+            if (ipAddress.IsIPv6Multicast)
             {
+                metrics?.IncrementUnsafeIPAddress(reason: "ipv6_multicast");
                 return true;
             }
 
-            if (additionalUnsafeIPNetworks is not null)
+
+            if (ipAddress.IsIPv6LinkLocal ||
+                ipAddress.IsIPv6SiteLocal ||
+                ipAddress.IsIPv6UniqueLocal)
             {
-                foreach (IPNetwork network in additionalUnsafeIPNetworks)
-                {
-                    if (network.BaseAddress.AddressFamily == AddressFamily.InterNetworkV6 &&
-                        network.Contains(ipAddress))
-                    {
-                        return true;
-                    }
-                }
+                metrics?.IncrementUnsafeIPAddress(reason: "ipv6_local");
+                return true;
             }
+
 
             foreach (IPNetwork network in s_ipv6UnsafeRanges)
             {
                 if (network.Contains(ipAddress))
                 {
+                    metrics?.IncrementUnsafeIPAddress(reason: "in_default_blocks");
                     return true;
                 }
             }
@@ -265,6 +286,7 @@ public static class Ssrf
             return false;
         }
 
+        metrics?.IncrementUnsafeIPAddress(reason: "unknown_address_family");
         // Unknown address family: fail closed.
         return true;
     }
@@ -287,6 +309,7 @@ public static class Ssrf
     /// </param>
     /// <param name="safeIPNetworks">Optional additional IP networks to consider safe, which can be used to allow specific safe ranges that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="safeIPAddresses">Optional additional IP addresses to consider safe, which can be used to allow specific safe addresses that would otherwise be blocked by the unsafe checks.</param>
+    /// <param name="metrics">Optional <see cref="SsrfMetrics"/> instance to report metrics on unsafe evaluations of <paramref name="uri" /> and related IP address checks.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
     /// <returns><see langword="true" /> if the <paramref name="uri" /> is considered unsafe, otherwise <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
@@ -307,6 +330,7 @@ public static class Ssrf
         ICollection<string>? allowedHostnames = null,
         ICollection<IPNetwork>? safeIPNetworks = null,
         ICollection<IPAddress>? safeIPAddresses = null,
+        SsrfMetrics? metrics = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(uri);
@@ -320,6 +344,7 @@ public static class Ssrf
             allowedHostnames: allowedHostnames,
             safeIPNetworks: safeIPNetworks,
             safeIPAddresses: safeIPAddresses,
+            metrics: metrics,
             hostEntryResolver: null,
             cancellationToken: cancellationToken);
     }
@@ -334,6 +359,7 @@ public static class Ssrf
         ICollection<string>? allowedHostnames,
         ICollection<IPNetwork>? safeIPNetworks,
         ICollection<IPAddress>? safeIPAddresses,
+        SsrfMetrics? metrics,
         Func<string, CancellationToken, Task<IPHostEntry>>? hostEntryResolver,
         CancellationToken cancellationToken)
     {
@@ -344,7 +370,8 @@ public static class Ssrf
         if (IsUnsafeUri(
             uri: uri,
             allowInsecureProtocols: allowInsecureProtocols,
-            allowLoopback: allowLoopback))
+            allowLoopback: allowLoopback,
+            metrics: metrics))
         {
             return true;
         }
@@ -359,7 +386,8 @@ public static class Ssrf
                 additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
                 safeIPNetworks: safeIPNetworks,
                 safeIPAddresses: safeIPAddresses,
-                allowLoopback: allowLoopback);
+                allowLoopback: allowLoopback,
+                metrics: metrics);
         }
 
         if (IsInAllowedHostnames(uri, allowedHostnames))
@@ -381,7 +409,8 @@ public static class Ssrf
                 additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
                 safeIPNetworks: safeIPNetworks,
                 safeIPAddresses: safeIPAddresses,
-                allowLoopback: allowLoopback))
+                allowLoopback: allowLoopback,
+                metrics: metrics))
             {
                 return true;
             }

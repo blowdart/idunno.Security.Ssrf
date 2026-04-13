@@ -25,6 +25,7 @@ internal static class CommonFunctions
         bool allowLoopback,
         bool failMixedResults,
         ILogger logger,
+        SsrfMetrics? metrics,
         Func<string, CancellationToken, Task<IPHostEntry>> asyncHostEntryResolver,
         CancellationToken cancellationToken)
     {
@@ -47,7 +48,8 @@ internal static class CommonFunctions
                 safeIPAddresses: safeIPAddresses,
                 allowLoopback: allowLoopback,
                 failMixedResults: failMixedResults,
-                logger: logger);
+                logger: logger,
+                metrics: metrics);
         }
     }
 
@@ -144,6 +146,7 @@ internal static class CommonFunctions
         bool allowLoopback,
         bool failMixedResults,
         ILogger logger,
+        SsrfMetrics? metrics,
         Func<string, IPHostEntry> hostEntryResolver)
     {
         ArgumentNullException.ThrowIfNull(uri);
@@ -165,7 +168,8 @@ internal static class CommonFunctions
                 safeIPAddresses: safeIPAddresses,
                 allowLoopback: allowLoopback,
                 failMixedResults: failMixedResults,
-                logger: logger);
+                logger: logger,
+                metrics: metrics);
         }
     }
 
@@ -180,7 +184,8 @@ internal static class CommonFunctions
         ICollection<IPAddress>? safeIPAddresses,
         bool allowLoopback,
         bool failMixedResults,
-        ILogger logger)
+        ILogger logger,
+        SsrfMetrics? metrics)
     {
         // Specify an initial capacity for the list of safe IP addresses based on the number of resolved addresses
         // to avoid multiple resizes as safe addresses are added to the list.
@@ -204,7 +209,8 @@ internal static class CommonFunctions
                 additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
                 safeIPNetworks: safeIPNetworks,
                 safeIPAddresses: safeIPAddresses,
-                allowLoopback: allowLoopback))
+                allowLoopback: allowLoopback,
+                metrics: metrics))
             {
                 safeResolvedIPAddresses.Add(ipAddress);
             }
@@ -215,6 +221,7 @@ internal static class CommonFunctions
         if (safeResolvedIPAddresses.Count == 0)
         {
             Log.AllResolvedIpAddressesUnsafe(logger, uri);
+            metrics?.IncrementUnsafeIPAddress(1, "all_resolved_addresses_unsafe");
             throw new SsrfException(uri, $"Connection blocked as all resolved addresses are unsafe.");
         }
 
@@ -224,6 +231,7 @@ internal static class CommonFunctions
         if (failMixedResults && safeResolvedIPAddresses.Count != resolvedIpAddresses.Length)
         {
             Log.SomeResolvedIpAddressesUnsafe(logger, uri);
+            metrics?.IncrementUnsafeIPAddress(1, "some_resolved_addresses_unsafe");
             throw new SsrfException(uri, $"Connection blocked as some resolved addresses are unsafe.");
         }
 

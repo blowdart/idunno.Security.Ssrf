@@ -195,7 +195,8 @@ public class SsrfSocketsHttpHandlerFactory
             proxy: null,
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
-            loggerFactory : null));
+            loggerFactory : null,
+            meterFactory: null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -241,7 +242,8 @@ public class SsrfSocketsHttpHandlerFactory
             proxy: null,
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
-            loggerFactory: null));
+            loggerFactory: null,
+            meterFactory: null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -287,7 +289,8 @@ public class SsrfSocketsHttpHandlerFactory
             proxy: null,
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
-            loggerFactory: null));
+            loggerFactory: null,
+            meterFactory: null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -333,7 +336,8 @@ public class SsrfSocketsHttpHandlerFactory
             proxy: null,
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
-            loggerFactory: null));
+            loggerFactory: null,
+            meterFactory: null));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -391,7 +395,11 @@ public class SsrfSocketsHttpHandlerFactory
             SslOptions = null
         };
 
-        using HttpClient httpClient = new(Security.SsrfSocketsHttpHandlerFactory.InternalCreate(options, loggerFactory:null, hostEntryResolver: hostEntryResolver));
+        using HttpClient httpClient = new(Security.SsrfSocketsHttpHandlerFactory.InternalCreate(
+            options,
+            loggerFactory: null,
+            meterFactory: null,
+            hostEntryResolver: hostEntryResolver));
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync("https://example.org", cancellationToken: TestContext.Current.CancellationToken));
         Exception? innermostException = ex;
         while (innermostException.InnerException is not null)
@@ -434,7 +442,8 @@ public class SsrfSocketsHttpHandlerFactory
             proxy: null,
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
-            loggerFactory: null));
+            loggerFactory: null,
+            meterFactory: null));
 
         HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async () => _ = await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken));
 
@@ -614,7 +623,8 @@ public class SsrfSocketsHttpHandlerFactory
             proxy: null,
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
-            loggerFactory: null));
+            loggerFactory: null,
+            meterFactory: null));
         {
             // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
             Exception? ex = await Record.ExceptionAsync(async () => {
@@ -673,7 +683,8 @@ public class SsrfSocketsHttpHandlerFactory
             proxy: null,
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
-            loggerFactory: null));
+            loggerFactory: null,
+            meterFactory: null));
         {
             // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
             Exception? ex = await Record.ExceptionAsync(async () => {
@@ -732,7 +743,8 @@ public class SsrfSocketsHttpHandlerFactory
             proxy: null,
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
-            loggerFactory: null));
+            loggerFactory: null,
+            meterFactory: null));
         {
             Exception? ex = await Record.ExceptionAsync(async () => {
                 await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
@@ -790,7 +802,8 @@ public class SsrfSocketsHttpHandlerFactory
             proxy: null,
             sslOptions: null,
             asyncHostEntryResolver: hostEntryResolver,
-            loggerFactory: null));
+            loggerFactory: null,
+            meterFactory: null));
         {
             // Should time out, because the mock resolver is returning loopback addresses, but it shouldn't throw an SsrfException because the hostname is in the allow list.
             Exception? ex = await Record.ExceptionAsync(async () => {
