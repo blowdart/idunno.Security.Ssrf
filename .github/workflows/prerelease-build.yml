@@ -125,8 +125,8 @@ jobs:
     - name: 'Attest signed nupkg'
       uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
       with:
-        subject-path: ${{env:NUPKG_DIRECTORY}}/idunno.Security.Ssrf.**.nupkg
-        sbom-path: ${{env:NUPKG_DIRECTORY}}/manifest.spdx.json
+        subject-path: ${{ env:NUPKG_DIRECTORY }}
+        sbom-path: ${{ env:NUPKG_DIRECTORY }}/manifest.spdx.json
 
     - name: 'List artifact directory'
       shell: pwsh
