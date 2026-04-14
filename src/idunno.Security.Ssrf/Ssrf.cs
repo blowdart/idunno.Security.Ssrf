@@ -83,7 +83,7 @@ public static class Ssrf
             new (IPAddress.Parse("64:ff9b:1::"), 48),
 
             // IPv6 discard-only prefix https://datatracker.ietf.org/doc/html/rfc6666
-            // while this range silently drops traffic so there is no SSRF risk, bocking it prevents potential connection-hanging probes.
+            // while this range silently drops traffic so there is no SSRF risk, blocking it prevents potential connection-hanging probes.
             new (IPAddress.Parse("100::"), 64)
         ];
 
@@ -215,7 +215,7 @@ public static class Ssrf
             return true;
         }
 
-        // Block unspecified addresses 
+        // Block none addresses 
         if (ipAddress.Equals(IPAddress.None) || ipAddress.Equals(IPAddress.IPv6None))
         {
             metrics?.IncrementUnsafeIPAddress(reason: "ip_none");
@@ -350,6 +350,7 @@ public static class Ssrf
     }
 
     [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoids delegate allocation on hot path.")]
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Catch any exception to fail close.")]
     internal static async Task<bool> InternalIsUnsafe(
         Uri uri,
         bool allowInsecureProtocols,
@@ -400,9 +401,8 @@ public static class Ssrf
         {
             hostEntry = await hostEntryResolver(uri.Host, cancellationToken).ConfigureAwait(false);
         }
-        catch (SocketException)
+        catch (Exception) when (!cancellationToken.IsCancellationRequested)
         {
-            // DNS resolution failures are treated as unsafe to fail closed,
             return true;
         }
 
@@ -444,7 +444,7 @@ public static class Ssrf
 
         foreach (string safeHostName in allowedHostnames)
         {
-            bool isWildcard = safeHostName.StartsWith("*.", StringComparison.OrdinalIgnoreCase);
+            bool isWildcard = safeHostName.StartsWith("*.", StringComparison.OrdinalIgnoreCase) && safeHostName != "*.";
 
             if (!isWildcard && string.Equals(uri.Host, safeHostName, StringComparison.OrdinalIgnoreCase))
             {

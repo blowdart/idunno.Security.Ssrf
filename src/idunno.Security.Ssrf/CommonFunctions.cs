@@ -78,18 +78,18 @@ internal static class CommonFunctions
                     resolvedIpAddresses = entry.AddressList;
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
                 Log.DnsResolutionException(logger, uri, ex);
-                throw new SsrfException(uri, $"Connection blocked as host could not be resolved.", inner: ex);
+                throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
             }
         }
 
         if (resolvedIpAddresses.Length == 0)
         {
             Log.DnsResolutionFailed(logger, uri);
-            throw new SsrfException(uri, $"Connection blocked as host could not be resolved to any IP addresses.");
+            throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
         }
 
         return resolvedIpAddresses;
@@ -119,18 +119,18 @@ internal static class CommonFunctions
                     resolvedIpAddresses = entry.AddressList;
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
                 Log.DnsResolutionException(logger, uri, ex);
-                throw new SsrfException(uri, $"Connection blocked as host could not be resolved.", inner: ex);
+                throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
             }
         }
 
         if (resolvedIpAddresses.Length == 0)
         {
             Log.DnsResolutionFailed(logger, uri);
-            throw new SsrfException(uri, $"Connection blocked as host could not be resolved to any IP addresses.");
+            throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
         }
 
         return resolvedIpAddresses;
@@ -193,18 +193,26 @@ internal static class CommonFunctions
 
         foreach (IPAddress ipAddress in resolvedIpAddresses)
         {
-            if (Ssrf.IsInAllowedNetworks(ipAddress, safeIPNetworks))
+            IPAddress normalizedIPAddress = ipAddress;
+
+            // Normalize IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1) to IPv4 before range checks.
+            if (ipAddress.IsIPv4MappedToIPv6)
+            {
+                normalizedIPAddress = ipAddress.MapToIPv4();
+            }
+
+            if (Ssrf.IsInAllowedNetworks(normalizedIPAddress, safeIPNetworks))
             {
                 Log.CheckBypassedForIPAddressAsItIsInSafeNetwork(logger, uri, ipAddress);
                 safeResolvedIPAddresses.Add(ipAddress);
             }
-            else if (Ssrf.IsInAllowedIpAddresses(ipAddress, safeIPAddresses))
+            else if (Ssrf.IsInAllowedIpAddresses(normalizedIPAddress, safeIPAddresses))
             {
                 Log.CheckBypassedForIPAddressAsItIsInSafeIpAddresses(logger, uri, ipAddress);
                 safeResolvedIPAddresses.Add(ipAddress);
             }
             else if (!Ssrf.IsUnsafeIpAddress(
-                ipAddress: ipAddress,
+                ipAddress: normalizedIPAddress,
                 additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
                 additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
                 safeIPNetworks: safeIPNetworks,
@@ -222,7 +230,7 @@ internal static class CommonFunctions
         {
             Log.AllResolvedIpAddressesUnsafe(logger, uri);
             metrics?.IncrementUnsafeIPAddress(1, "all_resolved_addresses_unsafe");
-            throw new SsrfException(uri, $"Connection blocked as all resolved addresses are unsafe.");
+            throw new SsrfException(uri, "Connection blocked as all resolved addresses are unsafe.");
         }
 
         // If failMixedResults is set to true, block the connection if any unsafe addresses were found, even if some safe addresses remain.
@@ -232,7 +240,7 @@ internal static class CommonFunctions
         {
             Log.SomeResolvedIpAddressesUnsafe(logger, uri);
             metrics?.IncrementUnsafeIPAddress(1, "some_resolved_addresses_unsafe");
-            throw new SsrfException(uri, $"Connection blocked as some resolved addresses are unsafe.");
+            throw new SsrfException(uri, "Connection blocked as some resolved addresses are unsafe.");
         }
 
         return [.. safeResolvedIPAddresses];

@@ -221,16 +221,9 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 }
                 catch (SsrfException)
                 {
-                    metrics.IncrementBlockedRequests();
-                    throw;
-                }
-
-                // If no IP addresses were resolved, early exit and block the connection as this is could be potential SSRF attack where the attacker is attempting to connect to a non-existent or internal host that is not resolvable through DNS.
-                if (resolvedIpAddresses.Length == 0)
-                {
                     Log.DnsResolutionFailed(logger, requestedUri);
                     metrics.IncrementBlockedRequests();
-                    throw new SsrfException(requestedUri, $"Connection blocked as host could not be resolved to any IP addresses.");
+                    throw;
                 }
 
                 // Reorder the list of safe IP addresses based on the specified connection strategy, if there are multiple addresses to choose from.
