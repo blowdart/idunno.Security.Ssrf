@@ -395,7 +395,17 @@ public static class Ssrf
             return false;
         }
 
-        IPHostEntry? hostEntry = await hostEntryResolver(uri.Host, cancellationToken).ConfigureAwait(false);
+        IPHostEntry? hostEntry;
+        try
+        {
+            hostEntry = await hostEntryResolver(uri.Host, cancellationToken).ConfigureAwait(false);
+        }
+        catch (SocketException)
+        {
+            // DNS resolution failures are treated as unsafe to fail closed,
+            return true;
+        }
+
         if (hostEntry is null || hostEntry.AddressList.Length == 0)
         {
             return true;

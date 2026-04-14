@@ -182,15 +182,20 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _additionalUnsafeIPNetworks = additionalUnsafeIPNetworks;
         _additionalUnsafeIPAddresses = additionalUnsafeIPAddresses;
+
         if (allowedHostnames is null)
         {
             _allowedHostnames = [webProxy.Address.Host];
         }
-        else if (!allowedHostnames.Contains(webProxy.Address.Host))
+        else
         {
             _allowedHostnames = allowedHostnames;
-            _allowedHostnames.Add(webProxy.Address.Host);
+            if (!allowedHostnames.Contains(webProxy.Address.Host))
+            {
+                _allowedHostnames.Add(webProxy.Address.Host);
+            }
         }
+
         _safeIPNetworks = safeIPNetworks;
         _safeIPAddresses = safeIPAddresses;
         _allowInsecureProtocols = allowInsecureProtocols;
@@ -205,7 +210,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         _metrics = new SsrfMetrics(meterFactory);
 
         InnerHandler = SsrfSocketsHttpHandlerFactory.InternalCreate(
-            connectionStrategy:connectionStrategy,
+            connectionStrategy: connectionStrategy,
             additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
             additionalUnsafeIPAddresses: _additionalUnsafeIPAddresses,
             allowedHostnames: _allowedHostnames,
@@ -245,15 +250,20 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _additionalUnsafeIPNetworks = options.AdditionalUnsafeIPNetworks;
         _additionalUnsafeIPAddresses = options.AdditionalUnsafeIPAddresses;
+
         if (options.AllowedHostnames is null)
         {
             _allowedHostnames = [webProxy.Address.Host];
         }
-        else if (!options.AllowedHostnames.Contains(webProxy.Address.Host))
+        else
         {
             _allowedHostnames = options.AllowedHostnames;
-            _allowedHostnames.Add(webProxy.Address.Host);
+            if (!options.AllowedHostnames.Contains(webProxy.Address.Host))
+            {
+                _allowedHostnames.Add(webProxy.Address.Host);
+            }
         }
+
         _safeIPNetworks = options.SafeIPNetworks;
         _safeIPAddresses = options.SafeIPAddresses;
         _allowInsecureProtocols = options.AllowInsecureProtocols;
