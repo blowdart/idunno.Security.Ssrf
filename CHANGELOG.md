@@ -4,10 +4,17 @@
 
 * Add `allowedHostnames` parameter to `SsrfSocketsHttpHandlerFactory.Create()`, `ProxiedSsrfDelegatingHandler`
   constructor and as a property in `SsrfOptions` to enable safe listing of host names,
-  including support for wildcard patterns ([#7](https://github.com/blowdart/idunno.Security.Ssrf/issues/7)) ([blowdart](https://github.com/blowdart))
+  including support for wildcard patterns
+  ([#6](https://github.com/blowdart/idunno.Security.Ssrf/issues/6)) ([blowdart](https://github.com/blowdart))
+  ([#7](https://github.com/blowdart/idunno.Security.Ssrf/issues/7)) ([blowdart](https://github.com/blowdart))
+  ([#9](https://github.com/blowdart/idunno.Security.Ssrf/issues/9)) ([blowdart](https://github.com/blowdart))
+  ([#10](https://github.com/blowdart/idunno.Security.Ssrf/issues/10)) ([blowdart](https://github.com/blowdart))
 * Add `safeIPNetworks` and `safeIPAddresses` parameters to `SsrfSocketsHttpHandlerFactory.Create()`,
   `ProxiedSsrfDelegatingHandler` constructor and as properties in `SsrfOptions` to enable safe listing of IP addresses and networks.
+  ([#6](https://github.com/blowdart/idunno.Security.Ssrf/issues/6)) ([blowdart](https://github.com/blowdart))
   ([#8](https://github.com/blowdart/idunno.Security.Ssrf/issues/8)) ([blowdart](https://github.com/blowdart))
+  ([#9](https://github.com/blowdart/idunno.Security.Ssrf/issues/9)) ([blowdart](https://github.com/blowdart))
+  ([#10](https://github.com/blowdart/idunno.Security.Ssrf/issues/10)) ([blowdart](https://github.com/blowdart))
 * Add metrics for tracking SSRF attempts, including counts of blocked requests and counts for blocked hosts and IP addresses.
 
 ### Changed
@@ -24,7 +31,7 @@
 
 * Add `allowLoopback` parameter to `Ssrf.IsUnsafe`, `Ssrf.IsUnsafeHost`, `Ssrf.IsUnsafeIPAddress` and
   `SsrfSocketsHttpHandlerFactory.Create` methods to allow localhost addresses to be considered valid
-  if explicitly specified. Fixes [#4](https://github.com/blowdart/idunno.Security.Ssrf/issues/4)
+  if explicitly specified. ([#4](https://github.com/blowdart/idunno.Security.Ssrf/issues/4)) ([blowdart](https://github.com/blowdart))
 * Add `ProxiedSsrfDelegatingHandler` to support the use of proxies.
 
 ### Changed
