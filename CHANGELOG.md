@@ -19,6 +19,7 @@
 
 ### Changed
 
+* Disable Nagle on new Sockets to match SocketsHttpHandler ([#11](https://github.com/blowdart/idunno.Security.Ssrf/pull/11)) ([MihaZupan](https://github.com/MihaZupan))
 * **Breaking** Remove multiple overloads in favor of two `Create` methods, with defaults, on `SsrfSocketsHttpHandlerFactory`.
 * **Breaking** Remove multiple constructors in favor of two constructors, with defaults, on `ProxiedSsrfDelegatingHandler`.
 * **Breaking** Change casing of `AdditionalUnsafeIpAddresses` property to `AdditionalUnsafeIPAddresses` in options to match .NET's casing.
