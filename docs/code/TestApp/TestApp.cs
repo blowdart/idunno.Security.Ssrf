@@ -1,7 +1,7 @@
 #!/usr/bin/env dotnet
 
 #:sdk Microsoft.NET.Sdk.Web
-#:package idunno.Security.Ssrf@4.0.0-prerelease.gbd71445a11
+#:package idunno.Security.Ssrf@4.0.0
 #:property PublishAot=false
 using System.Net;
 using System.Text;
