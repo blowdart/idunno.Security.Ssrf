@@ -22,6 +22,11 @@
     <File Path=".github/workflows/release.yml" />
   </Folder>
   <Folder Name="/demo/">
+    <Project Path="demo/AspNetHttpClientFactory/AspNetHttpClientFactory.csproj" Id="ae2f7a6c-60d6-4cb8-a75e-6dd345ed4d94">
+      <BuildType Solution="CodeQL|*" Project="Debug" />
+      <Build Solution="CodeQL|*" Project="false" />
+      <Build Solution="Release|*" Project="false" />
+    </Project>
     <Project Path="demo/ConsoleDemo/ConsoleDemo.csproj">
       <BuildType Solution="CodeQL|*" Project="Debug" />
       <Build Solution="CodeQL|*" Project="false" />
@@ -57,10 +62,13 @@
   </Folder>
   <Folder Name="/docs/code/TestApp/">
     <File Path="docs/code/TestApp/Directory.Packages.Props" />
+    <File Path="docs/code/TestApp/nuget.config" />
     <File Path="docs/code/TestApp/TestApp.cs" />
   </Folder>
   <Folder Name="/docs/docs/">
     <File Path="docs/docs/configuration.md" />
+    <File Path="docs/docs/httpClientFactory.md" />
+    <File Path="docs/docs/metrics.md" />
     <File Path="docs/docs/sampleBadApplication.md" />
     <File Path="docs/docs/ssrf.md" />
     <File Path="docs/docs/ssrfHandler.md" />

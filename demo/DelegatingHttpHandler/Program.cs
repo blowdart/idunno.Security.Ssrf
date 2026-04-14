@@ -1,4 +1,4 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Net;
@@ -10,17 +10,7 @@ using DelegatingHttpHandler;
 var timingHandler = new TimingHandler()
 {
     InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-         connectionStrategy: ConnectionStrategy.None,
-         additionalUnsafeNetworks: null,
-         additionalUnsafeIpAddresses: null,
-         connectTimeout: TimeSpan.FromSeconds(1),
-         allowInsecureProtocols: false,
-         allowLoopback: false,
-         failMixedResults: true,
-         allowAutoRedirect: false,
-         automaticDecompression: DecompressionMethods.All,
-         sslOptions: null,
-         loggerFactory: null)
+         connectTimeout: TimeSpan.FromSeconds(1))
 };
 
 using (var httpClient = new HttpClient(timingHandler))
@@ -32,22 +22,13 @@ using (var httpClient = new HttpClient(timingHandler))
 timingHandler = new TimingHandler()
 {
     InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-         connectionStrategy: ConnectionStrategy.None,
-         additionalUnsafeNetworks: null,
-         additionalUnsafeIpAddresses: [
+         additionalUnsafeIPAddresses: [
              IPAddress.Parse("2606:4700::6812:1b78"),
              IPAddress.Parse("2606:4700::6812:1a78"),
              IPAddress.Parse("104.18.27.120"),
              IPAddress.Parse("104.18.26.120")
          ],
-         connectTimeout: TimeSpan.FromSeconds(1),
-         allowInsecureProtocols: false,
-         allowLoopback: false,
-         failMixedResults: true,
-         allowAutoRedirect: false,
-         automaticDecompression: DecompressionMethods.All,
-         sslOptions: null,
-         loggerFactory: null)
+         connectTimeout: TimeSpan.FromSeconds(1))
 };
 
 using (var httpClient = new HttpClient(timingHandler))

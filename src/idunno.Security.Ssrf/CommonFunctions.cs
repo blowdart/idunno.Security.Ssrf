@@ -1,6 +1,7 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 
 using Microsoft.Extensions.Logging;
@@ -12,30 +13,53 @@ internal static class CommonFunctions
     private static readonly Func<string, CancellationToken, Task<IPHostEntry>> s_defaultAsyncHostEntryResolver = Dns.GetHostEntryAsync;
     private static readonly Func<string, IPHostEntry> s_defaultHostEntryResolver = Dns.GetHostEntry;
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "Suggested fix is language preview feature in some versions.")]
-    internal static async Task<List<IPAddress>> ResolveAndReturnSafeIPAddressesAsync(
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
+    [SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "Suggested fix is language preview feature in some versions.")]
+    internal static async Task<IPAddress[]> ResolveAndReturnSafeIPAddressesAsync(
         Uri uri,
-        ICollection<IPNetwork>? additionalUnsafeNetworks,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        ICollection<IPNetwork>? additionalUnsafeIPNetworks,
+        ICollection<IPAddress>? additionalUnsafeIPAddresses,
+        ICollection<string>? allowedHostnames,
+        ICollection<IPNetwork>? safeIPNetworks,
+        ICollection<IPAddress>? safeIPAddresses,
         bool allowLoopback,
         bool failMixedResults,
         ILogger logger,
-        Func<string, CancellationToken, Task<IPHostEntry>> hostEntryResolver,
+        SsrfMetrics? metrics,
+        Func<string, CancellationToken, Task<IPHostEntry>> asyncHostEntryResolver,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(uri);
-        IPAddress[] resolvedIpAddresses = await ResolveAsync(uri, logger, hostEntryResolver, cancellationToken).ConfigureAwait(false);
-        return GetSafeIPAddresses(uri, resolvedIpAddresses, additionalUnsafeNetworks, additionalUnsafeIpAddresses, allowLoopback, failMixedResults, logger);
+        IPAddress[] resolvedIpAddresses = await GetHostEntryAsync(uri, logger, asyncHostEntryResolver, cancellationToken).ConfigureAwait(false);
+
+        if (Ssrf.IsInAllowedHostnames(uri, allowedHostnames))
+        {
+            Log.ChecksBypassedForAllowedHostnames(logger, uri);
+            return resolvedIpAddresses;
+        }
+        else
+        {
+            return ReduceResolvedIPAddressesToSafeIPAddresses(
+                uri: uri,
+                resolvedIpAddresses: resolvedIpAddresses,
+                additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+                additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
+                safeIPNetworks: safeIPNetworks,
+                safeIPAddresses: safeIPAddresses,
+                allowLoopback: allowLoopback,
+                failMixedResults: failMixedResults,
+                logger: logger,
+                metrics: metrics);
+        }
     }
 
-    internal static async Task<IPAddress[]> ResolveAsync(
+    internal static async Task<IPAddress[]> GetHostEntryAsync(
         Uri uri,
         ILogger logger,
-        Func<string, CancellationToken, Task<IPHostEntry>> hostEntryResolver,
+        Func<string, CancellationToken, Task<IPHostEntry>> asyncHostEntryResolver,
         CancellationToken cancellationToken)
     {
-        hostEntryResolver ??= s_defaultAsyncHostEntryResolver;
+        asyncHostEntryResolver ??= s_defaultAsyncHostEntryResolver;
 
         IPAddress[] resolvedIpAddresses = [];
 
@@ -47,45 +71,31 @@ internal static class CommonFunctions
         {
             try
             {
-                IPHostEntry entry = await hostEntryResolver(uri.Host, cancellationToken).ConfigureAwait(false);
+                IPHostEntry entry = await asyncHostEntryResolver(uri.Host, cancellationToken).ConfigureAwait(false);
 
                 if (entry.AddressList is not null)
                 {
                     resolvedIpAddresses = entry.AddressList;
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
                 Log.DnsResolutionException(logger, uri, ex);
-                throw new SsrfException(uri, $"Connection blocked as host could not be resolved.", inner: ex);
+                throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
             }
         }
 
         if (resolvedIpAddresses.Length == 0)
         {
             Log.DnsResolutionFailed(logger, uri);
-            throw new SsrfException(uri, $"Connection blocked as host could not be resolved to any IP addresses.");
+            throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
         }
 
         return resolvedIpAddresses;
     }
 
-    internal static List<IPAddress> ResolveAndReturnSafeIPAddresses(
-        Uri uri,
-        ICollection<IPNetwork>? additionalUnsafeNetworks,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses,
-        bool allowLoopback,
-        bool failMixedResults,
-        ILogger logger,
-        Func<string, IPHostEntry> hostEntryResolver)
-    {
-        ArgumentNullException.ThrowIfNull(uri);
-        IPAddress[] resolvedIpAddresses = Resolve(uri, logger, hostEntryResolver);
-        return GetSafeIPAddresses(uri, resolvedIpAddresses, additionalUnsafeNetworks, additionalUnsafeIpAddresses, allowLoopback, failMixedResults, logger);
-    }
-
-    internal static IPAddress[] Resolve(
+    internal static IPAddress[] GetHostEntry(
         Uri uri,
         ILogger logger,
         Func<string, IPHostEntry> hostEntryResolver)
@@ -109,43 +119,106 @@ internal static class CommonFunctions
                     resolvedIpAddresses = entry.AddressList;
                 }
             }
-            catch (Exception ex)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
                 Log.DnsResolutionException(logger, uri, ex);
-                throw new SsrfException(uri, $"Connection blocked as host could not be resolved.", inner: ex);
+                throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
             }
         }
 
         if (resolvedIpAddresses.Length == 0)
         {
             Log.DnsResolutionFailed(logger, uri);
-            throw new SsrfException(uri, $"Connection blocked as host could not be resolved to any IP addresses.");
+            throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
         }
 
         return resolvedIpAddresses;
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "Suggested fix is language preview feature in some versions.")]
-    private static List<IPAddress> GetSafeIPAddresses(
+    internal static IPAddress[] ResolveAndReturnSafeIPAddresses(
         Uri uri,
-        IPAddress[] resolvedIpAddresses,
-        ICollection<IPNetwork>? additionalUnsafeNetworks,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        ICollection<IPNetwork>? additionalUnsafeIPNetworks,
+        ICollection<IPAddress>? additionalUnsafeIPAddresses,
+        ICollection<string>? allowedHostnames,
+        ICollection<IPNetwork>? safeIPNetworks,
+        ICollection<IPAddress>? safeIPAddresses,
         bool allowLoopback,
         bool failMixedResults,
-        ILogger logger)
+        ILogger logger,
+        SsrfMetrics? metrics,
+        Func<string, IPHostEntry> hostEntryResolver)
     {
+        ArgumentNullException.ThrowIfNull(uri);
+        IPAddress[] resolvedIpAddresses = GetHostEntry(uri, logger, hostEntryResolver);
+
+        if (Ssrf.IsInAllowedHostnames(uri, allowedHostnames))
+        {
+            Log.ChecksBypassedForAllowedHostnames(logger, uri);
+            return resolvedIpAddresses;
+        }
+        else
+        {
+            return ReduceResolvedIPAddressesToSafeIPAddresses(
+                uri: uri,
+                resolvedIpAddresses: resolvedIpAddresses,
+                additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+                additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
+                safeIPNetworks: safeIPNetworks,
+                safeIPAddresses: safeIPAddresses,
+                allowLoopback: allowLoopback,
+                failMixedResults: failMixedResults,
+                logger: logger,
+                metrics: metrics);
+        }
+    }
+
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
+    [SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "Suggested fix is language preview feature in some versions.")]
+    private static IPAddress[] ReduceResolvedIPAddressesToSafeIPAddresses(
+        Uri uri,
+        IPAddress[] resolvedIpAddresses,
+        ICollection<IPNetwork>? additionalUnsafeIPNetworks,
+        ICollection<IPAddress>? additionalUnsafeIPAddresses,
+        ICollection<IPNetwork>? safeIPNetworks,
+        ICollection<IPAddress>? safeIPAddresses,
+        bool allowLoopback,
+        bool failMixedResults,
+        ILogger logger,
+        SsrfMetrics? metrics)
+    {
+        // Specify an initial capacity for the list of safe IP addresses based on the number of resolved addresses
+        // to avoid multiple resizes as safe addresses are added to the list.
         List<IPAddress> safeResolvedIPAddresses = new(resolvedIpAddresses.Length);
 
         foreach (IPAddress ipAddress in resolvedIpAddresses)
         {
-            if (!Ssrf.IsUnsafeIpAddress(
-                ipAddress: ipAddress,
-                additionalUnsafeNetworks: additionalUnsafeNetworks,
-                additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
-                allowLoopback: allowLoopback))
+            IPAddress normalizedIPAddress = ipAddress;
+
+            // Normalize IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1) to IPv4 before range checks.
+            if (ipAddress.IsIPv4MappedToIPv6)
+            {
+                normalizedIPAddress = ipAddress.MapToIPv4();
+            }
+
+            if (Ssrf.IsInAllowedNetworks(normalizedIPAddress, safeIPNetworks))
+            {
+                Log.CheckBypassedForIPAddressAsItIsInSafeNetwork(logger, uri, ipAddress);
+                safeResolvedIPAddresses.Add(ipAddress);
+            }
+            else if (Ssrf.IsInAllowedIpAddresses(normalizedIPAddress, safeIPAddresses))
+            {
+                Log.CheckBypassedForIPAddressAsItIsInSafeIpAddresses(logger, uri, ipAddress);
+                safeResolvedIPAddresses.Add(ipAddress);
+            }
+            else if (!Ssrf.IsUnsafeIpAddress(
+                ipAddress: normalizedIPAddress,
+                additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+                additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
+                safeIPNetworks: safeIPNetworks,
+                safeIPAddresses: safeIPAddresses,
+                allowLoopback: allowLoopback,
+                metrics: metrics))
             {
                 safeResolvedIPAddresses.Add(ipAddress);
             }
@@ -156,7 +229,8 @@ internal static class CommonFunctions
         if (safeResolvedIPAddresses.Count == 0)
         {
             Log.AllResolvedIpAddressesUnsafe(logger, uri);
-            throw new SsrfException(uri, $"Connection blocked as all resolved addresses are unsafe.");
+            metrics?.IncrementUnsafeIPAddress(1, "all_resolved_addresses_unsafe");
+            throw new SsrfException(uri, "Connection blocked as all resolved addresses are unsafe.");
         }
 
         // If failMixedResults is set to true, block the connection if any unsafe addresses were found, even if some safe addresses remain.
@@ -165,9 +239,10 @@ internal static class CommonFunctions
         if (failMixedResults && safeResolvedIPAddresses.Count != resolvedIpAddresses.Length)
         {
             Log.SomeResolvedIpAddressesUnsafe(logger, uri);
-            throw new SsrfException(uri, $"Connection blocked as some resolved addresses are unsafe.");
+            metrics?.IncrementUnsafeIPAddress(1, "some_resolved_addresses_unsafe");
+            throw new SsrfException(uri, "Connection blocked as some resolved addresses are unsafe.");
         }
 
-        return safeResolvedIPAddresses;
+        return [.. safeResolvedIPAddresses];
     }
 }

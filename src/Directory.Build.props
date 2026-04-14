@@ -38,6 +38,7 @@
   <PropertyGroup>
     <IsAotCompatible>true</IsAotCompatible>
     <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <EventSourceSupport>true</EventSourceSupport>
   </PropertyGroup>
 
   <Choose>

@@ -1,8 +1,9 @@
 #!/usr/bin/env dotnet
 
 #:sdk Microsoft.NET.Sdk.Web
-#:package idunno.Security.Ssrf@*
+#:package idunno.Security.Ssrf@4.0.0-prerelease.gbd71445a11
 #:property PublishAot=false
+using System.Net;
 using System.Text;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -117,6 +118,38 @@ try
     using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(allowInsecureProtocols: true)))
     {
         Console.WriteLine($"Making request to {hostUrl} with the SSRF handler, allowing insecure protocols");
+        var getResult = await client.GetAsync(hostUrl);
+        Console.WriteLine($"Status Code: {getResult.StatusCode}");
+    }
+}
+catch (Exception ex)
+{
+    var indent = 0;
+
+    Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+
+    while (ex.InnerException is not null)
+    {
+        indent += 2;
+        ex = ex.InnerException;
+
+        Console.Write(new string(' ', indent));
+        Console.WriteLine($"↳ {ex.GetType().Name} => {ex.Message}");
+    }
+}
+
+Console.WriteLine();
+
+hostUrl = "http://loopback.ssrf.fail:3000";
+try
+{
+    using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(
+            allowedHostnames: ["*.ssrf.fail"],
+            connectTimeout: new TimeSpan(0, 0, 5),
+            allowInsecureProtocols: true,
+            automaticDecompression: DecompressionMethods.All)))
+    {
+        Console.WriteLine($"Making request to {hostUrl} with the SSRF handler, safe listing *.ssrf.fail and allowing insecure protocols");
         var getResult = await client.GetAsync(hostUrl);
         Console.WriteLine($"Status Code: {getResult.StatusCode}");
     }

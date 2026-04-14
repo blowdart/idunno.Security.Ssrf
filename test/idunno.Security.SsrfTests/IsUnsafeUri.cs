@@ -1,9 +1,9 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
 namespace idunno.Security.SsrfTests;
 
-public class IsUnsafeUriTests
+public class IsUnsafeUri
 {
     [Theory]
     [InlineData("example.com")]
@@ -46,7 +46,7 @@ public class IsUnsafeUriTests
     [Theory]
     [InlineData(@"ftp://example.com")]
     [InlineData(@"telnet://exampe.com")]
-    [InlineData(@"ms-teams://exampe.com")]
+    [InlineData(@"ms-teams://example.com")]
     public void ReturnsTrueForUnsafeProtocols(string uriAsString)
     {
         Uri uri = new(uriAsString);

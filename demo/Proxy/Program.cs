@@ -1,4 +1,4 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Net;
@@ -28,8 +28,9 @@ var proxyUri = new Uri("http://127.0.0.1:8866");
 var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
     proxy: new WebProxy(proxyUri),
     connectionStrategy: ConnectionStrategy.None,
-    additionalUnsafeNetworks: null,
-    additionalUnsafeIpAddresses: null,
+    additionalUnsafeIPNetworks: null,
+    additionalUnsafeIPAddresses: null,
+    allowedHostnames: null,
     connectTimeout: TimeSpan.FromSeconds(1),
     allowInsecureProtocols: false,
     allowLoopback: false,
@@ -190,8 +191,9 @@ Console.WriteLine();
 
 var allowMixedSsrfHostValidationHandler = new ProxiedSsrfDelegatingHandler(
     connectionStrategy: ConnectionStrategy.None,
-    additionalUnsafeNetworks: null,
-    additionalUnsafeIpAddresses: null,
+    additionalUnsafeIPNetworks: null,
+    additionalUnsafeIPAddresses: null,
+    allowedHostnames: null,
     connectTimeout: TimeSpan.FromSeconds(1),
     allowInsecureProtocols: true, // Must allow insecure protocols for the proxy itself to work.
     allowLoopback: true, // Must allow loopback for the proxy itself to work.

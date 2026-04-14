@@ -1,6 +1,7 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Sockets;
 
@@ -11,7 +12,7 @@ namespace idunno.Security;
 /// </summary>
 public static class Ssrf
 {
-    private static readonly Func<string, CancellationToken, Task<IPHostEntry>> s_defaultHostEntryResolver = Dns.GetHostEntryAsync;
+    private static readonly Func<string, CancellationToken, Task<IPHostEntry>> s_defaultHostEntryAsyncResolver = Dns.GetHostEntryAsync;
 
     private static readonly IPNetwork[] s_ipv4UnsafeRanges =
         [
@@ -82,44 +83,9 @@ public static class Ssrf
             new (IPAddress.Parse("64:ff9b:1::"), 48),
 
             // IPv6 discard-only prefix https://datatracker.ietf.org/doc/html/rfc6666
-            // while this range silently drops traffic so there is no SSRF risk, bocking it prevents potential connection-hanging probes.
+            // while this range silently drops traffic so there is no SSRF risk, blocking it prevents potential connection-hanging probes.
             new (IPAddress.Parse("100::"), 64)
         ];
-
-    /// <summary>
-    /// Evaluates the given <paramref name="uri"/> to determine if it is potentially unsafe for use in server-side requests,
-    /// based on its protocol (HTTPS only), host name type, whether it is absolute, loopback, UNC, and its scheme.
-    /// </summary>
-    /// <param name="uri">The <see cref="Uri"/> to evaluate.</param>
-    /// <returns><see langword="true"/> if the <paramref name="uri" /> is potentially unsafe; otherwise, <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
-    public static bool IsUnsafeUri(Uri uri)
-    {
-        ArgumentNullException.ThrowIfNull(uri);
-
-        return IsUnsafeUri(
-            uri: uri,
-            allowInsecureProtocols: false,
-            allowLoopback: false);
-    }
-
-    /// <summary>
-    /// Evaluates the given <paramref name="uri"/> to determine if it is potentially unsafe for use in server-side requests,
-    /// based on its host name type, whether it is absolute, loopback, UNC, and its scheme.
-    /// </summary>
-    /// <param name="uri">The <see cref="Uri"/> to evaluate.</param>
-    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
-    /// <returns><see langword="true"/> if the <paramref name="uri" /> is potentially unsafe; otherwise, <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
-    public static bool IsUnsafeUri(Uri uri, bool allowInsecureProtocols)
-    {
-        ArgumentNullException.ThrowIfNull(uri);
-
-        return IsUnsafeUri(
-            uri: uri,
-            allowInsecureProtocols: allowInsecureProtocols,
-            allowLoopback: false);
-    }
 
     /// <summary>
     /// Evaluates the given <paramref name="uri"/> to determine if it is potentially unsafe for use in server-side requests,
@@ -128,20 +94,32 @@ public static class Ssrf
     /// <param name="uri">The <see cref="Uri"/> to evaluate.</param>
     /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
     /// <param name="allowLoopback">Flag indicating whether localhost URIs will be allowed or rejected.</param>
-    /// <returns><see langword="true"/> if the <paramref name="uri" /> is potentially unsafe; otherwise, <see langword="false"/>.</returns>
+    /// <param name="metrics">Optional <see cref="SsrfMetrics"/> instance to report metrics on unsafe evaluations of <paramref name="uri" />.</param>
+    /// <returns><see langword="true"/> if the <paramref name="uri" /> is considered unsafe; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
-    public static bool IsUnsafeUri(Uri uri, bool allowInsecureProtocols, bool allowLoopback)
+    public static bool IsUnsafeUri(
+        Uri uri,
+        bool allowInsecureProtocols = false,
+        bool allowLoopback = false,
+        SsrfMetrics? metrics = null)
     {
         ArgumentNullException.ThrowIfNull(uri);
 
-        if (!uri.IsAbsoluteUri ||
-            uri.IsUnc)
+        if (!uri.IsAbsoluteUri)
         {
+            metrics?.IncrementUnsafeUri(reason: "not_absolute_uri");
+            return true;
+        }
+
+        if (uri.IsUnc)
+        {
+            metrics?.IncrementUnsafeUri(reason: "unc_uri");
             return true;
         }
 
         if (uri.IsLoopback && !allowLoopback)
         {
+            metrics?.IncrementUnsafeUri(reason: "loopback_uri");
             return true;
         }
 
@@ -149,53 +127,24 @@ public static class Ssrf
             uri.HostNameType != UriHostNameType.IPv4 &&
             uri.HostNameType != UriHostNameType.IPv6)
         {
+            metrics?.IncrementUnsafeUri(reason: "unknown_host_name_type");
             return true;
         }
 
         // Uri class already normalizes scheme to lower case, so we can do a simple ordinal comparison here.
-        return uri.Scheme switch
+        bool isUnsafe = uri.Scheme switch
         {
             "https" or "wss" => false,
             "http" or "ws" when allowInsecureProtocols => false,
             _ => true
         };
-    }
 
-    /// <summary>
-    /// Evaluates the given <paramref name="ipAddress"/> to determine if it is potentially unsafe for use in server-side requests, based on its address type, whether it is unspecified, loopback, multicast, link-local, site-local, unique local,
-    /// and whether it falls within known unsafe IP network ranges.
-    /// </summary>
-    /// <param name="ipAddress">The <see cref="IPAddress"/> to evaluate.</param>
-    /// <returns><see langword="true"/> if the <paramref name="ipAddress" /> is potentially unsafe; otherwise, <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/>.</exception>
-    public static bool IsUnsafeIpAddress(IPAddress ipAddress)
-    {
-        ArgumentNullException.ThrowIfNull(ipAddress);
+        if (isUnsafe)
+        {
+            metrics?.IncrementUnsafeUri(reason: "unsafe_scheme", value: uri.Scheme);
+        }
 
-        return IsUnsafeIpAddress(
-            ipAddress: ipAddress,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
-            allowLoopback: false);
-    }
-
-    /// <summary>
-    /// Evaluates the given <paramref name="ipAddress"/> to determine if it is potentially unsafe for use in server-side requests, based on its address type, whether it is unspecified, loopback, multicast, link-local, site-local, unique local,
-    /// and whether it falls within known unsafe IP network ranges.
-    /// </summary>
-    /// <param name="ipAddress">The <see cref="IPAddress"/> to evaluate.</param>
-    /// <param name="allowLoopback">Indicates whether localhost addresses should be considered safe.</param>
-    /// <returns><see langword="true"/> if the <paramref name="ipAddress" /> is potentially unsafe; otherwise, <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/>.</exception>
-    public static bool IsUnsafeIpAddress(IPAddress ipAddress, bool allowLoopback)
-    {
-        ArgumentNullException.ThrowIfNull(ipAddress);
-
-        return IsUnsafeIpAddress(
-            ipAddress: ipAddress,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
-            allowLoopback: allowLoopback);
+        return isUnsafe;
     }
 
     /// <summary>
@@ -203,41 +152,30 @@ public static class Ssrf
     /// and whether it falls within known unsafe IP network ranges. Optional additional networks can be provided to consider as unsafe beyond the built-in defaults.
     /// </summary>
     /// <param name="ipAddress">The <see cref="IPAddress"/> to evaluate.</param>
-    /// <param name="additionalUnsafeNetworks">Optional additional networks to consider unsafe.</param>
-    /// <param name="additionalUnsafeIpAddresses">Optional additional IP addresses to consider unsafe.</param>
-    /// <returns><see langword="true"/> if the <paramref name="ipAddress" /> is potentially unsafe; otherwise, <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/>.</exception>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoids delegate allocation on hot path.")]
-    public static bool IsUnsafeIpAddress(
-        IPAddress ipAddress,
-        ICollection<IPNetwork>? additionalUnsafeNetworks,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses)
-    {
-        ArgumentNullException.ThrowIfNull(ipAddress);
-
-        return IsUnsafeIpAddress(
-            ipAddress: ipAddress,
-            additionalUnsafeNetworks: additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
-            allowLoopback: false);
-    }
-
-    /// <summary>
-    /// Evaluates the given <paramref name="ipAddress"/> to determine if it is potentially unsafe for use in server-side requests, based on its address type, whether it is unspecified, loopback, multicast, link-local, site-local, unique local,
-    /// and whether it falls within known unsafe IP network ranges. Optional additional networks can be provided to consider as unsafe beyond the built-in defaults.
-    /// </summary>
-    /// <param name="ipAddress">The <see cref="IPAddress"/> to evaluate.</param>
-    /// <param name="additionalUnsafeNetworks">Optional additional networks to consider unsafe.</param>
-    /// <param name="additionalUnsafeIpAddresses">Optional additional IP addresses to consider unsafe.</param>
+    /// <param name="additionalUnsafeIPNetworks">Optional additional networks to consider unsafe.</param>
+    /// <param name="additionalUnsafeIPAddresses">Optional additional IP addresses to consider unsafe.</param>
+    /// <param name="safeIPNetworks">Optional additional IP networks to consider safe, which can be used to allow specific safe ranges that would otherwise be blocked by the unsafe checks.</param>
+    /// <param name="safeIPAddresses">Optional additional IP addresses to consider safe, which can be used to allow specific safe addresses that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="allowLoopback">Indicates whether localhost addresses should be considered safe.</param>
-    /// <returns><see langword="true"/> if the <paramref name="ipAddress" /> is potentially unsafe; otherwise, <see langword="false"/>.</returns>
+    /// <param name="metrics">Optional <see cref="SsrfMetrics"/> instance to report metrics on unsafe evaluations of <paramref name="ipAddress" />.</param>
+    /// <returns><see langword="true"/> if the <paramref name="ipAddress" /> is considered unsafe; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/>.</exception>
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoids delegate allocation on hot path.")]
+    /// <remarks>
+    /// <para>
+    ///   Careless use of <paramref name="safeIPNetworks"/> and <paramref name="safeIPAddresses"/> can lead to security vulnerabilities by allowing potentially unsafe IP addresses or networks
+    ///   to be considered safe. Use with caution and constrain the values specified to the smallest network range or individual IP addresses possible.
+    ///   Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address matches both a safe and unsafe address, it will be considered safe.
+    ///</para>
+    /// </remarks>
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoids delegate allocation on hot path.")]
     public static bool IsUnsafeIpAddress(
         IPAddress ipAddress,
-        ICollection<IPNetwork>? additionalUnsafeNetworks,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses,
-        bool allowLoopback)
+        ICollection<IPNetwork>? additionalUnsafeIPNetworks = null,
+        ICollection<IPAddress>? additionalUnsafeIPAddresses = null,
+        ICollection<IPNetwork>? safeIPNetworks = null,
+        ICollection<IPAddress>? safeIPAddresses = null,
+        bool allowLoopback = false,
+        SsrfMetrics? metrics = null)
     {
         ArgumentNullException.ThrowIfNull(ipAddress);
 
@@ -247,47 +185,70 @@ public static class Ssrf
             ipAddress = ipAddress.MapToIPv4();
         }
 
+        // Perform safe list checks before unsafe checks so that specific safe addresses or networks can be allowed even if they would normally be blocked by the unsafe checks.
+        // This allows for more granular allow-listing of specific safe addresses or ranges without having to allow an entire larger network range that contains unsafe addresses.
+        if (safeIPAddresses is not null && safeIPAddresses.Contains(ipAddress))
+        {
+            return false;
+        }
+
+        if (safeIPNetworks is not null)
+        {
+            foreach (IPNetwork network in safeIPNetworks)
+            {
+                if (network.Contains(ipAddress))
+                {
+                    return false;
+                }
+            }
+        }
+
         // Allow override to consider localhost addresses as safe
         if (allowLoopback && IPAddress.IsLoopback(ipAddress))
         {
             return false;
         }
 
-        if (additionalUnsafeIpAddresses is not null && additionalUnsafeIpAddresses.Contains(ipAddress))
+        if (additionalUnsafeIPAddresses is not null && additionalUnsafeIPAddresses.Contains(ipAddress))
         {
+            metrics?.IncrementUnsafeIPAddress(reason: "in_additional_unsafe_ip_addresses");
             return true;
         }
 
-        // Block IPv6 unspecified address (::), IPv4 0.0.0.0 is covered by the 0.0.0.0/8 range.
-        if (ipAddress.Equals(IPAddress.IPv6None))
+        // Block none addresses 
+        if (ipAddress.Equals(IPAddress.None) || ipAddress.Equals(IPAddress.IPv6None))
         {
+            metrics?.IncrementUnsafeIPAddress(reason: "ip_none");
             return true;
         }
 
         // Block loopback: IPv4 127/8 and IPv6 ::1.
         if (IPAddress.IsLoopback(ipAddress))
         {
+            metrics?.IncrementUnsafeIPAddress(reason: "loopback");
             return true;
+        }
+
+        if (additionalUnsafeIPNetworks is not null)
+        {
+            foreach (IPNetwork network in additionalUnsafeIPNetworks)
+            {
+                if (network.Contains(ipAddress))
+                {
+                    metrics?.IncrementUnsafeIPAddress(reason: "in_additional_unsafe_ip_networks");
+                    return true;
+                }
+            }
         }
 
         if (ipAddress.AddressFamily == AddressFamily.InterNetwork)
         {
-            if (additionalUnsafeNetworks is not null)
-            {
-                foreach (IPNetwork network in additionalUnsafeNetworks)
-                {
-                    if (network.BaseAddress.AddressFamily == AddressFamily.InterNetwork &&
-                        network.Contains(ipAddress))
-                    {
-                        return true;
-                    }
-                }
-            }
 
             foreach (IPNetwork network in s_ipv4UnsafeRanges)
             {
                 if (network.Contains(ipAddress))
                 {
+                    metrics?.IncrementUnsafeIPAddress(reason: "in_default_blocks");
                     return true;
                 }
             }
@@ -297,30 +258,27 @@ public static class Ssrf
 
         if (ipAddress.AddressFamily == AddressFamily.InterNetworkV6)
         {
-            if (ipAddress.IsIPv6Multicast ||
-                ipAddress.IsIPv6LinkLocal ||
-                ipAddress.IsIPv6SiteLocal ||
-                ipAddress.IsIPv6UniqueLocal)
+            if (ipAddress.IsIPv6Multicast)
             {
+                metrics?.IncrementUnsafeIPAddress(reason: "ipv6_multicast");
                 return true;
             }
 
-            if (additionalUnsafeNetworks is not null)
+
+            if (ipAddress.IsIPv6LinkLocal ||
+                ipAddress.IsIPv6SiteLocal ||
+                ipAddress.IsIPv6UniqueLocal)
             {
-                foreach (IPNetwork network in additionalUnsafeNetworks)
-                {
-                    if (network.BaseAddress.AddressFamily == AddressFamily.InterNetworkV6 &&
-                        network.Contains(ipAddress))
-                    {
-                        return true;
-                    }
-                }
+                metrics?.IncrementUnsafeIPAddress(reason: "ipv6_local");
+                return true;
             }
+
 
             foreach (IPNetwork network in s_ipv6UnsafeRanges)
             {
                 if (network.Contains(ipAddress))
                 {
+                    metrics?.IncrementUnsafeIPAddress(reason: "in_default_blocks");
                     return true;
                 }
             }
@@ -329,164 +287,8 @@ public static class Ssrf
         }
 
         // Unknown address family: fail closed.
+        metrics?.IncrementUnsafeIPAddress(reason: "unknown_address_family");
         return true;
-    }
-
-    /// <summary>
-    /// Implements simple SSRF validation on the specified <paramref name="uri"/> by checking 
-    /// its protocol (HTTPS only), host name type, whether it is absolute, loopback, UNC, and its scheme, and that
-    /// the host resolves to a public IP address which is not in a known unsafe range.
-    /// </summary>
-    /// <param name="uri">The <see cref="Uri"/> to validate.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <returns><see langword="true" /> if the <paramref name="uri" /> is considered safe, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
-    public static Task<bool> IsUnsafe(Uri uri, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(uri);
-
-        return IsUnsafe(
-            uri: uri,
-            allowInsecureProtocols: false,
-            allowLoopback: false,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
-            hostEntryResolver: null,
-            cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// Implements simple SSRF validation on the specified <paramref name="uri"/> by checking 
-    /// its protocol (HTTPS only), host name type, whether it is absolute, loopback, UNC, and its scheme, and that
-    /// the host resolves to a public IP address which is not in a known unsafe range.
-    /// </summary>
-    /// <param name="uri">The <see cref="Uri"/> to validate.</param>
-    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <returns><see langword="true" /> if the <paramref name="uri" /> is considered safe, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
-    public static Task<bool> IsUnsafe(Uri uri, bool allowInsecureProtocols, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(uri);
-
-        return IsUnsafe(
-            uri: uri,
-            allowInsecureProtocols: allowInsecureProtocols,
-            allowLoopback: false,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
-            hostEntryResolver: null,
-            cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// Implements simple SSRF validation on the specified <paramref name="uri"/> by checking 
-    /// its protocol (HTTPS only), host name type, whether it is absolute, loopback, UNC, and its scheme, and that
-    /// the host resolves to a public IP address which is not in a known unsafe range.
-    /// </summary>
-    /// <param name="uri">The <see cref="Uri"/> to validate.</param>
-    /// <param name="additionalUnsafeNetworks">Additional IP networks to consider unsafe.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <returns><see langword="true" /> if the <paramref name="uri" /> is considered safe, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> or <paramref name="additionalUnsafeNetworks"/> is <see langword="null"/>.</exception>
-    public static Task<bool> IsUnsafe(Uri uri, ICollection<IPNetwork> additionalUnsafeNetworks, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(uri);
-        ArgumentNullException.ThrowIfNull(additionalUnsafeNetworks);
-
-        return IsUnsafe(
-            uri: uri,
-            allowInsecureProtocols: false,
-            allowLoopback: false,
-            additionalUnsafeNetworks: additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: null,
-            hostEntryResolver: null,
-            cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// Implements simple SSRF validation on the specified <paramref name="uri"/> by checking 
-    /// its protocol (HTTPS only), host name type, whether it is absolute, loopback, UNC, and its scheme, and that
-    /// the host resolves to a public IP address which is not in a known unsafe range.
-    /// </summary>
-    /// <param name="uri">The <see cref="Uri"/> to validate.</param>
-    /// <param name="additionalUnsafeIpAddresses">Additional IP addresses to consider unsafe.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <returns><see langword="true" /> if the <paramref name="uri" /> is considered safe, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> or <paramref name="additionalUnsafeIpAddresses"/> is <see langword="null"/>.</exception>
-    public static Task<bool> IsUnsafe(Uri uri, ICollection<IPAddress> additionalUnsafeIpAddresses, CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(uri);
-        ArgumentNullException.ThrowIfNull(additionalUnsafeIpAddresses);
-
-        return IsUnsafe(
-            uri: uri,
-            allowInsecureProtocols: false,
-            allowLoopback: false,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
-            hostEntryResolver: null,
-            cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// Implements simple SSRF validation on the specified <paramref name="uri"/> by checking 
-    /// its protocol (HTTPS only), host name type, whether it is absolute, loopback, UNC, and its scheme, and that
-    /// the host resolves to a public IP address which is not in a known unsafe range.
-    /// </summary>
-    /// <param name="uri">The <see cref="Uri"/> to validate.</param>
-    /// <param name="additionalUnsafeNetworks">Optional additional networks to consider unsafe.</param>
-    /// <param name="additionalUnsafeIpAddresses">Optional additional IP addresses to consider unsafe.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <returns><see langword="true" /> if the <paramref name="uri" /> is considered safe, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
-    public static Task<bool> IsUnsafe(
-        Uri uri,
-        ICollection<IPNetwork>? additionalUnsafeNetworks,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(uri);
-
-        return IsUnsafe(
-            uri: uri,
-            allowInsecureProtocols: false,
-            allowLoopback: false,
-            additionalUnsafeNetworks: additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
-            hostEntryResolver: null,
-            cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// Implements simple SSRF validation on the specified <paramref name="uri"/> by checking 
-    /// its protocol (HTTPS only), host name type, whether it is absolute, loopback, UNC, and its scheme, and that
-    /// the host resolves to a public IP address which is not in a known unsafe range.
-    /// </summary>
-    /// <param name="uri">The <see cref="Uri"/> to validate.</param>
-    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
-    /// <param name="additionalUnsafeNetworks">Optional additional networks to consider unsafe.</param>
-    /// <param name="additionalUnsafeIpAddresses">Optional additional IP addresses to consider unsafe.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <returns><see langword="true" /> if the <paramref name="uri" /> is considered safe, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
-    public static Task<bool> IsUnsafe(
-        Uri uri,
-        bool allowInsecureProtocols,
-        ICollection<IPNetwork>? additionalUnsafeNetworks,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(uri);
-
-        return IsUnsafe(
-            uri: uri,
-            allowInsecureProtocols: allowInsecureProtocols,
-            allowLoopback: false,
-            additionalUnsafeNetworks: additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
-            hostEntryResolver: null,
-            cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -497,49 +299,80 @@ public static class Ssrf
     /// <param name="uri">The <see cref="Uri"/> to validate.</param>
     /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
     /// <param name="allowLoopback">Flag indicating whether localhost URIs will be allowed or rejected.</param>
-    /// <param name="additionalUnsafeNetworks">Optional additional networks to consider unsafe.</param>
-    /// <param name="additionalUnsafeIpAddresses">Optional additional IP addresses to consider unsafe.</param>
+    /// <param name="additionalUnsafeIPNetworks">Optional additional networks to consider unsafe.</param>
+    /// <param name="additionalUnsafeIPAddresses">Optional additional IP addresses to consider unsafe.</param>
+    /// <param name="allowedHostnames">
+    ///     Gets or sets an optional collection of hostnames that are allowed to bypass SSRF IP address protections.
+    ///     This can be used to allow specific trusted hosts names.
+    ///     Wild cards are supported only at the start of the hostname, and must be followed by a dot
+    ///     (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
+    /// </param>
+    /// <param name="safeIPNetworks">Optional additional IP networks to consider safe, which can be used to allow specific safe ranges that would otherwise be blocked by the unsafe checks.</param>
+    /// <param name="safeIPAddresses">Optional additional IP addresses to consider safe, which can be used to allow specific safe addresses that would otherwise be blocked by the unsafe checks.</param>
+    /// <param name="metrics">Optional <see cref="SsrfMetrics"/> instance to report metrics on unsafe evaluations of <paramref name="uri" /> and related IP address checks.</param>
     /// <param name="cancellationToken">A cancellation token that can be used by other objects or threads to receive notice of cancellation.</param>
-    /// <returns><see langword="true" /> if the <paramref name="uri" /> is considered safe, otherwise <see langword="false"/>.</returns>
+    /// <returns><see langword="true" /> if the <paramref name="uri" /> is considered unsafe, otherwise <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
+    /// <remarks>
+    /// <para>
+    ///   Careless use of <paramref name="safeIPNetworks"/> and <paramref name="safeIPAddresses"/> can lead to security vulnerabilities by allowing potentially unsafe IP addresses or networks
+    ///   to be considered safe. Use with caution and constrain the values specified to the smallest network range or individual IP addresses needed.
+    ///   Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address matches both a safe and unsafe address, or is within a safe network,
+    ///   it will be considered safe.
+    ///</para>
+    /// </remarks>
     public static Task<bool> IsUnsafe(
         Uri uri,
-        bool allowInsecureProtocols,
-        bool allowLoopback,
-        ICollection<IPNetwork>? additionalUnsafeNetworks,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses,
+        bool allowInsecureProtocols = false,
+        bool allowLoopback = false,
+        ICollection<IPNetwork>? additionalUnsafeIPNetworks = null,
+        ICollection<IPAddress>? additionalUnsafeIPAddresses = null,
+        ICollection<string>? allowedHostnames = null,
+        ICollection<IPNetwork>? safeIPNetworks = null,
+        ICollection<IPAddress>? safeIPAddresses = null,
+        SsrfMetrics? metrics = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(uri);
 
-        return IsUnsafe(
+        return InternalIsUnsafe(
             uri: uri,
             allowInsecureProtocols: allowInsecureProtocols,
             allowLoopback: allowLoopback,
-            additionalUnsafeNetworks: additionalUnsafeNetworks,
-            additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
+            additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+            additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
+            allowedHostnames: allowedHostnames,
+            safeIPNetworks: safeIPNetworks,
+            safeIPAddresses: safeIPAddresses,
+            metrics: metrics,
             hostEntryResolver: null,
             cancellationToken: cancellationToken);
     }
 
-    [System.Diagnostics.CodeAnalysis.SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoids delegate allocation on hot path.")]
-    internal static async Task<bool> IsUnsafe(
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoids delegate allocation on hot path.")]
+    [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Catch any exception to fail close.")]
+    internal static async Task<bool> InternalIsUnsafe(
         Uri uri,
         bool allowInsecureProtocols,
         bool allowLoopback,
-        ICollection<IPNetwork>? additionalUnsafeNetworks,
-        ICollection<IPAddress>? additionalUnsafeIpAddresses,
-        Func<string, CancellationToken, Task<IPHostEntry>>? hostEntryResolver = null,
-        CancellationToken cancellationToken = default)
+        ICollection<IPNetwork>? additionalUnsafeIPNetworks,
+        ICollection<IPAddress>? additionalUnsafeIPAddresses,
+        ICollection<string>? allowedHostnames,
+        ICollection<IPNetwork>? safeIPNetworks,
+        ICollection<IPAddress>? safeIPAddresses,
+        SsrfMetrics? metrics,
+        Func<string, CancellationToken, Task<IPHostEntry>>? hostEntryResolver,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(uri);
 
-        hostEntryResolver ??= s_defaultHostEntryResolver;
+        hostEntryResolver ??= s_defaultHostEntryAsyncResolver;
 
         if (IsUnsafeUri(
             uri: uri,
             allowInsecureProtocols: allowInsecureProtocols,
-            allowLoopback: allowLoopback))
+            allowLoopback: allowLoopback,
+            metrics: metrics))
         {
             return true;
         }
@@ -550,12 +383,29 @@ public static class Ssrf
 
             return IsUnsafeIpAddress(
                 ipAddress: ipAddress,
-                additionalUnsafeNetworks: additionalUnsafeNetworks,
-                additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
-                allowLoopback: allowLoopback);
+                additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+                additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
+                safeIPNetworks: safeIPNetworks,
+                safeIPAddresses: safeIPAddresses,
+                allowLoopback: allowLoopback,
+                metrics: metrics);
         }
 
-        IPHostEntry? hostEntry = await hostEntryResolver(uri.Host, cancellationToken).ConfigureAwait(false);
+        if (IsInAllowedHostnames(uri, allowedHostnames))
+        {
+            return false;
+        }
+
+        IPHostEntry? hostEntry;
+        try
+        {
+            hostEntry = await hostEntryResolver(uri.Host, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            return true;
+        }
+
         if (hostEntry is null || hostEntry.AddressList.Length == 0)
         {
             return true;
@@ -565,14 +415,92 @@ public static class Ssrf
         {
             if (IsUnsafeIpAddress(
                 ipAddress: ipAddress,
-                additionalUnsafeNetworks: additionalUnsafeNetworks,
-                additionalUnsafeIpAddresses: additionalUnsafeIpAddresses,
-                allowLoopback: allowLoopback))
+                additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+                additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
+                safeIPNetworks: safeIPNetworks,
+                safeIPAddresses: safeIPAddresses,
+                allowLoopback: allowLoopback,
+                metrics: metrics))
             {
                 return true;
             }
         }
 
+        return false;
+    }
+
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
+    internal static bool IsInAllowedHostnames(Uri uri, IEnumerable<string>? allowedHostnames)
+    {
+        if (uri is null)
+        {
+            return false;
+        }
+
+        if (allowedHostnames is null)
+        {
+            return false;
+        }
+
+        foreach (string safeHostName in allowedHostnames)
+        {
+            bool isWildcard = safeHostName.StartsWith("*.", StringComparison.OrdinalIgnoreCase) && safeHostName != "*.";
+
+            if (!isWildcard && string.Equals(uri.Host, safeHostName, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+            else if (isWildcard && uri.Host.EndsWith(safeHostName[1..], StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
+    internal static bool IsInAllowedNetworks(IPAddress ipAddress, IEnumerable<IPNetwork>? allowedIPNetworks)
+    {
+        if (ipAddress is null)
+        {
+            return false;
+        }
+
+        if (allowedIPNetworks is null)
+        {
+            return false;
+        }
+
+        foreach (IPNetwork network in allowedIPNetworks)
+        {
+            if (network.Contains(ipAddress))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
+    internal static bool IsInAllowedIpAddresses(IPAddress ipAddress, IEnumerable<IPAddress>? allowedIPAddresses)
+    {
+        if (ipAddress is null)
+        {
+            return false;
+        }
+        if (allowedIPAddresses is null)
+        {
+            return false;
+        }
+        foreach (IPAddress allowedIp in allowedIPAddresses)
+        {
+            if (ipAddress.Equals(allowedIp))
+            {
+                return true;
+            }
+        }
         return false;
     }
 }

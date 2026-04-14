@@ -1,10 +1,11 @@
-﻿name: CI Build
+name: CI Build
 
 on:
   workflow_dispatch:
   push:
     branches:
       - 'main'
+      - 'dev/*'
       - 'version/*'
     paths-ignore:
       - 'docs/**'

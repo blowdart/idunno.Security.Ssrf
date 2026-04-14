@@ -1,11 +1,11 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Net;
 
 namespace idunno.Security.SsrfTests;
 
-public class IsUnsafeTests
+public class IsUnsafe
 {
     [Fact]
     public async Task ThrowsArgumentNullExceptionIfUriIsNull()
@@ -132,12 +132,12 @@ public class IsUnsafeTests
         Assert.True(await Ssrf.IsUnsafe(
             new Uri($"https://{ipAddressAsString}"),
             allowInsecureProtocols: false,
-            additionalUnsafeNetworks:
+            additionalUnsafeIPNetworks:
             [
                 IPNetwork.Parse("104.16.0.0/12"),
                 IPNetwork.Parse("2620:1ec::/36"),
             ],
-            additionalUnsafeIpAddresses: null,
+            additionalUnsafeIPAddresses: null,
             cancellationToken: TestContext.Current.CancellationToken));
     }
 
@@ -151,8 +151,8 @@ public class IsUnsafeTests
         Assert.True(await Ssrf.IsUnsafe(
             new Uri($"https://{ipAddressAsString}"),
             allowInsecureProtocols: false,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses:
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses:
             [
                 IPAddress.Parse("104.18.26.120"),
                 IPAddress.Parse("104.18.27.120"),
@@ -172,12 +172,12 @@ public class IsUnsafeTests
         Assert.True(await Ssrf.IsUnsafe(
             new Uri($"https://{ipAddressAsString}"),
             allowInsecureProtocols: false,
-            additionalUnsafeNetworks:
+            additionalUnsafeIPNetworks:
             [
                 IPNetwork.Parse("104.16.0.0/12"),
                 IPNetwork.Parse("2620:1ec::/36"),
             ],
-            additionalUnsafeIpAddresses:
+            additionalUnsafeIPAddresses:
             [
                 IPAddress.Parse("104.18.26.120"),
                 IPAddress.Parse("104.18.27.120"),
@@ -423,13 +423,17 @@ public class IsUnsafeTests
             return Task.FromResult(new IPHostEntry { AddressList = [] });
         }
 
-        Assert.True(await Ssrf.IsUnsafe(
+        Assert.True(await Ssrf.InternalIsUnsafe(
             uri: new Uri("https://example.com"),
             allowInsecureProtocols: false,
             allowLoopback: false,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPNetworks: null,
+            safeIPAddresses: null,
             hostEntryResolver: emptyResolver,
+            metrics: null,
             cancellationToken: TestContext.Current.CancellationToken));
     }
 
@@ -439,12 +443,16 @@ public class IsUnsafeTests
     [InlineData("[::1]")]
     public async Task ReturnsFalseForLocalhostAndLoopbackAddressesIfAllowLoopbackIsTrue(string host)
     {
-        Assert.False(await Ssrf.IsUnsafe(
+        Assert.False(await Ssrf.InternalIsUnsafe(
             new Uri($"https://{host}/"),
             allowInsecureProtocols: false,
             allowLoopback: true,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPNetworks: null,
+            safeIPAddresses: null,
+            metrics: null,
             hostEntryResolver: null,
             cancellationToken: TestContext.Current.CancellationToken));
     }
@@ -455,13 +463,80 @@ public class IsUnsafeTests
     [InlineData("[::1]")]
     public async Task ReturnsTrueForLocalhostAndLoopbackAddressesIfAllowLoopbackIsTrueAndAllowInsecureProtocolsIsFalse(string host)
     {
-        Assert.True(await Ssrf.IsUnsafe(
+        Assert.True(await Ssrf.InternalIsUnsafe(
             new Uri($"http://{host}/"),
             allowInsecureProtocols: false,
             allowLoopback: true,
-            additionalUnsafeNetworks: null,
-            additionalUnsafeIpAddresses: null,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPNetworks: null,
+            safeIPAddresses: null,
+            metrics: null,
             hostEntryResolver: null,
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task ReturnsFalseIfTheUriIsInASafeListedDomainAndHasAnSafeProtocol()
+    {
+        static Task<IPHostEntry> hostEntryResolver(string host, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new IPHostEntry { AddressList =
+                [
+                    IPAddress.Parse("127.0.0.1"),
+                    IPAddress.Parse("::1")
+                ] });
+        }
+
+        Assert.False(await Ssrf.InternalIsUnsafe(
+            new Uri("https://api.example.localhost/"),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: ["*.example.localhost"],
+            safeIPNetworks: null,
+            safeIPAddresses: null,
+            metrics: null,
+            hostEntryResolver: hostEntryResolver,
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task ReturnsFalseForDefaultUnsafeAddressIfItIsInTheSafeIpAddressesCollection()
+    {
+        Assert.False(await Ssrf.IsUnsafe(
+            new Uri("https://loopback.ssrf.fail"),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPAddresses:
+            [
+                IPAddress.Parse("127.0.0.1"),
+                IPAddress.Parse("::1")
+            ],
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task ReturnsFalseForDefaultUnsafeAddressIfItIsWithinANetworkSpecifiedInSafeNetworksCollection()
+    {
+        Assert.False(await Ssrf.IsUnsafe(
+            new Uri("https://loopback.ssrf.fail"),
+            allowInsecureProtocols: false,
+            allowLoopback: false,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPNetworks:
+            [
+                IPNetwork.Parse("127.0.0.0/8"),
+                IPNetwork.Parse("::1/128")
+            ],
+            safeIPAddresses: null,
             cancellationToken: TestContext.Current.CancellationToken));
     }
 }
