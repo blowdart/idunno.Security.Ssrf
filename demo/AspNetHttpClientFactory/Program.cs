@@ -3,7 +3,7 @@
 
 using idunno.Security;
 
-var builder = WebApplication.CreateBuilder(args);
+WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorPages();
@@ -13,7 +13,7 @@ builder.Services.ConfigureHttpClientDefaults(configure =>
     configure.ConfigurePrimaryHttpMessageHandler(() => SsrfSocketsHttpHandlerFactory.Create(allowInsecureProtocols: true))
 );
 
-var app = builder.Build();
+WebApplication app = builder.Build();
 
 app.UseRouting();
 

@@ -141,7 +141,7 @@ public static class Ssrf
 
         if (isUnsafe)
         {
-            metrics?.IncrementUnsafeUri(reason: uri.Scheme);
+            metrics?.IncrementUnsafeUri(reason: "unsafe_scheme", value: uri.Scheme);
         }
 
         return isUnsafe;
@@ -286,8 +286,8 @@ public static class Ssrf
             return false;
         }
 
-        metrics?.IncrementUnsafeIPAddress(reason: "unknown_address_family");
         // Unknown address family: fail closed.
+        metrics?.IncrementUnsafeIPAddress(reason: "unknown_address_family");
         return true;
     }
 

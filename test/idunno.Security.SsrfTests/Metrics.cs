@@ -33,7 +33,9 @@ public class Metrics
         IReadOnlyList<CollectedMeasurement<long>> unsafeUriMeasurements = unsafeUriCounter.GetMeasurementSnapshot();
         Assert.Single(unsafeUriMeasurements);
         Assert.True(unsafeUriMeasurements[0].ContainsTags("reason"));
-        Assert.Equal("http", unsafeUriMeasurements[0].Tags["reason"]);
+        Assert.Equal("unsafe_scheme", unsafeUriMeasurements[0].Tags["reason"]);
+        Assert.True(unsafeUriMeasurements[0].ContainsTags("value"));
+        Assert.Equal("http", unsafeUriMeasurements[0].Tags["value"]);
 
         IReadOnlyList<CollectedMeasurement<long>> unsafeIpAddressMeasurements = unsafeIpAddressCounter.GetMeasurementSnapshot();
         Assert.Empty(unsafeIpAddressMeasurements);
@@ -58,7 +60,9 @@ public class Metrics
         IReadOnlyList<CollectedMeasurement<long>> unsafeUriMeasurements = unsafeUriCounter.GetMeasurementSnapshot();
         Assert.Single(unsafeUriMeasurements);
         Assert.True(unsafeUriMeasurements[0].ContainsTags("reason"));
-        Assert.Equal("ws", unsafeUriMeasurements[0].Tags["reason"]);
+        Assert.Equal("unsafe_scheme", unsafeUriMeasurements[0].Tags["reason"]);
+        Assert.True(unsafeUriMeasurements[0].ContainsTags("value"));
+        Assert.Equal("ws", unsafeUriMeasurements[0].Tags["value"]);
 
         IReadOnlyList<CollectedMeasurement<long>> unsafeIpAddressMeasurements = unsafeIpAddressCounter.GetMeasurementSnapshot();
         Assert.Empty(unsafeIpAddressMeasurements);
@@ -180,6 +184,58 @@ public class Metrics
         Assert.Single(unsafeUriMeasurements);
         Assert.True(unsafeUriMeasurements[0].ContainsTags("reason"));
         Assert.Equal("loopback_uri", unsafeUriMeasurements[0].Tags["reason"]);
+
+        IReadOnlyList<CollectedMeasurement<long>> unsafeIpAddressMeasurements = unsafeIpAddressCounter.GetMeasurementSnapshot();
+        Assert.Empty(unsafeIpAddressMeasurements);
+    }
+
+    [Fact]
+    public void IsUnsafeUriIncrementsMetricsWithUnknownAddressFamily()
+    {
+        IServiceProvider services = CreateServiceProvider();
+        IMeterFactory meterFactory = services.GetRequiredService<IMeterFactory>();
+        SsrfMetrics metrics = services.GetRequiredService<SsrfMetrics>();
+
+        var blockedRequestsCounter = new MetricCollector<long>(meterFactory, SsrfMetrics.MeterName, BlockedRequestsInstrumentName);
+        var unsafeUriCounter = new MetricCollector<long>(meterFactory, SsrfMetrics.MeterName, UnsafeUriInstrumentName);
+        var unsafeIpAddressCounter = new MetricCollector<long>(meterFactory, SsrfMetrics.MeterName, UnsafeIPAddressInstrumentName);
+
+        Assert.True(Ssrf.IsUnsafeUri(new Uri("ms-teams:foo"), metrics: metrics));
+
+        IReadOnlyList<CollectedMeasurement<long>> blockedRequestMeasurements = blockedRequestsCounter.GetMeasurementSnapshot();
+        Assert.Empty(blockedRequestMeasurements);
+
+        IReadOnlyList<CollectedMeasurement<long>> unsafeUriMeasurements = unsafeUriCounter.GetMeasurementSnapshot();
+        Assert.Single(unsafeUriMeasurements);
+        Assert.True(unsafeUriMeasurements[0].ContainsTags("reason"));
+        Assert.Equal("unknown_host_name_type", unsafeUriMeasurements[0].Tags["reason"]);
+
+        IReadOnlyList<CollectedMeasurement<long>> unsafeIpAddressMeasurements = unsafeIpAddressCounter.GetMeasurementSnapshot();
+        Assert.Empty(unsafeIpAddressMeasurements);
+    }
+
+    [Fact]
+    public void IsUnsafeUriIncrementsMetricsWithUnknownScheme()
+    {
+        IServiceProvider services = CreateServiceProvider();
+        IMeterFactory meterFactory = services.GetRequiredService<IMeterFactory>();
+        SsrfMetrics metrics = services.GetRequiredService<SsrfMetrics>();
+
+        var blockedRequestsCounter = new MetricCollector<long>(meterFactory, SsrfMetrics.MeterName, BlockedRequestsInstrumentName);
+        var unsafeUriCounter = new MetricCollector<long>(meterFactory, SsrfMetrics.MeterName, UnsafeUriInstrumentName);
+        var unsafeIpAddressCounter = new MetricCollector<long>(meterFactory, SsrfMetrics.MeterName, UnsafeIPAddressInstrumentName);
+
+        Assert.True(Ssrf.IsUnsafeUri(new Uri("gopher://example.org"), metrics: metrics));
+
+        IReadOnlyList<CollectedMeasurement<long>> blockedRequestMeasurements = blockedRequestsCounter.GetMeasurementSnapshot();
+        Assert.Empty(blockedRequestMeasurements);
+
+        IReadOnlyList<CollectedMeasurement<long>> unsafeUriMeasurements = unsafeUriCounter.GetMeasurementSnapshot();
+        Assert.Single(unsafeUriMeasurements);
+        Assert.True(unsafeUriMeasurements[0].ContainsTags("reason"));
+        Assert.Equal("unsafe_scheme", unsafeUriMeasurements[0].Tags["reason"]);
+        Assert.True(unsafeUriMeasurements[0].ContainsTags("value"));
+        Assert.Equal("gopher", unsafeUriMeasurements[0].Tags["value"]);
 
         IReadOnlyList<CollectedMeasurement<long>> unsafeIpAddressMeasurements = unsafeIpAddressCounter.GetMeasurementSnapshot();
         Assert.Empty(unsafeIpAddressMeasurements);

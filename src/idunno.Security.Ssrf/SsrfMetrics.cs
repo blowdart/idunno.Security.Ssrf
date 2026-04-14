@@ -1,8 +1,9 @@
-﻿// Copyright (c) Barry Dorrans. All rights reserved.
+// Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
+using System.Net.WebSockets;
 
 namespace idunno.Security;
 
@@ -15,6 +16,7 @@ public sealed class SsrfMetrics
     private static readonly Meter s_meter = new(MeterName, MeterVersion);
 
     private const string ReasonTagName = "reason";
+    private const string ValueTagName = "value";
 
     private Counter<long> _blockedRequests;
     private Counter<long> _unsafeUri;
@@ -53,9 +55,17 @@ public sealed class SsrfMetrics
         _blockedRequests.Add(count);
     }
 
-    internal void IncrementUnsafeUri(int count = 1, string? reason = default)
+    internal void IncrementUnsafeUri(int count = 1, string? reason = default, string? value = default)
     {
-        _unsafeUri.Add(count, new KeyValuePair<string, object?>(ReasonTagName, reason));
+        if (string.IsNullOrEmpty(value))
+        {
+            _unsafeUri.Add(count, new KeyValuePair<string, object?>(ReasonTagName, reason));
+        }
+        else
+        {
+            _unsafeUri.Add(count, new KeyValuePair<string, object?>(ReasonTagName, reason), new KeyValuePair<string, object?>(ValueTagName, value));
+
+        }
     }
 
     internal void IncrementUnsafeIPAddress(int count = 1, string? reason = default)
