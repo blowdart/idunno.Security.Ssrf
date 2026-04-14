@@ -1,0 +1,35 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "SSRF Protection Test";
+}
+
+<div>
+    <p>✅ Entering <code>http://example.org</code> should display a status code of 200.</p>
+    <p>❎ Entering <code>http://localhost</code> should throw an exception that the URI is unsafe.</p>
+    <p>❎ Entering <code>http://loopback.ssrf.fail</code> should throw an exception that all the resolve IP addresses are unsafe.</p>
+
+    @using (Html.BeginForm(FormMethod.Post))
+    {
+        <fieldset>
+            <legend>Test SSRF Protection</legend>
+            <div>
+                @Html.LabelFor(Model => Model.TestUri, "Url to test:", new { @class = "control-label" })
+                @Html.TextBoxFor(Model => Model.TestUri, new { @class = "form-control", @placeholder="https://" })
+                <span asp-validation-for="TestUri" class="text-danger"></span>
+            </div>
+            <div>
+                <br />
+                <input type="submit" value="go" class="btn btn-primary" />
+            </div>
+        </fieldset>
+    }
+
+    @if (Model.ResultStatusCode is not null)
+    {
+        <div>
+            <h3>Result</h3>
+            <p>Status Code: @Model.ResultStatusCode</p>
+        </div>
+    }
+</div>

@@ -1,0 +1,41 @@
+ .github/workflows/actions-security-analysis.yml    |    6 [32m+[m[31m-[m
+ .github/workflows/ci-build.yml                     |    3 [32m+[m[31m-[m
+ .github/workflows/codeql.yml                       |    8 [32m+[m[31m-[m
+ .github/workflows/dependency-review.yml            |    4 [32m+[m[31m-[m
+ .github/workflows/release.yml                      |   24 [32m+[m[31m-[m
+ .gitignore                                         |   14 [32m+[m[31m-[m
+ CHANGELOG.md                                       |   31 [32m+[m[31m-[m
+ Directory.Packages.props                           |   39 [32m+[m[31m-[m
+ demo/ConsoleDemo/Program.cs                        |   37 [32m+[m[31m-[m
+ demo/DelegatingHttpHandler/Program.cs              |   27 [32m+[m[31m-[m
+ demo/Proxy/Program.cs                              |   12 [32m+[m[31m-[m
+ docs/.editorconfig                                 |    3 [32m+[m[31m-[m
+ docs/code/TestApp/TestApp.cs                       |   35 [32m+[m[31m-[m
+ docs/code/TestApp/nuget.config                     |   17 [32m+[m
+ docs/docs/configuration.md                         |   42 [32m+[m[31m-[m
+ docs/docs/metrics.md                               |   39 [32m+[m
+ docs/toc.yml                                       |    3 [32m+[m[31m-[m
+ idunno.Security.Ssrf.slnx                          |    2 [32m+[m
+ src/Directory.Build.props                          |    1 [32m+[m
+ src/idunno.Security.Ssrf/CommonFunctions.cs        |  145 [32m++[m[31m-[m
+ src/idunno.Security.Ssrf/Log.cs                    |   12 [32m+[m[31m-[m
+ .../ProxiedSsrfDelegatingHandler.cs                |  712 [32m+++[m[31m---------[m
+ src/idunno.Security.Ssrf/Ssrf.cs                   |  544 [32m++++[m[31m-----[m
+ src/idunno.Security.Ssrf/SsrfMetrics.cs            |   85 [32m++[m
+ src/idunno.Security.Ssrf/SsrfOptions.cs            |   46 [32m+[m[31m-[m
+ .../SsrfSocketsHttpHandlerFactory.cs               | 1042 [32m++[m[31m---------------[m
+ .../idunno.Security.Ssrf.csproj                    |    1 [32m+[m
+ .../IsInAllowedHostNames.cs                        |   81 [32m++[m
+ .../IsInAllowedIpAddresses.cs                      |  131 [32m+++[m
+ .../IsInAllowedNetworks.cs                         |  103 [32m++[m
+ .../{IsUnsafeTests.cs => IsUnsafe.cs}              |  109 [32m+[m[31m-[m
+ ...nsafeIpAddressTests.cs => IsUnsafeIpAddress.cs} |   45 [32m+[m[31m-[m
+ .../{IsUnsafeUriTests.cs => IsUnsafeUri.cs}        |    6 [32m+[m[31m-[m
+ test/idunno.Security.SsrfTests/Metrics.cs          |  525 [32m+++++++++[m
+ .../ProxiedSsrfDelegatingHandler.cs                | 1123 [32m+++++++++++++++++++[m
+ .../ProxiedSsrfDelegatingHandlerTests.cs           |  629 [31m-----------[m
+ .../SsrfSocketsHttpHandlerFactory.cs               | 1170 [32m++++++++++++++++++++[m
+ .../SsrfSocketsHttpHandlerFactoryTests.cs          |  567 [31m----------[m
+ .../idunno.Security.SsrfTests.csproj               |    5 [32m+[m
+ version.json                                       |    2 [32m+[m[31m-[m
+ 40 files changed, 4264 insertions(+), 3166 deletions(-)
