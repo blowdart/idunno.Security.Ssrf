@@ -1076,6 +1076,15 @@ public sealed class SsrfSocketsHttpHandlerFactory
                     try
                     {
                         socket.NoDelay = true;
+                    }
+                    catch
+                    {
+                        socket.Dispose();
+                        throw;
+                    }
+
+                    try
+                    {
                         await socket.ConnectAsync(new IPEndPoint(ipAddress, context.DnsEndPoint.Port), cancellationToken).ConfigureAwait(false);
                         return new NetworkStream(socket, ownsSocket: true);
                     }
