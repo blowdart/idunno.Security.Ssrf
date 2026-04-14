@@ -107,7 +107,7 @@ public static class Ssrf
 
         if (!uri.IsAbsoluteUri)
         {
-            metrics?.IncrementUnsafeUri(reason: "absolute_uri");
+            metrics?.IncrementUnsafeUri(reason: "not_absolute_uri");
             return true;
         }
 
@@ -127,7 +127,7 @@ public static class Ssrf
             uri.HostNameType != UriHostNameType.IPv4 &&
             uri.HostNameType != UriHostNameType.IPv6)
         {
-            metrics?.IncrementUnsafeUri(reason: "unknown_host__name_type");
+            metrics?.IncrementUnsafeUri(reason: "unknown_host_name_type");
             return true;
         }
 
@@ -215,10 +215,10 @@ public static class Ssrf
             return true;
         }
 
-        // Block IPv6 unspecified address (::), IPv4 0.0.0.0 is covered by the 0.0.0.0/8 range.
-        if (ipAddress.Equals(IPAddress.IPv6None))
+        // Block unspecified addresses 
+        if (ipAddress.Equals(IPAddress.None) || ipAddress.Equals(IPAddress.IPv6None))
         {
-            metrics?.IncrementUnsafeIPAddress(reason: "ipv6_none");
+            metrics?.IncrementUnsafeIPAddress(reason: "ip_none");
             return true;
         }
 

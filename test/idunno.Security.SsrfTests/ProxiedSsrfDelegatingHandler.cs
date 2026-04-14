@@ -15,7 +15,7 @@ public class ProxiedSsrfDelegatingHandler
     [InlineData("https://bad.ipv6.ssrf.fail/")]
     public async Task ConnectionThrowsForUnsafeUri(string hostName)
     {
-        using var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
+        var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
             connectTimeout: TimeSpan.FromSeconds(1),
             proxy: new WebProxy(new Uri("http://127.0.0.1:9999")));
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
@@ -31,7 +31,7 @@ public class ProxiedSsrfDelegatingHandler
     [InlineData("https://mixed.ipv6.ssrf.fail/")]
     public async Task ConnectionThrowsForHostsThatReturnAMixOfSafeAndUnsafeIPAddresses(string hostName)
     {
-        using var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
+        var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
             connectTimeout: TimeSpan.FromSeconds(1),
             proxy: new WebProxy(new Uri("http://127.0.0.1:9999")));
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
