@@ -2,18 +2,21 @@
 
 ### Added
 
-* Add `allowedHostnames` parameter to constructions and property in `SsrfOptions` to enable safe listing of host names,
+* Add `allowedHostnames` parameter to `SsrfSocketsHttpHandlerFactory.Create()`, `ProxiedSsrfDelegatingHandler`
+  constructor and as a property in `SsrfOptions` to enable safe listing of host names,
   including support for wildcard patterns ([#7](https://github.com/blowdart/idunno.Security.Ssrf/issues/7)) ([blowdart](https://github.com/blowdart))
+* Add `safeIPNetworks` and `safeIPAddresses` parameters to `SsrfSocketsHttpHandlerFactory.Create()`,
+  `ProxiedSsrfDelegatingHandler` constructor and as properties in `SsrfOptions` to enable safe listing of IP addresses and networks.
+  ([#8](https://github.com/blowdart/idunno.Security.Ssrf/issues/8)) ([blowdart](https://github.com/blowdart))
+* Add metrics for tracking SSRF attempts, including counts of blocked requests and counts for blocked hosts and IP addresses.
 
 ### Changed
 
-* **Breaking** Removed multiple overloads in favor of two `Create` methods, with defaults, on `SsrfSocketsHttpHandlerFactory`.
-* **Breaking** Removed multiple constructors in favor of two constructors, with defaults, on `ProxiedSsrfDelegatingHandler`.
-* **Breaking** Changed casing of `AdditionalUnsafeIpAddresses` property to `AdditionalUnsafeIPAddresses` in options to match .NET's casing.
-* **Breaking** Changed casing of `additionalUnsafeIpAddresses` property to `additionalUnsafeIPAddresses` parameters to match .NET's casing.
-
-* **Breaking** Changed `additionalUnsafeNetworks` parameter name to `additionalUnsafeIPNetworks` to match .NET's naming.
-
+* **Breaking** Remove multiple overloads in favor of two `Create` methods, with defaults, on `SsrfSocketsHttpHandlerFactory`.
+* **Breaking** Remove multiple constructors in favor of two constructors, with defaults, on `ProxiedSsrfDelegatingHandler`.
+* **Breaking** Change casing of `AdditionalUnsafeIpAddresses` property to `AdditionalUnsafeIPAddresses` in options to match .NET's casing.
+* **Breaking** Change casing of `additionalUnsafeIpAddresses` property to `additionalUnsafeIPAddresses` parameters to match .NET's casing.
+* **Breaking** Change `additionalUnsafeNetworks` parameter name to `additionalUnsafeIPNetworks` to match .NET's naming.
 
 ## 3.0.0 - 2026-04-04
 
