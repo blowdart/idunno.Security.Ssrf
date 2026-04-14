@@ -1072,9 +1072,10 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 // Attempt to connect to each safe IP address until a successful connection is made.
                 foreach (IPAddress ipAddress in safeResolvedIPAddresses)
                 {
-                    Socket socket = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp) { NoDelay = true };
+                    Socket socket = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                     try
                     {
+                        socket.NoDelay = true;
                         await socket.ConnectAsync(new IPEndPoint(ipAddress, context.DnsEndPoint.Port), cancellationToken).ConfigureAwait(false);
                         return new NetworkStream(socket, ownsSocket: true);
                     }
