@@ -1075,16 +1075,14 @@ public sealed class SsrfSocketsHttpHandlerFactory
                     Socket socket = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                     try
                     {
-                        socket.NoDelay = true;
-                    }
-                    catch
-                    {
-                        socket.Dispose();
-                        throw;
-                    }
-
-                    try
-                    {
+                        try
+                        {
+                            socket.NoDelay = true;
+                        }
+                        catch (Exception ex) when (ex is SocketException or PlatformNotSupportedException)
+                        {
+                            // Best-effort optimization to match SocketsHttpHandler behavior.
+                        }
                         await socket.ConnectAsync(new IPEndPoint(ipAddress, context.DnsEndPoint.Port), cancellationToken).ConfigureAwait(false);
                         return new NetworkStream(socket, ownsSocket: true);
                     }
