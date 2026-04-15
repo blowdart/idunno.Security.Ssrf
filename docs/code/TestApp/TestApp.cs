@@ -5,8 +5,6 @@
 #:property PublishAot=false
 using System.Net;
 using System.Text;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
 using idunno.Security;
 
 Console.OutputEncoding = Encoding.UTF8;
