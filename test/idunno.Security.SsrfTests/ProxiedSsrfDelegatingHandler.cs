@@ -24,6 +24,25 @@ public class ProxiedSsrfDelegatingHandler
         Assert.Equal(hostName, ex.Uri!.ToString());
     }
 
+    [Theory]
+    [InlineData("http://localhost/")]
+    [InlineData("https://localhost/")]
+    [InlineData("https://bad.ssrf.fail/")]
+    [InlineData("https://bad.ipv4.ssrf.fail/")]
+    [InlineData("https://bad.ipv6.ssrf.fail/")]
+    public void ConnectionThrowsForUnsafeUriWithSend(string hostName)
+    {
+        var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
+            connectTimeout: TimeSpan.FromSeconds(1),
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")));
+
+        var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, hostName);
+
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+        SsrfException ex = Assert.Throws<SsrfException>( () =>_ = httpClient.Send(httpRequestMessage, cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal(hostName, ex.Uri!.ToString());
+    }
 
     [Theory]
     [InlineData("https://mixed.ssrf.fail/")]
@@ -36,6 +55,24 @@ public class ProxiedSsrfDelegatingHandler
             proxy: new WebProxy(new Uri("http://127.0.0.1:9999")));
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
+
+        Assert.Equal(hostName, ex.Uri!.ToString());
+    }
+
+    [Theory]
+    [InlineData("https://mixed.ssrf.fail/")]
+    [InlineData("https://mixed.ipv4.ssrf.fail/")]
+    [InlineData("https://mixed.ipv6.ssrf.fail/")]
+    public void ConnectionThrowsForSendWithHostsThatReturnAMixOfSafeAndUnsafeIPAddresses(string hostName)
+    {
+        var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
+            connectTimeout: TimeSpan.FromSeconds(1),
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")));
+
+        var httpRequestMessage = new HttpRequestMessage(HttpMethod.Get, hostName);
+
+        using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
+        SsrfException ex = Assert.Throws<SsrfException>(() => _ = httpClient.Send(httpRequestMessage, cancellationToken: TestContext.Current.CancellationToken));
 
         Assert.Equal(hostName, ex.Uri!.ToString());
     }
