@@ -335,9 +335,6 @@ public class CommonFunctions
             hostEntryResolver: hostEntryResolver));
     }
 
-    ///
-
-
     [Fact]
     public async Task GetHostEntryAsyncAvoidsResolvingTheHostWhenItIsAnIPAddress()
     {
@@ -424,5 +421,4 @@ public class CommonFunctions
             asyncHostEntryResolver: asyncHostEntryResolver,
             cancellationToken: TestContext.Current.CancellationToken));
     }
-
 }

@@ -107,4 +107,11 @@ public class IsUnsafeUri
         Assert.False(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowInsecureProtocols: true, allowLoopback: true));
         Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowInsecureProtocols: false, allowLoopback: true));
     }
+
+    [Fact]
+    public void SchemelessRelativeIsConsideredUnsafe()
+    {
+        Assert.True(Ssrf.IsUnsafeUri(new Uri("//example.com")));
+        Assert.True(Ssrf.IsUnsafeUri(new Uri("//example.com", UriKind.RelativeOrAbsolute)));
+    }
 }
