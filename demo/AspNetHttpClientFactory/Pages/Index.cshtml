@@ -3,17 +3,25 @@
 @{
     ViewData["Title"] = "SSRF Protection Test";
 }
+<h3>Configuration</h3>
+<p><code>HttpClient</code> configured using:</p>
+<pre>
+    builder.Services.AddHttpClient();
+    builder.Services.ConfigureHttpClientDefaults(configure => 
+        configure.ConfigurePrimaryHttpMessageHandler(() => SsrfSocketsHttpHandlerFactory.Create(allowInsecureProtocols: true))
+    );
+</pre>
 
 <div>
-    <p>✅ Entering <code>http://example.org</code> should display a status code of 200.</p>
-    <p>❎ Entering <code>http://localhost</code> should throw an exception that the URI is unsafe.</p>
-    <p>❎ Entering <code>http://loopback.ssrf.fail</code> should throw an exception that all the resolve IP addresses are unsafe.</p>
+    <p>✅ Entering <code onclick="document.getElementById('TestUri').value='http://example.org'" style="cursor: pointer;">http://example.org</code> should display a status code of 200.</p>
+    <p>❎ Entering <code onclick="document.getElementById('TestUri').value='http://localhost'" style="cursor: pointer;">http://localhost</code> should throw an exception that the URI is unsafe.</p>
+    <p>❎ Entering <code onclick="document.getElementById('TestUri').value='https://loopback.ssrf.fail'" style="cursor: pointer;">https://loopback.ssrf.fail</code> should throw an exception that all the resolved IP addresses are unsafe.</p>
 
     @using (Html.BeginForm(FormMethod.Post))
     {
         <fieldset>
             <legend>Test SSRF Protection</legend>
-            <div>
+            <div class="form-group">
                 @Html.LabelFor(Model => Model.TestUri, "Url to test:", new { @class = "control-label" })
                 @Html.TextBoxFor(Model => Model.TestUri, new { @class = "form-control", @placeholder="https://" })
                 <span asp-validation-for="TestUri" class="text-danger"></span>

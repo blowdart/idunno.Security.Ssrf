@@ -1,6 +1,8 @@
 // Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Diagnostics.CodeAnalysis;
+
 #pragma warning disable IDE0130 // Namespace does not match folder structure
 namespace OpenTelemetry.Metrics;
 #pragma warning restore IDE0130 // Namespace does not match folder structure
@@ -8,6 +10,7 @@ namespace OpenTelemetry.Metrics;
 /// <summary>
 /// Extension methods to simplify registering of the instrumentation meters.
 /// </summary>
+[ExcludeFromCodeCoverage]
 public static class SsrfMetricsExtensions
 {
     /// <summary>
