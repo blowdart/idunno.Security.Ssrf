@@ -1,7 +1,6 @@
 // Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Security;
@@ -18,15 +17,12 @@ namespace idunno.Security;
 /// </summary>
 public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 {
-    private static readonly Func<string, CancellationToken, Task<IPHostEntry>> s_defaultAsyncHostEntryResolver = Dns.GetHostEntryAsync;
-    private static readonly Func<string, IPHostEntry> s_defaultHostEntryResolver = Dns.GetHostEntry;
-
     private readonly ICollection<IPNetwork>? _additionalUnsafeIPNetworks;
     private readonly ICollection<IPAddress>? _additionalUnsafeIPAddresses;
     private readonly ICollection<string>? _allowedHostnames;
     private readonly ICollection<IPNetwork>? _safeIPNetworks;
     private readonly ICollection<IPAddress>? _safeIPAddresses;
-    private readonly bool _allowInsecureProtocols;
+    private readonly ICollection<string>? _allowedSchemes;
     private readonly bool _allowLoopback;
     private readonly bool _failMixedResults;
     private readonly Func<string, IPHostEntry> _hostEntryResolver;
@@ -52,7 +48,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     /// <param name="safeIPNetworks">Optional additional IP networks to consider safe, which can be used to allow specific safe ranges that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="safeIPAddresses">Optional additional IP addresses to consider safe, which can be used to allow specific safe addresses that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
-    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowedSchemes">An optional collection of URI schemes that are allowed. This can be used to restrict or allow specific protocols such as "http" or "ws". If <see langword="null"/>, defaults to allow https and wss.</param>
     /// <param name="allowLoopback">Flag indicating whether loopback addresses will be allowed or rejected.</param>
     /// <param name="failMixedResults">Flag indicating whether to fail when a mixture of safe and unsafe addresses is found. Setting this to <see langword="true"/> will reject the connection if any unsafe addresses are found.</param>
     /// <param name="allowAutoRedirect">Flag indicating whether to allow auto-redirects. Setting this to <see langword="true"/> can introduce security vulnerabilities and should only be enabled if necessary.</param>
@@ -79,7 +75,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         ICollection<IPNetwork>? safeIPNetworks = null,
         ICollection<IPAddress>? safeIPAddresses = null,
         TimeSpan? connectTimeout = null,
-        bool allowInsecureProtocols = false,
+        ICollection<string>? allowedSchemes = null,
         bool allowLoopback = false,
         bool failMixedResults = true,
         bool allowAutoRedirect = false,
@@ -95,7 +91,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             safeIPNetworks: safeIPNetworks,
             safeIPAddresses: safeIPAddresses,
             connectTimeout: connectTimeout,
-            allowInsecureProtocols: allowInsecureProtocols,
+            allowedSchemes: allowedSchemes,
             allowLoopback: allowLoopback,
             failMixedResults: failMixedResults,
             allowAutoRedirect: allowAutoRedirect,
@@ -159,7 +155,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         ICollection<IPNetwork>? safeIPNetworks,
         ICollection<IPAddress>? safeIPAddresses,
         TimeSpan? connectTimeout,
-        bool allowInsecureProtocols,
+        ICollection<string>? allowedSchemes,
         bool allowLoopback,
         bool failMixedResults,
         bool allowAutoRedirect,
@@ -198,16 +194,22 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _safeIPNetworks = safeIPNetworks;
         _safeIPAddresses = safeIPAddresses;
-        _allowInsecureProtocols = allowInsecureProtocols;
+        _allowedSchemes = allowedSchemes;
         _allowLoopback = allowLoopback;
         _failMixedResults = failMixedResults;
-        _hostEntryResolver = hostEntryResolver ?? s_defaultHostEntryResolver;
-        _asyncHostEntryResolver = asyncHostEntryResolver ?? s_defaultAsyncHostEntryResolver;
+        _hostEntryResolver = hostEntryResolver ?? Defaults.GetHostEntry;
+        _asyncHostEntryResolver = asyncHostEntryResolver ?? Defaults.GetHostEntryAsync;
 
         loggerFactory ??= NullLoggerFactory.Instance;
         _logger = loggerFactory.CreateLogger<ProxiedSsrfDelegatingHandler>();
 
         _metrics = new SsrfMetrics(meterFactory);
+
+        ICollection<string> innerHandlerAllowedSchemes = allowedSchemes ?? Defaults.AllowedSchemes;
+        if (!innerHandlerAllowedSchemes.Contains(webProxy.Address.Scheme, StringComparer.OrdinalIgnoreCase))
+        {
+            innerHandlerAllowedSchemes = [.. innerHandlerAllowedSchemes, webProxy.Address.Scheme];
+        }
 
         InnerHandler = SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: connectionStrategy,
@@ -217,7 +219,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             safeIPNetworks: _safeIPNetworks,
             safeIPAddresses: _safeIPAddresses,
             connectTimeout: connectTimeout,
-            allowInsecureProtocols: webProxy.Address.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase),
+            allowedSchemes: innerHandlerAllowedSchemes,
             allowLoopback: webProxy.Address.IsLoopback,
             failMixedResults: _failMixedResults,
             allowAutoRedirect: allowAutoRedirect,
@@ -266,16 +268,22 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _safeIPNetworks = options.SafeIPNetworks;
         _safeIPAddresses = options.SafeIPAddresses;
-        _allowInsecureProtocols = options.AllowInsecureProtocols;
+        _allowedSchemes = options.AllowedSchemes;
         _allowLoopback = options.AllowLoopback;
         _failMixedResults = options.FailMixedResults;
-        _hostEntryResolver = hostEntryResolver ?? s_defaultHostEntryResolver;
-        _asyncHostEntryResolver = asyncHostEntryResolver ?? s_defaultAsyncHostEntryResolver;
+        _hostEntryResolver = hostEntryResolver ?? Defaults.GetHostEntry;
+        _asyncHostEntryResolver = asyncHostEntryResolver ?? Defaults.GetHostEntryAsync;
 
         loggerFactory ??= NullLoggerFactory.Instance;
         _logger = loggerFactory.CreateLogger<ProxiedSsrfDelegatingHandler>();
 
         _metrics = new SsrfMetrics(meterFactory);
+
+        ICollection<string> innerHandlerAllowedSchemes = options.AllowedSchemes ?? Defaults.AllowedSchemes;
+        if (!innerHandlerAllowedSchemes.Contains(webProxy.Address.Scheme, StringComparer.OrdinalIgnoreCase))
+        {
+            innerHandlerAllowedSchemes = [.. innerHandlerAllowedSchemes, webProxy.Address.Scheme];
+        }
 
         InnerHandler = SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: options.ConnectionStrategy,
@@ -285,7 +293,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             safeIPNetworks: _safeIPNetworks,
             safeIPAddresses: _safeIPAddresses,
             connectTimeout: options.ConnectTimeout,
-            allowInsecureProtocols: webProxy.Address.Scheme.Equals("http", StringComparison.OrdinalIgnoreCase),
+            allowedSchemes: innerHandlerAllowedSchemes,
             allowLoopback: webProxy.Address.IsLoopback,
             failMixedResults: _failMixedResults,
             allowAutoRedirect: options.AllowAutoRedirect,
@@ -312,7 +320,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         if (Ssrf.IsUnsafeUri(
             uri: request.RequestUri,
-            allowInsecureProtocols: _allowInsecureProtocols,
+            allowedSchemes: _allowedSchemes,
             allowLoopback: _allowLoopback,
             metrics: _metrics))
         {
@@ -361,7 +369,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         if (Ssrf.IsUnsafeUri(
             uri: request.RequestUri,
-            allowInsecureProtocols: _allowInsecureProtocols,
+            allowedSchemes: _allowedSchemes,
             allowLoopback: _allowLoopback,
             metrics: _metrics))
         {

@@ -53,10 +53,12 @@ such as a local development environment or a trusted internal service.
 > Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address matches
 > both a safe and unsafe address, or is within a safe network, it will be considered safe.
 
-## Allowing HTTP and WS URIs
+## Setting allowed schemes
 
-You may have some `http` or `ws` URIs you need to access. You can mark those protocols as safe using the
-`allowInsecureProtocols` parameter.
+You may have some `http` or `ws` URIs you need to access. You can add to the default allowed schemes of `https` and `wss` using the `allowedSchemes` parameter.
+For example, to allow `http` and `ws` schemes you would set `allowedSchemes` to `[ "https", "wss", "http", "ws" ]`.
+
+If you are not going to use WebSockets you can remove `wss` from the allowed schemes, by passing `[ "https" ]` to `allowedSchemes`.
 
 ## Allowing loopback connections
 

@@ -34,9 +34,9 @@ public record SsrfOptions
     public TimeSpan? ConnectTimeout { get; set; }
 
     /// <summary>
-    /// Gets or sets a flag indicating whether http:// and ws:// URIs will be allowed or rejected. Defaults to <see langword="false"/>.
+    /// Gets or sets an optional collection of URI schemes that are allowed. This can be used to restrict or allow specific protocols such as "http" or "ws".
     /// </summary>
-    public bool AllowInsecureProtocols { get; set; }
+    public ICollection<string>? AllowedSchemes { get; init; } = Defaults.AllowedSchemes;
 
     /// <summary>
     /// Gets or sets a flag indicating whether to fail when a mixture of safe and unsafe addresses is found.

@@ -165,13 +165,15 @@ static async Task TestWithHttpClient(string uri, bool allowInsecureProtocols = f
     bool exceptionThrown = false;
     string errorMessage = string.Empty;
 
+    ICollection<string> allowedSchemes = allowInsecureProtocols ? ["https", "http"] : ["https"];
+
     using (var httpClient = new HttpClient(
         SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: allowInsecureProtocols,
+            allowedSchemes: allowedSchemes,
             allowLoopback: false,
             failMixedResults: failMixedResults,
             allowAutoRedirect: false,
@@ -251,13 +253,15 @@ static async Task TestWithClientWebSocket(string uri, bool allowInsecureProtocol
     bool exceptionThrown = false;
     string errorMessage = string.Empty;
 
+    ICollection<string> allowedSchemes = allowInsecureProtocols ? ["https", "http", "wss", "ws"] : ["https", "wss"];
+
     using (var clientWebSocket = new ClientWebSocket())
     using (var invoker = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(3),
-            allowInsecureProtocols: allowInsecureProtocols,
+            allowedSchemes: allowedSchemes,
             allowLoopback: false,
             failMixedResults: failMixedResults,
             allowAutoRedirect: false,

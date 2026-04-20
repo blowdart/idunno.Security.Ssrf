@@ -12,8 +12,6 @@ namespace idunno.Security;
 /// </summary>
 public static class Ssrf
 {
-    private static readonly Func<string, CancellationToken, Task<IPHostEntry>> s_defaultHostEntryAsyncResolver = Dns.GetHostEntryAsync;
-
     private static readonly IPNetwork[] s_ipv4UnsafeRanges =
         [
             // IPv4 private address ranges https://datatracker.ietf.org/doc/html/rfc1918
@@ -92,14 +90,16 @@ public static class Ssrf
     /// based on its host name type, whether it is absolute, loopback, UNC, and its scheme.
     /// </summary>
     /// <param name="uri">The <see cref="Uri"/> to evaluate.</param>
-    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowedSchemes">An optional collection of URI schemes that are allowed. This can be used to restrict or allow specific protocols such as "http" or "ws". If <see langword="null"/>, defaults to allow https and wss.</param>
     /// <param name="allowLoopback">Flag indicating whether localhost URIs will be allowed or rejected.</param>
     /// <param name="metrics">Optional <see cref="SsrfMetrics"/> instance to report metrics on unsafe evaluations of <paramref name="uri" />.</param>
     /// <returns><see langword="true"/> if the <paramref name="uri" /> is considered unsafe; otherwise, <see langword="false"/>.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid linq allocations on a hot path.")]
+    [SuppressMessage("Documentation", "CSENSE020:Potential ghost parameter reference in documentation", Justification = "Not a ghost reference.")]
     public static bool IsUnsafeUri(
         Uri uri,
-        bool allowInsecureProtocols = false,
+        ICollection<string>? allowedSchemes = null,
         bool allowLoopback = false,
         SsrfMetrics? metrics = null)
     {
@@ -131,20 +131,23 @@ public static class Ssrf
             return true;
         }
 
-        // Uri class already normalizes scheme to lower case, so we can do a simple ordinal comparison here.
-        bool isUnsafe = uri.Scheme switch
-        {
-            "https" or "wss" => false,
-            "http" or "ws" when allowInsecureProtocols => false,
-            _ => true
-        };
+        bool isUnsafeScheme = true;
 
-        if (isUnsafe)
+        foreach (string allowedScheme in allowedSchemes ?? Defaults.AllowedSchemes)
+        {
+            if (string.Equals(uri.Scheme, allowedScheme, StringComparison.OrdinalIgnoreCase))
+            {
+                isUnsafeScheme = false;
+                break;
+            }
+        }
+
+        if (isUnsafeScheme)
         {
             metrics?.IncrementUnsafeUri(reason: "unsafe_scheme", value: uri.Scheme);
         }
 
-        return isUnsafe;
+        return isUnsafeScheme;
     }
 
     /// <summary>
@@ -297,7 +300,7 @@ public static class Ssrf
     /// the host resolves to a public IP address which is not in a known unsafe range.
     /// </summary>
     /// <param name="uri">The <see cref="Uri"/> to validate.</param>
-    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowedSchemes">An optional collection of URI schemes that are allowed. This can be used to restrict or allow specific protocols such as "http" or "ws". If <see langword="null"/>, defaults to allow https and wss.</param>
     /// <param name="allowLoopback">Flag indicating whether localhost URIs will be allowed or rejected.</param>
     /// <param name="additionalUnsafeIPNetworks">Optional additional networks to consider unsafe.</param>
     /// <param name="additionalUnsafeIPAddresses">Optional additional IP addresses to consider unsafe.</param>
@@ -321,9 +324,10 @@ public static class Ssrf
     ///   it will be considered safe.
     ///</para>
     /// </remarks>
+    [SuppressMessage("Documentation", "CSENSE020:Potential ghost parameter reference in documentation", Justification = "Not a ghost reference.")]
     public static Task<bool> IsUnsafe(
         Uri uri,
-        bool allowInsecureProtocols = false,
+        ICollection<string>? allowedSchemes = null,
         bool allowLoopback = false,
         ICollection<IPNetwork>? additionalUnsafeIPNetworks = null,
         ICollection<IPAddress>? additionalUnsafeIPAddresses = null,
@@ -337,7 +341,7 @@ public static class Ssrf
 
         return InternalIsUnsafe(
             uri: uri,
-            allowInsecureProtocols: allowInsecureProtocols,
+            allowedSchemes: allowedSchemes ?? Defaults.AllowedSchemes,
             allowLoopback: allowLoopback,
             additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
             additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
@@ -353,7 +357,7 @@ public static class Ssrf
     [SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Catch any exception to fail close.")]
     internal static async Task<bool> InternalIsUnsafe(
         Uri uri,
-        bool allowInsecureProtocols,
+        ICollection<string>? allowedSchemes,
         bool allowLoopback,
         ICollection<IPNetwork>? additionalUnsafeIPNetworks,
         ICollection<IPAddress>? additionalUnsafeIPAddresses,
@@ -366,11 +370,11 @@ public static class Ssrf
     {
         ArgumentNullException.ThrowIfNull(uri);
 
-        hostEntryResolver ??= s_defaultHostEntryAsyncResolver;
+        hostEntryResolver ??= Defaults.GetHostEntryAsync;
 
         if (IsUnsafeUri(
             uri: uri,
-            allowInsecureProtocols: allowInsecureProtocols,
+            allowedSchemes: allowedSchemes ?? Defaults.AllowedSchemes,
             allowLoopback: allowLoopback,
             metrics: metrics))
         {

@@ -1,3 +1,9 @@
+## 5.0.0 - Unrelease
+
+### Changed
+
+* **Breaking** Replace `allowInsecureProtocols` parameter with `allowedSchemes` in `SsrfSocketsHttpHandlerFactory.Create()`, `ProxiedSsrfDelegatingHandler` constructor and as a property in `SsrfOptions` to allow for more flexible protocol allow listing.
+
 ## 4.0.0 - 2026-04-14
 
 ### Added

@@ -142,11 +142,11 @@ public class ProxiedSsrfDelegatingHandler
     [Theory]
     [InlineData("http://example.org/")]
     [InlineData("http://github.com/")]
-    public async Task ConnectionDoesNotThrowForSafeHostButUnsafeProtocolIfAllowInsecureProtocolIsTrue(string hostName)
+    public async Task ConnectionDoesNotThrowForSafeHostButUnsafeProtocolButHttpIsAllowed(string hostName)
     {
         using var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: true,
+            allowedSchemes: ["https", "http", "wss", "ws"],
             proxy: new WebProxy(new Uri("http://127.0.0.1:9999")));
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
@@ -194,7 +194,7 @@ public class ProxiedSsrfDelegatingHandler
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -241,7 +241,7 @@ public class ProxiedSsrfDelegatingHandler
             allowedHostnames: null,
             safeIPNetworks: null,
             safeIPAddresses: null,
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -288,7 +288,7 @@ public class ProxiedSsrfDelegatingHandler
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -335,7 +335,7 @@ public class ProxiedSsrfDelegatingHandler
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -387,7 +387,6 @@ public class ProxiedSsrfDelegatingHandler
 
         SsrfOptions options = new()
         {
-            ConnectionStrategy = ConnectionStrategy.None,
             AdditionalUnsafeIPNetworks =
             [
                 IPNetwork.Parse("104.18.3.24/30"),
@@ -401,12 +400,8 @@ public class ProxiedSsrfDelegatingHandler
                 IPAddress.Parse("104.18.2.24"),
             ],
             ConnectTimeout = new TimeSpan(0, 0, 5),
-            AllowInsecureProtocols = false,
-            FailMixedResults = true,
-            AllowAutoRedirect = false,
             AutomaticDecompression = DecompressionMethods.All,
-            Proxy = new WebProxy(new Uri("http://127.0.0.1:9999")),
-            SslOptions = null
+            Proxy = new WebProxy(new Uri("http://127.0.0.1:9999"))
         };
 
         using var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
@@ -447,7 +442,7 @@ public class ProxiedSsrfDelegatingHandler
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -484,10 +479,9 @@ public class ProxiedSsrfDelegatingHandler
     public async Task ConnectionDoesNotThrowForLoopbackHostWhenAllowLoopbackIsSet(string hostName)
     {
         using var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
-            connectionStrategy: ConnectionStrategy.None,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: true,
             allowLoopback: true,
+            allowedSchemes: ["http", "https"],
             automaticDecompression: DecompressionMethods.All,
             proxy: new WebProxy(new Uri("http://127.0.0.1:9999")));
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
@@ -520,7 +514,7 @@ public class ProxiedSsrfDelegatingHandler
         SsrfOptions options = new()
         {
             ConnectTimeout = new TimeSpan(0, 0, 1),
-            AllowInsecureProtocols = true,
+            AllowedSchemes = ["http", "https"],
             AllowLoopback = true,
             Proxy = new WebProxy(new Uri("http://127.0.0.1:9999")),
         };
@@ -555,7 +549,7 @@ public class ProxiedSsrfDelegatingHandler
             additionalUnsafeIPAddresses: null,
             allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: true,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -581,7 +575,7 @@ public class ProxiedSsrfDelegatingHandler
             additionalUnsafeIPAddresses: null,
             allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -605,7 +599,7 @@ public class ProxiedSsrfDelegatingHandler
             additionalUnsafeIPAddresses: null,
             allowedHostnames: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -627,9 +621,6 @@ public class ProxiedSsrfDelegatingHandler
             Assert.IsNotType<SsrfException>(ex);
         }
     }
-
-    /// ---------------
-    ///
 
     [Fact]
     public async Task ConnectionIsAllowedForIndividualAllowedDomainsEvenIfTheyResolveToAnUnsafeIPAddress()
@@ -669,7 +660,7 @@ public class ProxiedSsrfDelegatingHandler
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -734,7 +725,7 @@ public class ProxiedSsrfDelegatingHandler
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -801,7 +792,7 @@ public class ProxiedSsrfDelegatingHandler
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -861,7 +852,7 @@ public class ProxiedSsrfDelegatingHandler
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,

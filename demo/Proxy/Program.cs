@@ -32,7 +32,7 @@ var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
     additionalUnsafeIPAddresses: null,
     allowedHostnames: null,
     connectTimeout: TimeSpan.FromSeconds(1),
-    allowInsecureProtocols: false,
+    allowedSchemes: ["https"],
     allowLoopback: false,
     failMixedResults: true,
     allowAutoRedirect: false,
@@ -195,7 +195,7 @@ var allowMixedSsrfHostValidationHandler = new ProxiedSsrfDelegatingHandler(
     additionalUnsafeIPAddresses: null,
     allowedHostnames: null,
     connectTimeout: TimeSpan.FromSeconds(1),
-    allowInsecureProtocols: true, // Must allow insecure protocols for the proxy itself to work.
+    allowedSchemes: ["https"],
     allowLoopback: true, // Must allow loopback for the proxy itself to work.
     failMixedResults: false,
     allowAutoRedirect: false,
@@ -205,7 +205,7 @@ var allowMixedSsrfHostValidationHandler = new ProxiedSsrfDelegatingHandler(
     loggerFactory: loggerFactory);
 using (var httpClient = new HttpClient(allowMixedSsrfHostValidationHandler))
 {
-    Uri destinationUri = new("http://mixed.ssrf.fail");
+    Uri destinationUri = new("https://mixed.ssrf.fail");
     Console.WriteLine($"Request to {destinationUri} will fail, but not with an SSRF error, as it is an allowed protocol and has at least one safe IP address.");
     try
     {

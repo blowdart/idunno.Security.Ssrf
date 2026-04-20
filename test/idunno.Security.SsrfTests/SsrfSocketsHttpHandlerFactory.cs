@@ -79,7 +79,7 @@ public class SsrfSocketsHttpHandlerFactory
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
             connectTimeout: new TimeSpan(0,0,1),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: false,
             allowAutoRedirect: false,
@@ -149,14 +149,14 @@ public class SsrfSocketsHttpHandlerFactory
     [Theory]
     [InlineData("http://example.org/")]
     [InlineData("http://github.com/")]
-    public async Task ConnectionDoesNotThrowForSafeHostButUnsafeProtocolIfAllowInsecureProtocolIsTrue(string uri)
+    public async Task ConnectionDoesNotThrowForSafeHostButUnsafeProtocolIfAllowHttpAndWsAreAllowed(string uri)
     {
         using HttpClient httpClient = new(Security.SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: true,
+            allowedSchemes: ["https", "http", "wss", "ws"],
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -187,7 +187,7 @@ public class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: true,
+            allowedSchemes: ["https", "http", "wss", "ws"],
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -234,7 +234,7 @@ public class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: true,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -281,7 +281,7 @@ public class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: true,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -328,7 +328,7 @@ public class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -373,7 +373,6 @@ public class SsrfSocketsHttpHandlerFactory
 
         SsrfOptions options = new()
         {
-            ConnectionStrategy = ConnectionStrategy.None,
             AdditionalUnsafeIPNetworks =
             [
                 IPNetwork.Parse("104.18.3.24/30"),
@@ -387,12 +386,7 @@ public class SsrfSocketsHttpHandlerFactory
                 IPAddress.Parse("104.18.2.24")
             ],
             ConnectTimeout = new TimeSpan(0, 0, 5),
-            AllowInsecureProtocols = false,
             FailMixedResults = true,
-            AllowAutoRedirect = false,
-            AutomaticDecompression = DecompressionMethods.All,
-            Proxy = null,
-            SslOptions = null
         };
 
         using HttpClient httpClient = new(Security.SsrfSocketsHttpHandlerFactory.InternalCreate(
@@ -434,7 +428,7 @@ public class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: false,
+            allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -474,17 +468,10 @@ public class SsrfSocketsHttpHandlerFactory
     public async Task ConnectionDoesNotThrowForLoopbackHostWhenAllowLoopbackIsSet(string uri)
     {
         using HttpClient httpClient = new(Security.SsrfSocketsHttpHandlerFactory.Create(
-            connectionStrategy: ConnectionStrategy.None,
-            additionalUnsafeIPNetworks: null,
-            additionalUnsafeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 1),
-            allowInsecureProtocols: true,
+            allowedSchemes: ["https", "http", "wss", "ws"],
             allowLoopback: true,
-            failMixedResults: true,
-            allowAutoRedirect: false,
-            automaticDecompression: DecompressionMethods.All,
-            sslOptions: null,
-            loggerFactory: null));
+            automaticDecompression: DecompressionMethods.All));
 
         Exception? ex = await Record.ExceptionAsync(async () => {
             await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
@@ -521,7 +508,7 @@ public class SsrfSocketsHttpHandlerFactory
         SsrfOptions options = new()
         {
             ConnectTimeout = new TimeSpan(0, 0, 1),
-            AllowInsecureProtocols = true,
+            AllowedSchemes = ["https", "http", "wss", "ws"],
             AllowLoopback = true,
         };
 
@@ -553,20 +540,15 @@ public class SsrfSocketsHttpHandlerFactory
     [InlineData("http://127.0.0.1/")]
     [InlineData("http://127.255.255.254/")]
     [InlineData("http://[::1]/")]
-    public async Task ConnectionThrowsForInsecureLoopbackHostWhenAllowLoopbackIsSetButAllowInsecureIsFalse(string uri)
+    public async Task ConnectionThrowsForInsecureLoopbackHostWhenAllowLoopbackIsSetAndNoAllowedSchemesAreSet(string uri)
     {
         using HttpClient httpClient = new(Security.SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 1),
-            allowInsecureProtocols: false,
             allowLoopback: true,
-            failMixedResults: true,
-            allowAutoRedirect: false,
-            automaticDecompression: DecompressionMethods.All,
-            sslOptions: null,
-            loggerFactory: null));
+            automaticDecompression: DecompressionMethods.All));
 
         Exception? ex = await Record.ExceptionAsync(async () => {
             await httpClient.GetAsync(uri, cancellationToken: TestContext.Current.CancellationToken);
@@ -615,7 +597,7 @@ public class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: false,
+            allowedSchemes: ["https"],
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -675,7 +657,7 @@ public class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: false,
+            allowedSchemes: ["https"],
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -735,7 +717,7 @@ public class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: false,
+            allowedSchemes: ["https"],
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,
@@ -794,7 +776,7 @@ public class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: null,
             safeIPAddresses: null,
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: false,
+            allowedSchemes: ["https"],
             allowLoopback: false,
             failMixedResults: true,
             allowAutoRedirect: false,

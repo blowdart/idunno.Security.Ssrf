@@ -18,8 +18,6 @@ namespace idunno.Security;
 /// </summary>
 public sealed class SsrfSocketsHttpHandlerFactory
 {
-    private static readonly Func<string, CancellationToken, Task<IPHostEntry>> s_defaultHostEntryResolver = Dns.GetHostEntryAsync;
-
     [ExcludeFromCodeCoverage]
     private SsrfSocketsHttpHandlerFactory()
     {
@@ -42,7 +40,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="safeIPNetworks">Optional additional IP networks to consider safe, which can be used to allow specific safe ranges that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="safeIPAddresses">Optional additional IP addresses to consider safe, which can be used to allow specific safe addresses that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
-    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowedSchemes">An optional collection of URI schemes that are allowed. This can be used to restrict or allow specific protocols such as "http" or "ws". If <see langword="null"/>, defaults to allow https and wss.</param>
     /// <param name="allowLoopback">Flag indicating whether loopback addresses will be allowed or rejected.</param>
     /// <param name="failMixedResults">Flag indicating whether to fail when a mixture of safe and unsafe addresses is found. Setting this to <see langword="true"/> will reject the connection if any unsafe addresses are found.</param>
     /// <param name="allowAutoRedirect">Flag indicating whether to allow auto-redirects. Setting this to <see langword="true"/> can introduce security vulnerabilities and should only be enabled if necessary.</param>
@@ -67,7 +65,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ICollection<IPNetwork>? safeIPNetworks = null,
         ICollection<IPAddress>? safeIPAddresses = null,
         TimeSpan? connectTimeout = null,
-        bool allowInsecureProtocols = false,
+        ICollection<string>? allowedSchemes = null,
         bool allowLoopback = false,
         bool failMixedResults = true,
         bool allowAutoRedirect = false,
@@ -84,7 +82,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: safeIPNetworks,
             safeIPAddresses: safeIPAddresses,
             connectTimeout: connectTimeout,
-            allowInsecureProtocols: allowInsecureProtocols,
+            allowedSchemes: allowedSchemes ?? Defaults.AllowedSchemes,
             allowLoopback: allowLoopback,
             failMixedResults: failMixedResults,
             allowAutoRedirect: allowAutoRedirect,
@@ -135,7 +133,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: options.SafeIPNetworks,
             safeIPAddresses: options.SafeIPAddresses,
             connectTimeout: options.ConnectTimeout,
-            allowInsecureProtocols: options.AllowInsecureProtocols,
+            allowedSchemes: options.AllowedSchemes ?? Defaults.AllowedSchemes,
             failMixedResults: options.FailMixedResults,
             allowAutoRedirect: options.AllowAutoRedirect,
             allowLoopback: options.AllowLoopback,
@@ -155,7 +153,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ICollection<IPNetwork>? safeIPNetworks,
         ICollection<IPAddress>? safeIPAddresses,
         TimeSpan? connectTimeout,
-        bool allowInsecureProtocols,
+        ICollection<string>? allowedSchemes,
         bool allowLoopback,
         bool failMixedResults,
         bool allowAutoRedirect,
@@ -166,7 +164,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ILoggerFactory? loggerFactory,
         IMeterFactory? meterFactory)
     {
-        asyncHostEntryResolver ??= s_defaultHostEntryResolver;
+        asyncHostEntryResolver ??= Defaults.GetHostEntryAsync;
         loggerFactory ??= NullLoggerFactory.Instance;
         ILogger logger = loggerFactory.CreateLogger<SsrfSocketsHttpHandlerFactory>();
         SsrfMetrics metrics = new(meterFactory);
@@ -192,7 +190,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
 
                 if (Ssrf.IsUnsafeUri(
                     uri: requestedUri,
-                    allowInsecureProtocols: allowInsecureProtocols,
+                    allowedSchemes: allowedSchemes ?? Defaults.AllowedSchemes,
                     allowLoopback: allowLoopback,
                     metrics: metrics))
                 {
