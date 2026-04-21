@@ -13,7 +13,7 @@ namespace idunno.Security;
 /// relevant RFCs. Use these extensions to simplify interoperability between IPv4 and IPv6 address
 /// representations.</para></remarks>
 [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1034:Nested types should not be visible", Justification = "Nested type is an extension property.")]
-public static class IpAddressExtensions
+public static class IPAddressExtensions
 {
     private static readonly IPAddress s_ipV6ZeroHost = IPAddress.Parse("::");
     private static readonly IPAddress s_ipV6LocalHost = IPAddress.Parse("::1");
