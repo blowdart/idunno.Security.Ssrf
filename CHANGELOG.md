@@ -1,5 +1,13 @@
 ## 5.0.0 - Unrelease
 
+### Added
+
+* Add check for IPv4-compatible IPv6 addresses.
+* Add check for 6:4 IPv6 addresses.
+* Add check for ISATAP IPv6 addresses.
+* Add check for NAT64 IPv6 addresses.
+* Add check for Teredo IPv6 addresses.
+
 ### Changed
 
 * **Breaking** Replace `allowInsecureProtocols` parameter with `allowedSchemes` in `SsrfSocketsHttpHandlerFactory.Create()`, `ProxiedSsrfDelegatingHandler` constructor and as a property in `SsrfOptions` to allow for more flexible protocol allow listing.

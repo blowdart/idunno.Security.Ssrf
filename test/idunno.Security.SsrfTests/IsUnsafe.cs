@@ -401,15 +401,32 @@ public class IsUnsafe
     [InlineData("64:ff9b::192.168.1.1")]     // NAT64 well-known prefix embedding private IPv4
     [InlineData("64:ff9b::127.0.0.1")]       // NAT64 well-known prefix embedding loopback
     [InlineData("64:ff9b::169.254.169.254")] // NAT64 well-known prefix embedding link-local
-    [InlineData("64:ff9b::8.8.8.8")]         // NAT64 well-known prefix embedding public IPv4
     [InlineData("64:ff9b:1::10.0.0.1")]      // NAT64 local-use prefix embedding private IPv4
-    [InlineData("64:ff9b:1::8.8.8.8")]       // NAT64 local-use prefix embedding public IPv4
     public async Task ReturnsTrueForNat64Addresses(string ipAddressAsString)
     {
         Assert.True(await Ssrf.IsUnsafe(
             new Uri($"https://[{ipAddressAsString}]"),
             cancellationToken: TestContext.Current.CancellationToken));
     }
+
+    [Theory]
+    [InlineData("64:ff9b::8.8.8.8")]         // NAT64 well-known prefix embedding public IPv4
+    public async Task ReturnsFalseForPublicNat64Addresses(string ipAddressAsString)
+    {
+        Assert.False(await Ssrf.IsUnsafe(
+            new Uri($"https://[{ipAddressAsString}]"),
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData("64:ff9b:1::8.8.8.8")]       // NAT64 local-use prefix embedding public IPv4
+    public async Task ReturnsTrueForPublicButLocalUseNat64Addresses(string ipAddressAsString)
+    {
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"https://[{ipAddressAsString}]"),
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
 
     [Fact]
     public async Task ReturnsTrueWhenDnsResolvesToEmptyAddressList()

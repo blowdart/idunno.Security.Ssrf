@@ -182,11 +182,7 @@ public static class Ssrf
     {
         ArgumentNullException.ThrowIfNull(ipAddress);
 
-        // Normalize IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1) to IPv4 before range checks.
-        if (ipAddress.IsIPv4MappedToIPv6)
-        {
-            ipAddress = ipAddress.MapToIPv4();
-        }
+        ipAddress = ipAddress.NormalizeToIPv4();
 
         // Perform safe list checks before unsafe checks so that specific safe addresses or networks can be allowed even if they would normally be blocked by the unsafe checks.
         // This allows for more granular allow-listing of specific safe addresses or ranges without having to allow an entire larger network range that contains unsafe addresses.

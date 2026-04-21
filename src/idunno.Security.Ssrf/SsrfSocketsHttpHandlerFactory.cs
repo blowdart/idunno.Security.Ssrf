@@ -247,6 +247,13 @@ public sealed class SsrfSocketsHttpHandlerFactory
                     }
                 }
 
+                // Ensure the Host header is set to the original host from the request URI, as some servers require this and
+                // it may not be set if the request URI was modified to use an IP address for connection.
+                if (!context.InitialRequestMessage.Headers.Contains("Host"))
+                {
+                    context.InitialRequestMessage.Headers.Host = context.DnsEndPoint.Host;
+                }
+
                 // Attempt to connect to each safe IP address until a successful connection is made.
                 foreach (IPAddress ipAddress in resolvedIpAddresses)
                 {

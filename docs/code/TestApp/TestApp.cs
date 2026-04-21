@@ -1,7 +1,7 @@
 #!/usr/bin/env dotnet
 
 #:sdk Microsoft.NET.Sdk.Web
-#:package idunno.Security.Ssrf@4.0.0
+#:package idunno.Security.Ssrf@5.0.0
 #:property PublishAot=false
 using System.Net;
 using System.Text;
@@ -85,7 +85,7 @@ Console.WriteLine();
 
 try
 {
-    using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(allowInsecureProtocols: true)))
+    using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(allowedSchemes: ["http", "https"])))
     {
         Console.WriteLine($"Making request to {hostUrl} with the SSRF handler, allowing insecure protocols");
         var getResult = await client.GetAsync(hostUrl);
@@ -113,7 +113,7 @@ Console.WriteLine();
 hostUrl = "http://loopback.ssrf.fail:3000";
 try
 {
-    using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(allowInsecureProtocols: true)))
+    using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(allowedSchemes: ["http", "https"])))
     {
         Console.WriteLine($"Making request to {hostUrl} with the SSRF handler, allowing insecure protocols");
         var getResult = await client.GetAsync(hostUrl);
