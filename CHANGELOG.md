@@ -2,12 +2,12 @@
 
 ### Added
 
-* Add check for IPv4-compatible IPv6 addresses.
-* Add check for 6:4 IPv6 addresses.
-* Add check for ISATAP IPv6 addresses.
-* Add check for NAT64 IPv6 addresses.
-* Add check for Teredo IPv6 addresses.
-
+* Add property and method extensions to `IPAddress` to check for various special types of IPv6 addresses that may be relevant for SSRF protection, including:
+  * Add check and normalization for IPv4-compatible IPv6 addresses, `IsIPv4CompatibleIPv6` and `MapIPv6CompatibleToIPv4()`.
+  * Add check and normalization for 6:4 IPv6 addresses, `Is6to4` and `Map6to4ToIPv4()`.
+  * Add check and normalization for ISATAP IPv6 addresses, `IsISATAP` and `MapISATAPToIPv4()`.
+  * Add check and normalization for NAT64 IPv6 addresses, `IsNAT64` and map `MapNAT64ToIPv4()`.
+  * Add normalization for Teredo IPv6 addresses, `MapTeredoToIPv4()`.
 ### Changed
 
 * **Breaking** Replace `allowInsecureProtocols` parameter with `allowedSchemes` in `SsrfSocketsHttpHandlerFactory.Create()`, `ProxiedSsrfDelegatingHandler` constructor and as a property in `SsrfOptions` to allow for more flexible protocol allow listing.

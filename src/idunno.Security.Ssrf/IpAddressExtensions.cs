@@ -164,12 +164,12 @@ public static class IpAddressExtensions
         /// <returns>The mapped IPv4 address if the IP address is a 6:4 tunnel; otherwise, the original IP address.</returns>
         /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/></exception>
         /// <remarks>
-        /// <para>If you want to use <see cref="Map6to4TunnelToIPv4(IPAddress)"/>to convert an IPv4 address from IPv6 format to IPv4 format, you must first ensure that you've got a
+        /// <para>If you want to use <see cref="Map6to4ToIPv4(IPAddress)"/>to convert an IPv4 address from IPv6 format to IPv4 format, you must first ensure that you've got a
         /// compatible IPv6 address. Call <see cref="get_Is6to4(IPAddress)"/>, which will return <see langword="true"/> if the IP address is a 6:4 tunnel,
-        /// or <see langword="false"/> otherwise. If <see cref="get_Is6to4(IPAddress)"/> returns <see langword="true"/>, use <see cref="Map6to4TunnelToIPv4(IPAddress)"/>
+        /// or <see langword="false"/> otherwise. If <see cref="get_Is6to4(IPAddress)"/> returns <see langword="true"/>, use <see cref="Map6to4ToIPv4(IPAddress)"/>
         /// to make the conversion.</para>
         /// </remarks>
-        public IPAddress Map6to4TunnelToIPv4()
+        public IPAddress Map6to4ToIPv4()
         {
             ArgumentNullException.ThrowIfNull(ipAddress);
 
@@ -289,7 +289,7 @@ public static class IpAddressExtensions
                 // This may also catch an overlapping ISATAP address (e.g. 2002:c000:022a::5efe:0a00:0001), but that's not a problem since it will normalize to an unsafe IPv4 address anyway.
                 if (ipAddress.Is6to4)
                 {
-                    return ipAddress.Map6to4TunnelToIPv4();
+                    return ipAddress.Map6to4ToIPv4();
                 }
 
                 // Normalize Teredo addresses (e.g. 2001::) before ISATAP, because an attacker-crafted Teredo address

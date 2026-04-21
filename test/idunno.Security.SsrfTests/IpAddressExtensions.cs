@@ -90,7 +90,7 @@ public class IPAddressExtensions
     public void MapIPv6ToIPv4Tunnel_ReturnsMappedIPv4Address(string ipV6, string ipV4)
     {
         var ipAddress = IPAddress.Parse(ipV6);
-        var result = ipAddress.Map6to4TunnelToIPv4();
+        var result = ipAddress.Map6to4ToIPv4();
         Assert.Equal(IPAddress.Parse(ipV4), result);
     }
 
@@ -98,7 +98,7 @@ public class IPAddressExtensions
     public void MapIPv6ToIPv4Tunnel_ReturnsOriginalIPAddressForNon6to4Addresses()
     {
         var ipAddress = IPAddress.Parse("2606:4700:10::6814:179a");
-        var result = ipAddress.Map6to4TunnelToIPv4();
+        var result = ipAddress.Map6to4ToIPv4();
         Assert.Equal(ipAddress, result);
     }
 
