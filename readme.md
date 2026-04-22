@@ -167,9 +167,6 @@ or through the [command line](https://learn.microsoft.com/en-us/dotnet/core/tool
 
 The package source URI is https://www.myget.org/F/blowdart/api/v3/index.json
 
-Please note that nightly builds are signed with Azure [Artifact Signing](https://azure.microsoft.com/en-us/products/artifact-signing/),
-the signing certificate chain will not match the signing chain of a release build. The subject name remains the same.
-
 ### External analyzers used during builds
 * [DotNetAnalyzers.DocumentationAnalyzers](https://github.com/DotNetAnalyzers/DocumentationAnalyzers) - used to validate XML docs on public types.
 * [CommentSense](https://www.nuget.org/packages/CommentSense) - used to validate XML docs on public types.
