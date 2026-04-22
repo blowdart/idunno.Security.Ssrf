@@ -98,12 +98,11 @@ if (Ssrf.IsUnsafeIpAddress(IPAddress.Parse("127.0.0.1")))
 }
 ```
 
-
-
 ## Current Build Status
 
-[![Build Status](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/ci-build.yml/badge.svg?branch=main)](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/ci-build.yml)
-[![CodeQL Scan](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/codeql-analysis.yml)
+[![Build Status](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/ci-build.yml/badge.svg?branch=main)](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/ci-build.yml)
+[![CodeQL Scan](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/codeql-analysis.yml)
+[![Dependency Review](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/dependency-review.yml)
 
 ## License
 
@@ -134,7 +133,7 @@ NuGet verifies the signatures during the publication process and during
 [package installation on Windows and Linux](https://learn.microsoft.com/en-us/dotnet/core/tools/nuget-signed-package-verification).
 
 Instructions for validating signatures of my .NET assemblies, NuGet packages and Windows executables can be found in the
-[Code Signing Information](https://github.com/blowdart/#%EF%B8%8F-code-signing-information) page on my
+[Code Signing Information](https://github.com/blowdart/#code-signing-information) page on my
 [GitHub profile](https://github.com/blowdart).
 
 ## Pre-releases
