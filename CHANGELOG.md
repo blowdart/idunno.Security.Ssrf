@@ -12,6 +12,9 @@
 
 * **Breaking** Replace `allowInsecureProtocols` parameter with `allowedSchemes` in `SsrfSocketsHttpHandlerFactory.Create()`, `ProxiedSsrfDelegatingHandler` constructor and as a property in `SsrfOptions` to allow for more flexible protocol allow listing.
 
+  To use the new collection replace `allowInsecureProtocols : true` with `allowedSchemes : ["https", "http", "wss", "ws"]`.
+  You can remove `wss` and `ws` if you have no websocket use.
+
 ## 4.0.0 - 2026-04-14
 
 ### Added
