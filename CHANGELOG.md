@@ -8,12 +8,15 @@
   * Add check and normalization for ISATAP IPv6 addresses, `IsISATAP` and `MapISATAPToIPv4()`.
   * Add check and normalization for NAT64 IPv6 addresses, `IsNAT64` and map `MapNAT64ToIPv4()`.
   * Add normalization for Teredo IPv6 addresses, `MapTeredoToIPv4()`.
+
 ### Changed
 
 * **Breaking** Replace `allowInsecureProtocols` parameter with `allowedSchemes` in `SsrfSocketsHttpHandlerFactory.Create()`, `ProxiedSsrfDelegatingHandler` constructor and as a property in `SsrfOptions` to allow for more flexible protocol allow listing.
 
   To use the new collection replace `allowInsecureProtocols : true` with `allowedSchemes : ["https", "http", "wss", "ws"]`.
   You can remove `wss` and `ws` if you have no websocket use.
+
+* Update OpenTelemetry dependencies to address CVE-2026-40894 - OpenTelemetry dotnet: Excessive memory allocation when parsing OpenTelemetry propagation headers
 
 ## 4.0.0 - 2026-04-14
 
