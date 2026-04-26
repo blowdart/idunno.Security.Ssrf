@@ -139,7 +139,6 @@ public static class IPAddressExtensions
         /// Maps the an IPv4 compatible IPv6 <see cref="IPAddress"/> object to an IPv4 address.
         /// </summary>
         /// <returns>The mapped IPv4 address if the IP address is an IPv4 compatible IPv6 address; otherwise, the original IP address.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/></exception>
         /// <remarks>
         /// <para>If you want to use <see cref="MapIPv6CompatibleToIPv4(IPAddress)"/>to convert an IPv4 address from IPv6 format to IPv4 format, you must first ensure that you've got a
         /// compatible IPv6 address. Call <see cref="get_IsIPv4CompatibleIPv6(IPAddress)"/>, which will return <see langword="true"/> if the IP address is an IPv4 compatible IPv6 address,
@@ -148,8 +147,6 @@ public static class IPAddressExtensions
         /// </remarks>
         public IPAddress MapIPv6CompatibleToIPv4()
         {
-            ArgumentNullException.ThrowIfNull(ipAddress);
-
             if (ipAddress.IsIPv4CompatibleIPv6)
             {
                 byte[] bytes = ipAddress.GetAddressBytes();
@@ -162,7 +159,6 @@ public static class IPAddressExtensions
         /// Maps a 6:4 -mapped IPv6 <see cref="IPAddress"/> object to an IPv4 address.
         /// </summary>
         /// <returns>The mapped IPv4 address if the IP address is a 6:4 tunnel; otherwise, the original IP address.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/></exception>
         /// <remarks>
         /// <para>If you want to use <see cref="Map6to4ToIPv4(IPAddress)"/>to convert an IPv4 address from IPv6 format to IPv4 format, you must first ensure that you've got a
         /// compatible IPv6 address. Call <see cref="get_Is6to4(IPAddress)"/>, which will return <see langword="true"/> if the IP address is a 6:4 tunnel,
@@ -171,8 +167,6 @@ public static class IPAddressExtensions
         /// </remarks>
         public IPAddress Map6to4ToIPv4()
         {
-            ArgumentNullException.ThrowIfNull(ipAddress);
-
             if (ipAddress.Is6to4)
             {
                 byte[] bytes = ipAddress.GetAddressBytes();
@@ -185,7 +179,6 @@ public static class IPAddressExtensions
         /// Maps an ISATAP IPv6 <see cref="IPAddress"/> object to an IPv4 address.
         /// </summary>
         /// <returns>The mapped IPv4 address if the IP address is a ISATAP address; otherwise, the original IP address.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/></exception>
         /// <remarks>
         /// <para>If you want to use <see cref="MapISATAPToIPv4(IPAddress)"/>to convert an IPv4 address from IPv6 format to IPv4 format, you must first ensure that you've got a
         /// compatible IPv6 address. Call <see cref="get_IsISATAP(IPAddress)"/>, which will return <see langword="true"/> if the IP address is an ISATAP tunnel,
@@ -194,7 +187,6 @@ public static class IPAddressExtensions
         /// </remarks>
         public IPAddress MapISATAPToIPv4()
         {
-            ArgumentNullException.ThrowIfNull(ipAddress);
             if (ipAddress.IsISATAP)
             {
                 byte[] bytes = ipAddress.GetAddressBytes();
@@ -207,7 +199,6 @@ public static class IPAddressExtensions
         /// Maps a NAT64 IPv6 <see cref="IPAddress"/> object to an IPv4 address.
         /// </summary>
         /// <returns>The mapped IPv4 address if the IP address is a NAT64 address; otherwise, the original IP address.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/></exception>
         /// <remarks>
         /// <para>If you want to use <see cref="MapNAT64ToIPv4(IPAddress)"/>to convert an IPv4 address from IPv6 format to IPv4 format, you must first ensure that you've got a
         /// compatible IPv6 address. Call <see cref="get_IsNAT64(IPAddress)"/>, which will return <see langword="true"/> if the IP address is a NAT64 address,
@@ -217,7 +208,6 @@ public static class IPAddressExtensions
         /// </remarks>
         public IPAddress MapNAT64ToIPv4()
         {
-            ArgumentNullException.ThrowIfNull(ipAddress);
             if (ipAddress.IsNAT64)
             {
                 byte[] bytes = ipAddress.GetAddressBytes();
@@ -230,7 +220,6 @@ public static class IPAddressExtensions
         /// Maps a Teredo IPv6 <see cref="IPAddress"/> object to an IPv4 address.
         /// </summary>
         /// <returns>The mapped IPv4 address if the IP address is a Teredo address; otherwise, the original IP address.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/></exception>
         /// <remarks>
         /// <para>If you want to use <see cref="MapTeredoToIPv4(IPAddress)"/>to convert an IPv4 address from IPv6 format to IPv4 format, you must first ensure that you've got a
         /// compatible IPv6 address. Call <see cref="IPAddress.IsIPv6Teredo"/>, which will return <see langword="true"/> if the IP address is a Teredo address,
@@ -239,7 +228,6 @@ public static class IPAddressExtensions
         /// </remarks>
         public IPAddress MapTeredoToIPv4()
         {
-            ArgumentNullException.ThrowIfNull(ipAddress);
             if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
                 && ipAddress.IsIPv6Teredo)
             {
@@ -262,15 +250,12 @@ public static class IPAddressExtensions
         /// otherwise, returns the original IP address.
         /// </summary>
         /// <returns>A normalized IPv4 address if the IP address is an IPv4 compatible IPv6 address, an 6:4-mapped IPv6 address, a NAT64 address, or a Teredo address; otherwise, the original IP address.</returns>
-        /// <exception cref="ArgumentNullException">Thrown when <paramref name="ipAddress"/> is <see langword="null"/></exception>
         /// <remarks>
         /// <para>NAT64 local use IPv4 destinations are not mapped to IPv4 by this method, even though they are technically NAT64 addresses, because the gateway itself is internal infrastructure
         /// and will be treated as unsafe by the default IPv6 checks.</para>
         /// </remarks>
         public IPAddress NormalizeToIPv4()
         {
-            ArgumentNullException.ThrowIfNull(ipAddress);
-
             if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
             {
                 // Normalize IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1)

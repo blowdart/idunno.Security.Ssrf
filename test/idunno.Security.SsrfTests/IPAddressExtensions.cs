@@ -67,7 +67,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void IsIPv6ToIPv4Mapped_ReturnsTrueForIPv6ToIPv4MappedAddress()
+    public void Is6to4_ReturnsTrueForIPv6ToIPv4MappedAddress()
     {
         var ipAddress = IPAddress.Parse("2002:C000:022A::1");
 
@@ -76,7 +76,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void IsIPv6ToIPv4Mapped_ReturnsFalseForNonIPv6ToIPv4MappedAddress()
+    public void Is6to4_ReturnsFalseForNon6to4Address()
     {
         var ipAddress = IPAddress.Parse("2606:4700:10::6814:179a");
 

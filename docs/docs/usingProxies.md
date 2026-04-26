@@ -1,11 +1,11 @@
-﻿# Using Proxy Servers
+# Using Proxy Servers
 
 > [!WARNING]
 > Using proxy servers introduces a potential Time of Check Time Of Use (TOCTOU) vulnerability to the SSRF checks.
 > Using a proxy hands requests to the proxy which then performs its own name resolution to turn a host name into
 > one or more IP addresses. The proxy server may get entirely different resolution results to your application.
 >
-> It is suggested you do not use a proxy server in production environments, and limit the use of proxy support
+> It is strongly suggested you do not use a proxy server in production environments, and limit the use of proxy support
 > to debugging scenarios with proxies like Fiddler or Burp.
 
 It is not possible to use the `SsrfSocketsHttpHandlerFactory` to produce a handler that uses a proxy server, as

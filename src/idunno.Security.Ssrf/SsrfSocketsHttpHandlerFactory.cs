@@ -125,6 +125,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         IMeterFactory? meterFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
+
         return InternalCreate(
             connectionStrategy: options.ConnectionStrategy,
             additionalUnsafeIPNetworks: options.AdditionalUnsafeIPNetworks,
@@ -138,7 +139,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             allowAutoRedirect: options.AllowAutoRedirect,
             allowLoopback: options.AllowLoopback,
             automaticDecompression: options.AutomaticDecompression,
-            proxy: options.Proxy,
+            proxy: null,
             sslOptions: options.SslOptions,
             asyncHostEntryResolver: hostEntryResolver,
             loggerFactory: loggerFactory,
@@ -164,6 +165,16 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ILoggerFactory? loggerFactory,
         IMeterFactory? meterFactory)
     {
+        if (proxy is not WebProxy webProxy)
+        {
+            throw new ArgumentException("Only WebProxy instances are supported for the proxy parameter.", nameof(proxy));
+        }
+
+        if (webProxy.Address is null)
+        {
+            throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
+        }
+
         asyncHostEntryResolver ??= Defaults.GetHostEntryAsync;
         loggerFactory ??= NullLoggerFactory.Instance;
         ILogger logger = loggerFactory.CreateLogger<SsrfSocketsHttpHandlerFactory>();
@@ -188,64 +199,86 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 // This may result in additional latency for connections due to DNS lookups, but is necessary as caching would introduce a TOCTOU (Time of Check to Time of Use)
                 // vulnerability where an attacker could change the resolved IP address after validation but before connection.
 
+                // If the handler is used directly requestedUri will be the destination URI.
+                // If the handler wrapped inside the proxy handler the requestedUri will be the proxy URI.
+
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
+                IPAddress[] resolvedIPAddresses;
 
-                if (Ssrf.IsUnsafeUri(
-                    uri: requestedUri,
-                    allowedSchemes: snapshottedAllowedSchemes,
-                    allowLoopback: allowLoopback,
-                    metrics: metrics))
+                bool requestIsToProxy = proxy is not null &&
+                    requestedUri.Scheme.Equals(webProxy.Address.Scheme, StringComparison.OrdinalIgnoreCase) &&
+                    requestedUri.Authority.Equals(webProxy.Address.Authority, StringComparison.OrdinalIgnoreCase);
+
+                if (requestIsToProxy)
                 {
-                    Log.UnsafeUri(logger, requestedUri);
-                    metrics.IncrementBlockedRequests();
-                    throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
+                    try
+                    {
+                        resolvedIPAddresses = await CommonFunctions.GetHostEntryAsync(requestedUri, logger, asyncHostEntryResolver, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (SsrfException)
+                    {
+                        Log.DnsResolutionFailed(logger, requestedUri);
+                        metrics.IncrementBlockedRequests();
+                        throw;
+                    }
                 }
-
-                IPAddress[] resolvedIpAddresses;
-
-                try
+                else
                 {
-                    resolvedIpAddresses = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
+                    if (Ssrf.IsUnsafeUri(
                         uri: requestedUri,
-                        additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
-                        additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
-                        allowedHostnames: allowedHostnames,
-                        safeIPNetworks: safeIPNetworks,
-                        safeIPAddresses: safeIPAddresses,
+                        allowedSchemes: snapshottedAllowedSchemes,
                         allowLoopback: allowLoopback,
-                        failMixedResults: failMixedResults,
-                        logger: logger,
-                        metrics: metrics,
-                        asyncHostEntryResolver: asyncHostEntryResolver,
-                        cancellationToken: cancellationToken).ConfigureAwait(false);
-                }
-                catch (SsrfException)
-                {
-                    Log.DnsResolutionFailed(logger, requestedUri);
-                    metrics.IncrementBlockedRequests();
-                    throw;
+                        metrics: metrics))
+                    {
+                        Log.UnsafeUri(logger, requestedUri);
+                        metrics.IncrementBlockedRequests();
+                        throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
+                    }
+
+                    try
+                    {
+                        resolvedIPAddresses = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
+                            uri: requestedUri,
+                            additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+                            additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
+                            allowedHostnames: allowedHostnames,
+                            safeIPNetworks: safeIPNetworks,
+                            safeIPAddresses: safeIPAddresses,
+                            allowLoopback: allowLoopback,
+                            failMixedResults: failMixedResults,
+                            logger: logger,
+                            metrics: metrics,
+                            asyncHostEntryResolver: asyncHostEntryResolver,
+                            cancellationToken: cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (SsrfException)
+                    {
+                        Log.DnsResolutionFailed(logger, requestedUri);
+                        metrics.IncrementBlockedRequests();
+                        throw;
+                    }
                 }
 
                 // Reorder the list of safe IP addresses based on the specified connection strategy, if there are multiple addresses to choose from.
-                if (resolvedIpAddresses.Length > 1)
+                if (resolvedIPAddresses.Length > 1)
                 {
                     if (connectionStrategy.HasFlag(ConnectionStrategy.Random))
                     {
                         // Shuffle in place O(n) in-place vs linq based O(n log n) OrderBy + new list allocation.
-                        for (int i = resolvedIpAddresses.Length - 1; i > 0; i--)
+                        for (int i = resolvedIPAddresses.Length - 1; i > 0; i--)
                         {
                             int j = RandomNumberGenerator.GetInt32(0, i + 1);
-                            (resolvedIpAddresses[i], resolvedIpAddresses[j]) = (resolvedIpAddresses[j], resolvedIpAddresses[i]);
+                            (resolvedIPAddresses[i], resolvedIPAddresses[j]) = (resolvedIPAddresses[j], resolvedIPAddresses[i]);
                         }
                     }
 
                     if (connectionStrategy.HasFlag(ConnectionStrategy.Ipv4Preferred))
                     {
-                        SortIpAddressListByFamily(resolvedIpAddresses, AddressFamily.InterNetwork);
+                        SortIpAddressListByFamily(resolvedIPAddresses, AddressFamily.InterNetwork);
                     }
                     else if (connectionStrategy.HasFlag(ConnectionStrategy.Ipv6Preferred))
                     {
-                        SortIpAddressListByFamily(resolvedIpAddresses, AddressFamily.InterNetworkV6);
+                        SortIpAddressListByFamily(resolvedIPAddresses, AddressFamily.InterNetworkV6);
                     }
                 }
 
@@ -264,7 +297,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 }
 
                 // Attempt to connect to each safe IP address until a successful connection is made.
-                foreach (IPAddress ipAddress in resolvedIpAddresses)
+                foreach (IPAddress ipAddress in resolvedIPAddresses)
                 {
                     Socket socket = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                     try
