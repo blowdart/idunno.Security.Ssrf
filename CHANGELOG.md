@@ -16,7 +16,7 @@
   To use the new collection replace `allowInsecureProtocols : true` with `allowedSchemes : ["https", "http", "wss", "ws"]`.
   You can remove `wss` and `ws` if you have no websocket use.
 
-* Update OpenTelemetry dependencies to address CVE-2026-40894 - OpenTelemetry dotnet: Excessive memory allocation when parsing OpenTelemetry propagation headers
+* Update OTEL dependencies to address [CVE-2026-40894 - OpenTelemetry dotnet: Excessive memory allocation when parsing OpenTelemetry propagation headers](https://github.com/advisories/GHSA-g94r-2vxg-569j)
 
 ## 4.0.0 - 2026-04-14
 
