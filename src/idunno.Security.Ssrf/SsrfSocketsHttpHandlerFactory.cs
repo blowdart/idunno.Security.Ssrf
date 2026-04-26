@@ -169,6 +169,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ILogger logger = loggerFactory.CreateLogger<SsrfSocketsHttpHandlerFactory>();
         SsrfMetrics metrics = new(meterFactory);
 
+        string[] snapshottedAllowedSchemes = allowedSchemes != null ? [.. allowedSchemes] : Defaults.AllowedSchemes;
+
         SocketsHttpHandler handler = new()
         {
             AllowAutoRedirect = allowAutoRedirect,
@@ -190,7 +192,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
 
                 if (Ssrf.IsUnsafeUri(
                     uri: requestedUri,
-                    allowedSchemes: allowedSchemes ?? Defaults.AllowedSchemes,
+                    allowedSchemes: snapshottedAllowedSchemes,
                     allowLoopback: allowLoopback,
                     metrics: metrics))
                 {

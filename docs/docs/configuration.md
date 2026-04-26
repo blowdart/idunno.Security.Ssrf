@@ -83,7 +83,7 @@ parameter to `false` all unsafe addresses will be removed from the potential con
 remain, a connection will be attempted to each.
 
 >[!Warning]
-> DNS resolution that returns a mix of safe and unsafe IP addresses is likely be an indicator of attack.
+> DNS resolution that returns a mix of safe and unsafe IP addresses is likely to be an indicator of attack.
 > Do not set `failMixedResults` to `false` unless you have a specific need to allow this, and you understand the risks of doing so.
 
 ## Other configuration parameters
