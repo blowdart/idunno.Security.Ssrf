@@ -253,7 +253,14 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 // it may not be set if the request URI was modified to use an IP address for connection.
                 if (context.InitialRequestMessage.Headers.Host is null)
                 {
-                    context.InitialRequestMessage.Headers.Host = requestedUri.Authority;
+                    string host = requestedUri.HostNameType switch
+                    {
+                        UriHostNameType.IPv6 => $"[{requestedUri.Host}]",
+                        _ => requestedUri.IdnHost,
+                    };
+                    context.InitialRequestMessage.Headers.Host = requestedUri.IsDefaultPort
+                        ? host
+                        : $"{host}:{requestedUri.Port}";
                 }
 
                 // Attempt to connect to each safe IP address until a successful connection is made.

@@ -268,7 +268,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _safeIPNetworks = options.SafeIPNetworks;
         _safeIPAddresses = options.SafeIPAddresses;
-        _allowedSchemes = options.AllowedSchemes;
+        _allowedSchemes = options.AllowedSchemes != null ? [.. options.AllowedSchemes] : Defaults.AllowedSchemes;
         _allowLoopback = options.AllowLoopback;
         _failMixedResults = options.FailMixedResults;
         _hostEntryResolver = hostEntryResolver ?? Defaults.GetHostEntry;
@@ -279,7 +279,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _metrics = new SsrfMetrics(meterFactory);
 
-        ICollection<string> innerHandlerAllowedSchemes = options.AllowedSchemes ?? Defaults.AllowedSchemes;
+        ICollection<string> innerHandlerAllowedSchemes = _allowedSchemes;
         if (!innerHandlerAllowedSchemes.Contains(webProxy.Address.Scheme, StringComparer.OrdinalIgnoreCase))
         {
             innerHandlerAllowedSchemes = [.. innerHandlerAllowedSchemes, webProxy.Address.Scheme];
