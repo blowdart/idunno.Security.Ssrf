@@ -36,7 +36,7 @@ public record SsrfOptions
     /// <summary>
     /// Gets or sets an optional collection of URI schemes that are allowed. This can be used to restrict or allow specific protocols such as "http" or "ws".
     /// </summary>
-    public ICollection<string>? AllowedSchemes { get; init; } = [..Defaults.AllowedSchemes];
+    public ICollection<string>? AllowedSchemes { get; init; }
 
     /// <summary>
     /// Gets or sets a flag indicating whether to fail when a mixture of safe and unsafe addresses is found.
