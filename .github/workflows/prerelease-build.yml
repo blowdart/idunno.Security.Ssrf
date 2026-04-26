@@ -135,12 +135,11 @@ jobs:
           Copy-Item $_.FullName $($env:ATTESTATION_INPUT)
           Expand-Archive $_.FullName "$($env:ATTESTATION_INPUT)/$($_.Basename)" -Force
           Remove-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/_rels" -Recurse -Force
-          Remove-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/package" -Recurse -Force  
+          Remove-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/package" -Recurse -Force
 
           # Need to special case [Content_Types].xml bgecause of those pesky [] characters
           $contentTypes=Join-Path "$($env:ATTESTATION_INPUT)/$($_.Basename)" -ChildPath "[Content_Types].xml"
-          Remove-Item -LiteralPath $contentTypes -Force
-        }
+          Remove-Item -LiteralPath $contentTypes -Force }
 
     - name: 'List attestation artifacts'
       shell: pwsh
