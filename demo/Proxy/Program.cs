@@ -32,7 +32,7 @@ var proxiedSsrfDelegatingHandler = new ProxiedSsrfDelegatingHandler(
     additionalUnsafeIPAddresses: null,
     allowedHostnames: null,
     connectTimeout: TimeSpan.FromSeconds(1),
-    allowedSchemes: ["https"],
+    allowedSchemes: ["https", "wss"],
     allowLoopback: false,
     failMixedResults: true,
     allowAutoRedirect: false,

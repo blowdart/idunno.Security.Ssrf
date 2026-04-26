@@ -126,7 +126,7 @@ jobs:
     - name: Expand signed nupkg for attestation
       shell: pwsh
       run: | 
-        # Create the attestion directory, if it doesn't exist, then delete whatever is in it, just in case.
+        # Create the attestation directory, if it doesn't exist, then delete whatever is in it, just in case.
         New-Item -ItemType Directory -Force -Path ($env:ATTESTATION_INPUT) | Out-Null
         Remove-Item "$($env:ATTESTATION_INPUT)/*" -Recurse -Force
 
@@ -142,7 +142,7 @@ jobs:
           # Remove the extraneous files from the nupkg extraction
           Remove-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/_rels" -Recurse -Force
           Remove-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/package" -Recurse -Force
-          # Need to special case [Content_Types].xml bgecause of those pesky [] characters
+          # Need to special case [Content_Types].xml because of those pesky [] characters
           $contentTypes=Join-Path "$($env:ATTESTATION_INPUT)/$($_.Basename)" -ChildPath "[Content_Types].xml"
           Remove-Item -LiteralPath $contentTypes -Force
         }
