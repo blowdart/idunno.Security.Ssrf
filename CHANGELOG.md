@@ -14,7 +14,7 @@
 * **Breaking** Replace `allowInsecureProtocols` parameter with `allowedSchemes` in `SsrfSocketsHttpHandlerFactory.Create()`, `ProxiedSsrfDelegatingHandler` constructor and as a property in `SsrfOptions` to allow for more flexible protocol allow listing.
 
   To use the new collection replace `allowInsecureProtocols : true` with `allowedSchemes : ["https", "http", "wss", "ws"]`.
-  You can remove `wss` and `ws` if you have no websocket use.
+  You can remove `wss` and `ws` if you have no WebSocket use.
 
 * Update OTEL dependencies to address [CVE-2026-40894 - OpenTelemetry dotnet: Excessive memory allocation when parsing OpenTelemetry propagation headers](https://github.com/advisories/GHSA-g94r-2vxg-569j)
 
