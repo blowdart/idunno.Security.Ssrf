@@ -134,9 +134,14 @@ jobs:
         Get-ChildItem -Path $env:NUPKG_DIRECTORY -Filter *.nupkg -Force | ForEach-Object { 
           Copy-Item $_.FullName $($env:ATTESTATION_INPUT)
           Expand-Archive $_.FullName "$($env:ATTESTATION_INPUT)/$($_.Basename)" -Force
+
+          # Place SBOM from the nupkg alongside the nupkg for attestation
+          Copy-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json" -Destination "$($env:ATTESTATION_INPUT)/$($_.Basename).spdx.json"
+          Copy-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json.sha256" -Destination "$($env:ATTESTATION_INPUT)/$($_.Basename).spdx.json.sha256"
+
+          # Remove the extraneous files from the nupkg extraction
           Remove-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/_rels" -Recurse -Force
           Remove-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/package" -Recurse -Force
-
           # Need to special case [Content_Types].xml bgecause of those pesky [] characters
           $contentTypes=Join-Path "$($env:ATTESTATION_INPUT)/$($_.Basename)" -ChildPath "[Content_Types].xml"
           Remove-Item -LiteralPath $contentTypes -Force
