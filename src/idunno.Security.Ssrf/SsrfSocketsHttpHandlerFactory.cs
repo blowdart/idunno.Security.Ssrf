@@ -165,14 +165,16 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ILoggerFactory? loggerFactory,
         IMeterFactory? meterFactory)
     {
-        if (proxy is not WebProxy webProxy)
-        {
-            throw new ArgumentException("Only WebProxy instances are supported for the proxy parameter.", nameof(proxy));
-        }
+        WebProxy? webProxy = null;
 
-        if (webProxy.Address is null)
+        if (proxy is not null)
         {
-            throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
+            webProxy = proxy as WebProxy ?? throw new ArgumentException("Only WebProxy instances are supported for the proxy parameter.", nameof(proxy));
+
+            if (webProxy.Address is null)
+            {
+                throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
+            }
         }
 
         asyncHostEntryResolver ??= Defaults.GetHostEntryAsync;
@@ -205,7 +207,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
                 IPAddress[] resolvedIPAddresses;
 
-                bool requestIsToProxy = proxy is not null &&
+                bool requestIsToProxy = webProxy is not null &&
+                    webProxy.Address is not null &&
                     requestedUri.Scheme.Equals(webProxy.Address.Scheme, StringComparison.OrdinalIgnoreCase) &&
                     requestedUri.Authority.Equals(webProxy.Address.Authority, StringComparison.OrdinalIgnoreCase);
 
