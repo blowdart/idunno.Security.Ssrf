@@ -7,7 +7,7 @@ namespace idunno.Security;
 
 internal static class Defaults
 {
-    public static ICollection<string> AllowedSchemes { get; } = ["https", "wss"];
+    public static readonly string[] AllowedSchemes = ["https", "wss"];
 
     public static Func<string, CancellationToken, Task<IPHostEntry>> GetHostEntryAsync { get; } = Dns.GetHostEntryAsync;
 

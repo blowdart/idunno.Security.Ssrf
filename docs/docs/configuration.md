@@ -48,7 +48,7 @@ such as a local development environment or a trusted internal service.
 
 > [!Warning]
 > Careless use of `safeIPNetworks` and `safeIPAddresses` can lead to security vulnerabilities by allowing
-> genuinely unsafe IP addresses or network to be considered safe.
+> genuinely unsafe IP addresses or networks to be considered safe.
 > Use with caution and constrain the values specified to the smallest network range or individual IP addresses needed.
 > Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address matches
 > both a safe and unsafe address, or is within a safe network, it will be considered safe.
