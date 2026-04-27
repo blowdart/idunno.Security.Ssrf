@@ -1,6 +1,7 @@
 // Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using System.Net;
@@ -175,7 +176,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ILogger logger = loggerFactory.CreateLogger<SsrfSocketsHttpHandlerFactory>();
         SsrfMetrics metrics = new(meterFactory);
 
-        string[] snapshottedAllowedSchemes = allowedSchemes != null ? [.. allowedSchemes] : Defaults.AllowedSchemes;
+        ICollection<string> snapshottedAllowedSchemes = allowedSchemes != null ? [.. allowedSchemes] : Defaults.AllowedSchemes;
 
         SocketsHttpHandler handler = new()
         {
