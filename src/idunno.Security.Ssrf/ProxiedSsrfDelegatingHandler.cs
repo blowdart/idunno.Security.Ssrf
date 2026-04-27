@@ -213,12 +213,14 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             throw new ArgumentException("The WebProxy instance in the options.Proxy property must have a non-null Address property.", nameof(options));
         }
 
+        ICollection<string>? snapshotAllowedSchemes = options.AllowedSchemes is null ? null : [.. options.AllowedSchemes];
+
         _additionalUnsafeIPNetworks = options.AdditionalUnsafeIPNetworks;
         _additionalUnsafeIPAddresses = options.AdditionalUnsafeIPAddresses;
         _safeIPNetworks = options.SafeIPNetworks;
         _safeIPAddresses = options.SafeIPAddresses;
         _allowedHostnames = options.AllowedHostnames;
-        _allowedSchemes = options.AllowedSchemes;
+        _allowedSchemes = snapshotAllowedSchemes;
         _allowLoopback = options.AllowLoopback;
         _failMixedResults = options.FailMixedResults;
         _hostEntryResolver = hostEntryResolver ?? Defaults.GetHostEntry;

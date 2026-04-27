@@ -1,7 +1,6 @@
 // Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
-using System.Collections;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
 using System.Net;
@@ -199,18 +198,18 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 // If the handler wrapped inside the proxy handler the requestedUri will be the proxy URI.
 
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
+                Uri connectUri = new UriBuilder(requestedUri.Scheme, context.DnsEndPoint.Host, context.DnsEndPoint.Port).Uri;
                 IPAddress[] resolvedIPAddresses;
 
-                bool requestIsToProxy = proxy is not null &&
-                    proxy.Address is not null &&
-                    requestedUri.Scheme.Equals(proxy.Address.Scheme, StringComparison.OrdinalIgnoreCase) &&
-                    requestedUri.Authority.Equals(proxy.Address.Authority, StringComparison.OrdinalIgnoreCase);
+                bool requestIsToProxy = proxy?.Address is Uri proxyAddress &&
+                    context.DnsEndPoint.Host.Equals(proxyAddress.IdnHost, StringComparison.OrdinalIgnoreCase) &&
+                    context.DnsEndPoint.Port == proxyAddress.Port;
 
                 if (requestIsToProxy)
                 {
                     try
                     {
-                        resolvedIPAddresses = await CommonFunctions.GetHostEntryAsync(requestedUri, logger, asyncHostEntryResolver, cancellationToken).ConfigureAwait(false);
+                        resolvedIPAddresses = await CommonFunctions.GetHostEntryAsync(connectUri, logger, asyncHostEntryResolver, cancellationToken).ConfigureAwait(false);
                     }
                     catch (SsrfException)
                     {

@@ -225,7 +225,7 @@ var allowMixedSsrfHostValidationHandler = new ProxiedSsrfDelegatingHandler(
     allowedHostnames: null,
     connectTimeout: TimeSpan.FromSeconds(1),
     allowedSchemes: ["https"],
-    allowLoopback: true, // Must allow loopback for the proxy itself to work.
+    allowLoopback: false,
     failMixedResults: false,
     allowAutoRedirect: false,
     automaticDecompression: DecompressionMethods.All,
