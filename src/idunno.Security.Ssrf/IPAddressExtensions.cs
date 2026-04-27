@@ -245,7 +245,6 @@ public static class IPAddressExtensions
         /// Maps a Teredo IPv6 <see cref="IPAddress"/> object to an IPv4 address.
         /// </summary>
         /// <returns>The mapped IPv4 address if the IP address is a Teredo address; otherwise, the original IP address.</returns>
-        /// <exception cref="SsrfException">Thrown if the IP address bytes cannot be written.</exception>
         /// <remarks>
         /// <para>If you want to use <see cref="MapTeredoToIPv4(IPAddress)"/>to convert an IPv4 address from IPv6 format to IPv4 format, you must first ensure that you've got a
         /// compatible IPv6 address. Call <see cref="IPAddress.IsIPv6Teredo"/>, which will return <see langword="true"/> if the IP address is a Teredo address,

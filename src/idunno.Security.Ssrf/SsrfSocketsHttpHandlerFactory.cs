@@ -113,7 +113,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ArgumentNullException.ThrowIfNull(options);
         if (options is ProxiedSsrfOptions)
         {
-            throw new ArgumentException("SsrfSocketsHttpHandlerFactory cannot accept ProxiedSsrfOptions. Use ProxiedSsrfSocketsHttpHandlerFactory for options that include proxy settings.", nameof(options));
+            throw new ArgumentException("SsrfSocketsHttpHandlerFactory cannot accept ProxiedSsrfOptions. Use ProxiedSsrfDelegatingHandler with ProxiedSsrfOptions for configurations that include proxy settings.", nameof(options));
         }
 
         return InternalCreate(
@@ -132,7 +132,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ArgumentNullException.ThrowIfNull(options);
         if (options is ProxiedSsrfOptions)
         {
-            throw new ArgumentException("SsrfSocketsHttpHandlerFactory cannot accept ProxiedSsrfOptions. Use ProxiedSsrfSocketsHttpHandlerFactory for options that include proxy settings.", nameof(options));
+            throw new ArgumentException("SsrfSocketsHttpHandlerFactory cannot accept ProxiedSsrfOptions. Use ProxiedSsrfDelegatingHandler with ProxiedSsrfOptions for configurations that include proxy settings.", nameof(options));
         }
 
         return InternalCreate(
