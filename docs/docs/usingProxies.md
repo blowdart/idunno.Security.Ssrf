@@ -8,12 +8,14 @@
 > It is strongly suggested you do not use a proxy server in production environments, and limit the use of proxy support
 > to debugging scenarios with proxies like Fiddler or Burp.
 
-It is not possible to use the `SsrfSocketsHttpHandlerFactory` to produce a handler that uses a proxy server, as
-proxy servers may be on a loopback address. A specialist handler, `ProxiedSsrfDelegatingHandler` can be used
-to produce a handler which validates outgoing requests, whilst still allowing access to a proxy on a loopback address
-and an unsafe `http` protocol automatically.
+When using a web proxy a specialist handler, `ProxiedSsrfDelegatingHandler`, and, optionally its
+`ProxiedSsrfOptions` options class must be used
+to produce a handler which validates outgoing requests, whilst still allowing access to a proxy on, potentially
+a loopback address and, or with an unsafe `http` protocol. The `ProxiedSsrfDelegatingHandler` safelists calls
+to the configured proxy.
 
-For example,
+To use `ProxiedSsrfDelegatingHandler` create an instance of the handler,
+passing in a `WebProxy` instance configured with the proxy you want to use. For example,
 
 ```c#
 var proxyUri = new Uri("http://127.0.0.1:8866");
@@ -27,5 +29,5 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler))
 ```
 
 While `ProxiedSsrfDelegatingHandler` is a delegating handler it sets an `InnerHandler`.
-While you can use it in a message handler pipeline, it must be the last handler in
+You can use it in a message handler pipeline, however it must be the last handler in
 the pipeline.

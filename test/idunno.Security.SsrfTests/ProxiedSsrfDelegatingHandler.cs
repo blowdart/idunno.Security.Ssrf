@@ -385,7 +385,7 @@ public class ProxiedSsrfDelegatingHandler
 
         string hostName = "https://example.org/";
 
-        SsrfOptions options = new()
+        ProxiedSsrfOptions options = new()
         {
             AdditionalUnsafeIPNetworks =
             [
@@ -511,7 +511,7 @@ public class ProxiedSsrfDelegatingHandler
     [InlineData("https://[::1]/")]
     public async Task ConnectionDoesNotThrowForLoopbackHostWhenAllowLoopbackIsSetInOptions(string hostName)
     {
-        SsrfOptions options = new()
+        ProxiedSsrfOptions options = new()
         {
             ConnectTimeout = new TimeSpan(0, 0, 1),
             AllowedSchemes = ["http", "https"],
@@ -1086,7 +1086,7 @@ public class ProxiedSsrfDelegatingHandler
     {
         var uri = new Uri("https://loopback.ssrf.fail");
 
-        var options = new SsrfOptions
+        var options = new ProxiedSsrfOptions
         {
             SafeIPNetworks =
             [
@@ -1120,7 +1120,7 @@ public class ProxiedSsrfDelegatingHandler
     {
         var uri = new Uri("https://loopback.ssrf.fail");
 
-        var options = new SsrfOptions
+        var options = new ProxiedSsrfOptions
         {
             SafeIPAddresses =
             [

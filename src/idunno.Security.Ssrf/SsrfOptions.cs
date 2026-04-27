@@ -35,6 +35,7 @@ public record SsrfOptions
 
     /// <summary>
     /// Gets or sets an optional collection of URI schemes that are allowed. This can be used to restrict or allow specific protocols such as "http" or "ws".
+    /// When set to <see langword="null"/> defaults to <c>https</c> and <c>wss</c>.
     /// </summary>
     public ICollection<string>? AllowedSchemes { get; init; }
 
@@ -54,11 +55,6 @@ public record SsrfOptions
     /// Gets or sets the type of decompression method used by the handler for automatic decompression of the HTTP content response.
     /// </summary>
     public DecompressionMethods? AutomaticDecompression { get; set; }
-
-    /// <summary>
-    /// Gets or sets the custom proxy to use.
-    /// </summary>
-    public IWebProxy? Proxy { get; set; }
 
     /// <summary>
     /// Gets or sets the set of options used for client TLS authentication.

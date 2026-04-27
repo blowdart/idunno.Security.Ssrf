@@ -50,7 +50,6 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHand
     Console.WriteLine($"Making requests through the {proxyUri}...");
     Console.WriteLine();
 
-
     Uri destinationUri = new("https://www.example.com/");
     Console.WriteLine($"Request to {destinationUri} will succeed as it is an allowed protocol and safe destination.");
     HttpResponseMessage response = await httpClient.GetAsync(destinationUri);

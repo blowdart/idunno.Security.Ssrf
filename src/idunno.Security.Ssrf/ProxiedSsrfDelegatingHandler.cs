@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Security;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace idunno.Security;
 
@@ -67,7 +68,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     ///</para>
     /// </remarks>
     public ProxiedSsrfDelegatingHandler(
-        IWebProxy proxy,
+        WebProxy proxy,
         ConnectionStrategy connectionStrategy = ConnectionStrategy.None,
         ICollection<IPNetwork>? additionalUnsafeIPNetworks = null,
         ICollection<IPAddress>? additionalUnsafeIPAddresses = null,
@@ -83,7 +84,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         SslClientAuthenticationOptions? sslOptions = null,
         ILoggerFactory? loggerFactory = null,
         IMeterFactory? meterFactory = null) : this(
-            proxy: proxy,
+            proxy: proxy ?? throw new ArgumentNullException(nameof(proxy)),
             connectionStrategy: connectionStrategy,
             additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
             additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
@@ -104,12 +105,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     {
         ArgumentNullException.ThrowIfNull(proxy);
 
-        if (proxy is not WebProxy webProxy)
-        {
-            throw new ArgumentException("Only WebProxy instances are supported for the proxy parameter.", nameof(proxy));
-        }
-
-        if (webProxy.Address is null)
+        if (proxy.Address is null)
         {
             throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
         }
@@ -118,13 +114,13 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     /// <summary>
     /// Creates a new instance of <see cref="ProxiedSsrfDelegatingHandler"/> with the specified configuration, with an inner handler created by <see cref="SsrfSocketsHttpHandlerFactory"/>.
     /// </summary>
-    /// <param name="options">The <see cref="SsrfOptions"/> containing the configuration for the handler.</param>
+    /// <param name="options">The <see cref="ProxiedSsrfOptions"/> containing the configuration for the handler.</param>
     /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
     /// <param name="meterFactory">An optional <see cref="IMeterFactory"/> to use for metrics. If not provided, a default <see cref="SsrfMetrics"/> instance will be used with a shared meter.</param>
     /// <exception cref="ArgumentException">Thrown if the provided <paramref name="options"/> contains an invalid proxy configuration.</exception>
     /// <exception cref="ArgumentNullException">Thrown if the provided <paramref name="options"/> or its Proxy property is <see langword="null"/>.</exception>
     public ProxiedSsrfDelegatingHandler(
-        SsrfOptions options,
+        ProxiedSsrfOptions options,
         ILoggerFactory? loggerFactory = null,
         IMeterFactory? meterFactory = null) : this(
             options,
@@ -147,7 +143,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     }
 
     internal ProxiedSsrfDelegatingHandler(
-        IWebProxy proxy,
+        WebProxy proxy,
         ConnectionStrategy connectionStrategy,
         ICollection<IPNetwork>? additionalUnsafeIPNetworks,
         ICollection<IPAddress>? additionalUnsafeIPAddresses,
@@ -166,12 +162,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         ILoggerFactory? loggerFactory,
         IMeterFactory? meterFactory)
     {
-        if (proxy is not WebProxy webProxy)
-        {
-            throw new ArgumentException("Only WebProxy instances are supported for the proxy parameter.", nameof(proxy));
-        }
-
-        if (webProxy.Address is null)
+        if (proxy.Address is null)
         {
             throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
         }
@@ -179,18 +170,21 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         _additionalUnsafeIPNetworks = additionalUnsafeIPNetworks;
         _additionalUnsafeIPAddresses = additionalUnsafeIPAddresses;
 
-        if (allowedHostnames is null)
-        {
-            _allowedHostnames = [webProxy.Address.Host];
-        }
-        else
-        {
-            _allowedHostnames = allowedHostnames;
-            if (!allowedHostnames.Contains(webProxy.Address.Host))
-            {
-                _allowedHostnames.Add(webProxy.Address.Host);
-            }
-        }
+        //if (allowedHostnames is null)
+        //{
+        //    _allowedHostnames = [webProxy.Address.Host];
+        //}
+        //else
+        //{
+        //    _allowedHostnames = allowedHostnames;
+        //    if (!allowedHostnames.Contains(webProxy.Address.Host))
+        //    {
+        //        _allowedHostnames.Add(webProxy.Address.Host);
+        //    }
+        //}
+
+        _allowedHostnames = allowedHostnames;
+
 
         _safeIPNetworks = safeIPNetworks;
         _safeIPAddresses = safeIPAddresses;
@@ -214,7 +208,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             safeIPAddresses: _safeIPAddresses,
             connectTimeout: connectTimeout,
             allowedSchemes: _allowedSchemes,
-            allowLoopback: webProxy.Address.IsLoopback,
+            allowLoopback: _allowLoopback,
             failMixedResults: _failMixedResults,
             allowAutoRedirect: allowAutoRedirect,
             automaticDecompression: automaticDecompression,
@@ -226,7 +220,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     }
 
     internal ProxiedSsrfDelegatingHandler(
-        SsrfOptions options,
+        ProxiedSsrfOptions options,
         Func<string, IPHostEntry>? hostEntryResolver,
         Func<string, CancellationToken, Task<IPHostEntry>>? asyncHostEntryResolver,
         ILoggerFactory? loggerFactory,

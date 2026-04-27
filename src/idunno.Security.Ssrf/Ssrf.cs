@@ -182,10 +182,15 @@ public static class Ssrf
     {
         ArgumentNullException.ThrowIfNull(ipAddress);
 
+        // Normalize IPv4-embedded IPv6 forms to their IPv4 representation before any allow/block checks.
+        // This means those addresses are evaluated against the IPv4 safe/unsafe lists after normalization,
+        // rather than against IPv6 prefix entries that describe the embedding/translation format itself.
         ipAddress = ipAddress.NormalizeToIPv4();
 
-        // Perform safe list checks before unsafe checks so that specific safe addresses or networks can be allowed even if they would normally be blocked by the unsafe checks.
-        // This allows for more granular allow-listing of specific safe addresses or ranges without having to allow an entire larger network range that contains unsafe addresses.
+        // Perform safe list checks before unsafe checks so that specific safe addresses or networks can be allowed
+        // even if they would normally be blocked by the unsafe checks.
+        // This allows for more granular allow-listing of specific safe addresses or ranges without having to allow
+        // an entire larger network range that contains unsafe addresses.
         if (safeIPAddresses is not null && safeIPAddresses.Contains(ipAddress))
         {
             return false;

@@ -82,7 +82,7 @@ during name resolution returns a mixture of safe and unsafe IP addresses. If you
 parameter to `false` all unsafe addresses will be removed from the potential connection list, and, if any safe IP addresses
 remain, a connection will be attempted to each.
 
->[!Warning]
+> [!Warning]
 > DNS resolution that returns a mix of safe and unsafe IP addresses is likely to be an indicator of attack.
 > Do not set `failMixedResults` to `false` unless you have a specific need to allow this, and you understand the risks of doing so.
 

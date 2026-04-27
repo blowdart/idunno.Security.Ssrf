@@ -159,22 +159,15 @@ public sealed class SsrfSocketsHttpHandlerFactory
         bool failMixedResults,
         bool allowAutoRedirect,
         DecompressionMethods? automaticDecompression,
-        IWebProxy? proxy,
+        WebProxy? proxy,
         SslClientAuthenticationOptions? sslOptions,
         Func<string, CancellationToken, Task<IPHostEntry>>? asyncHostEntryResolver,
         ILoggerFactory? loggerFactory,
         IMeterFactory? meterFactory)
     {
-        WebProxy? webProxy = null;
-
-        if (proxy is not null)
-        {
-            webProxy = proxy as WebProxy ?? throw new ArgumentException("Only WebProxy instances are supported for the proxy parameter.", nameof(proxy));
-
-            if (webProxy.Address is null)
-            {
-                throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
-            }
+        if (proxy is not null && proxy.Address is null)
+        { 
+            throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
         }
 
         asyncHostEntryResolver ??= Defaults.GetHostEntryAsync;
@@ -207,10 +200,10 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
                 IPAddress[] resolvedIPAddresses;
 
-                bool requestIsToProxy = webProxy is not null &&
-                    webProxy.Address is not null &&
-                    requestedUri.Scheme.Equals(webProxy.Address.Scheme, StringComparison.OrdinalIgnoreCase) &&
-                    requestedUri.Authority.Equals(webProxy.Address.Authority, StringComparison.OrdinalIgnoreCase);
+                bool requestIsToProxy = proxy is not null &&
+                    proxy.Address is not null &&
+                    requestedUri.Scheme.Equals(proxy.Address.Scheme, StringComparison.OrdinalIgnoreCase) &&
+                    requestedUri.Authority.Equals(proxy.Address.Authority, StringComparison.OrdinalIgnoreCase);
 
                 if (requestIsToProxy)
                 {
