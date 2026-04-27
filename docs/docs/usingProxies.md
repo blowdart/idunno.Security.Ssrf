@@ -5,6 +5,9 @@
 > Using a proxy hands requests to the proxy which then performs its own name resolution to turn a host name into
 > one or more IP addresses. The proxy server may get entirely different resolution results to your application.
 >
+> The `Proxy` argument, or property on `ProxiedSsrfOptions` is assumed to be a trusted proxy configuration.
+> The SSRF protections do not apply to the proxy itself, so it is important to ensure that the proxy is secure and properly configured.
+>
 > It is strongly suggested you do not use a proxy server in production environments, and limit the use of proxy support
 > to debugging scenarios with proxies like Fiddler or Burp.
 

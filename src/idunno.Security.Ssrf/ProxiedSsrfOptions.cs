@@ -11,8 +11,14 @@ namespace idunno.Security;
 public record ProxiedSsrfOptions : SsrfOptions
 {
     /// <summary>
-    /// Gets or sets the custom proxy to use.
+    /// Gets or sets the custom proxy to use by the <see cref="ProxiedSsrfDelegatingHandler"/>
     /// </summary>
+    /// <remarks>
+    /// <para>
+    ///   The <see cref="Proxy"/> property is assumed to be a trusted proxy configuration.
+    ///   The SSRF protections do not apply to the proxy itself, so it is important to ensure that the proxy is secure and properly configured.
+    /// </para>
+    /// </remarks>
     public WebProxy? Proxy { get; set; }
 
     /// <summary>

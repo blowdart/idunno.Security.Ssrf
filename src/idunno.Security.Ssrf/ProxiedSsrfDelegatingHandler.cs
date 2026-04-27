@@ -35,7 +35,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     /// Creates a new instance of <see cref="ProxiedSsrfDelegatingHandler"/> with the specified configuration, with an inner handler created by <see cref="SsrfSocketsHttpHandlerFactory"/>.
     /// The inner handler is configured to allow insecure protocols and loopback connections based on the provided <paramref name="proxy"/> URI.
     /// </summary>
-    /// <param name="proxy">The proxy to use.</param>
+    /// <param name="proxy">The proxy to use. The <see cref="Proxy"/> property is assumed to be a trusted proxy configuration. The SSRF protections do not apply to the proxy itself, so it is important to ensure that the proxy is secure and properly configured.</param>
     /// <param name="connectionStrategy">The strategy to use when attempting to connect to multiple resolved IP addresses for a given host.</param>
     /// <param name="additionalUnsafeIPNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
     /// <param name="additionalUnsafeIPAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
