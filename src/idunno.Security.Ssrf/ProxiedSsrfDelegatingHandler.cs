@@ -83,7 +83,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         SslClientAuthenticationOptions? sslOptions = null,
         ILoggerFactory? loggerFactory = null,
         IMeterFactory? meterFactory = null) : this(
-            proxy: proxy ?? throw new ArgumentNullException(nameof(proxy)),
+            proxy: proxy,
             connectionStrategy: connectionStrategy,
             additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
             additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,

@@ -215,7 +215,10 @@ public sealed class SsrfSocketsHttpHandlerFactory
 
                 if (requestIsToProxy)
                 {
-                    Uri connectUri = new UriBuilder(requestedUri.Scheme, context.DnsEndPoint.Host, context.DnsEndPoint.Port).Uri;
+                    // We don't care about scheme or allowed hostnames when connecting to the proxy, since the proxy should be a trusted component within the network
+                    // and not subject to SSRF protections. However, we still want to ensure that the proxy's IP address is resolved and validated as safe to prevent
+                    // SSRF vulnerabilities in the case of an attacker controlling the proxy address or DNS responses for the proxy hostname.
+                    Uri connectUri = new UriBuilder(scheme:null, context.DnsEndPoint.Host, context.DnsEndPoint.Port).Uri;
 
                     try
                     {
@@ -223,7 +226,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
                     }
                     catch (SsrfException)
                     {
-                        Log.DnsResolutionFailed(logger, requestedUri);
+                        Log.DnsResolutionFailed(logger, connectUri);
                         metrics.IncrementBlockedRequests();
                         throw;
                     }
