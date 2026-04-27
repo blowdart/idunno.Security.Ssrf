@@ -8,7 +8,7 @@ namespace idunno.Security.SsrfTests;
 public class IPAddressExtensions
 {
     [Fact]
-    public void IsIPv4CompatibleIPv6_ReturnsTrueForIPv4CompatibleIPv6Address()
+    public void IsIPv4CompatibleIPv6ReturnsTrueForIPv4CompatibleIPv6Address()
     {
         var ipAddress = IPAddress.Parse("::192.0.2.1");
 
@@ -18,7 +18,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void IsIPv4CompatibleIPv6_ReturnsFalseForNonIPv4CompatibleIPv6Address()
+    public void IsIPv4CompatibleIPv6ReturnsFalseForNonIPv4CompatibleIPv6Address()
     {
         var ipAddress = IPAddress.Parse("2606:4700:10::6814:179a");
 
@@ -28,7 +28,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void IsIPv4CompatibleIPv6_ReturnsFalseForIPv6Localhost()
+    public void IsIPv4CompatibleIPv6ReturnsFalseForIPv6Localhost()
     {
         var ipAddress = IPAddress.Parse("::1");
 
@@ -38,7 +38,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void IsIPv4CompatibleIPv6_ReturnsFalseForIPv6EmptyNetwork()
+    public void IsIPv4CompatibleIPv6ReturnsFalseForIPv6EmptyNetwork()
     {
         var ipAddress = IPAddress.Parse("::");
 
@@ -49,7 +49,7 @@ public class IPAddressExtensions
 
 
     [Fact]
-    public void MapIPv6CompatibleToIPv4_ReturnsMappedIPv4Address()
+    public void MapIPv6CompatibleToIPv4ReturnsMappedIPv4Address()
     {
         var ipAddress = IPAddress.Parse("::129.0.2.1");
 
@@ -59,7 +59,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void MapIPv6CompatibleToIPv4_ReturnsOriginalIPAddressForNonIPv4CompatibleIPv6Address()
+    public void MapIPv6CompatibleToIPv4ReturnsOriginalIPAddressForNonIPv4CompatibleIPv6Address()
     {
         var ipAddress = IPAddress.Parse("2606:4700:10::6814:179a");
         var result = ipAddress.MapIPv6CompatibleToIPv4();
@@ -67,7 +67,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void Is6to4_ReturnsTrueForIPv6ToIPv4MappedAddress()
+    public void Is6to4ReturnsTrueForIPv6ToIPv4MappedAddress()
     {
         var ipAddress = IPAddress.Parse("2002:C000:022A::1");
 
@@ -76,7 +76,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void Is6to4_ReturnsFalseForNon6to4Address()
+    public void Is6to4ReturnsFalseForNon6to4Address()
     {
         var ipAddress = IPAddress.Parse("2606:4700:10::6814:179a");
 
@@ -87,7 +87,7 @@ public class IPAddressExtensions
     [InlineData("2002:C000:022A::1", "192.0.2.42")]
     [InlineData("2002:c0a8:6301::1", "192.168.99.1")]
     [Theory]
-    public void MapIPv6ToIPv4Tunnel_ReturnsMappedIPv4Address(string ipV6, string ipV4)
+    public void MapIPv6ToIPv4TunnelReturnsMappedIPv4Address(string ipV6, string ipV4)
     {
         var ipAddress = IPAddress.Parse(ipV6);
         var result = ipAddress.Map6to4ToIPv4();
@@ -95,7 +95,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void MapIPv6ToIPv4Tunnel_ReturnsOriginalIPAddressForNon6to4Addresses()
+    public void MapIPv6ToIPv4TunnelReturnsOriginalIPAddressForNon6to4Addresses()
     {
         var ipAddress = IPAddress.Parse("2606:4700:10::6814:179a");
         var result = ipAddress.Map6to4ToIPv4();
@@ -138,7 +138,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void MapISATAPToIPv4_ReturnsMappedIPv4Address()
+    public void MapISATAPToIPv4ReturnsMappedIPv4Address()
     {
         var ipAddress = IPAddress.Parse("2001:DB8:1234:5678:0000:5EFE:0AAD:8108");
         var result = ipAddress.MapISATAPToIPv4();
@@ -146,7 +146,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void MapISATAPToIPv4_ReturnsOriginalIPAddressForNonISATAPAddress()
+    public void MapISATAPToIPv4ReturnsOriginalIPAddressForNonISATAPAddress()
     {
         var ipAddress = IPAddress.Parse("2606:4700:10::6814:179a");
         var result = ipAddress.MapISATAPToIPv4();
@@ -154,7 +154,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void IsNAT64_ReturnsTrueForNAT64Address()
+    public void IsNAT64ReturnsTrueForNAT64Address()
     {
         var ipAddress = IPAddress.Parse("64:ff9b::10.0.0.1");
         var result = ipAddress.IsNAT64;
@@ -162,7 +162,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void IsNAT64_ReturnsFalseForNonNAT64Address()
+    public void IsNAT64ReturnsFalseForNonNAT64Address()
     {
         var ipAddress = IPAddress.Parse("2606:4700:10::6814:179a");
         var result = ipAddress.IsNAT64;
@@ -170,7 +170,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void MapNAT64ToIPv4_ReturnsMappedIPv4Address()
+    public void MapNAT64ToIPv4ReturnsMappedIPv4Address()
     {
         var ipAddress = IPAddress.Parse("64:ff9b::10.0.0.1");
         var result = ipAddress.MapNAT64ToIPv4();
@@ -178,7 +178,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void MapNAT64ToIPv4_ReturnsOriginalIPAddressForNonNAT64Address()
+    public void MapNAT64ToIPv4ReturnsOriginalIPAddressForNonNAT64Address()
     {
         var ipAddress = IPAddress.Parse("2606:4700:10::6814:179a");
         var result = ipAddress.MapNAT64ToIPv4();
@@ -186,7 +186,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void MapTeredoToIPv4_ReturnsMappedIPv4Address()
+    public void MapTeredoToIPv4ReturnsMappedIPv4Address()
     {
         var ipAddress = IPAddress.Parse("2001:0:4136:e378:8000:63bf:3fff:fdd2");
         var result = ipAddress.MapTeredoToIPv4();
@@ -194,7 +194,7 @@ public class IPAddressExtensions
     }
 
     [Fact]
-    public void MapTeredoToIPv4_ReturnsOriginalIPForNonTeredoAddress()
+    public void MapTeredoToIPv4ReturnsOriginalIPForNonTeredoAddress()
     {
         var ipAddress = IPAddress.Parse("2606:4700:10::6814:179a");
         var result = ipAddress.MapTeredoToIPv4();
@@ -203,7 +203,7 @@ public class IPAddressExtensions
 
     [Theory]
     [InlineData("64:ff9b::10.0.0.1")]
-    public void IsNAT64_ReturnsTrueForWellKnownPrefix(string ipAddressAsString)
+    public void IsNAT64ReturnsTrueForWellKnownPrefix(string ipAddressAsString)
     {
         var ipAddress = IPAddress.Parse(ipAddressAsString);
 
@@ -213,7 +213,7 @@ public class IPAddressExtensions
     [Theory]
     [InlineData("64:ff9b:1::10.0.0.1")]
     [InlineData("64:ff9b:1::8.8.8.8")]
-    public void IsNAT64_ReturnsFalseForLocalUsePrefix(string ipAddressAsString)
+    public void IsNAT64ReturnsFalseForLocalUsePrefix(string ipAddressAsString)
     {
         var ipAddress = IPAddress.Parse(ipAddressAsString);
 
@@ -224,7 +224,7 @@ public class IPAddressExtensions
     [InlineData("64:ff9b:1::10.0.0.1")]
     [InlineData("64:ff9b:1::8.8.8.8")]
     [InlineData("64:ff9b:1:abcd::10.0.0.1")]
-    public void IsNAT64LocalUse_ReturnsTrueForLocalUsePrefix(string ipAddressAsString)
+    public void IsNAT64LocalUseReturnsTrueForLocalUsePrefix(string ipAddressAsString)
     {
         var ipAddress = IPAddress.Parse(ipAddressAsString);
 
@@ -235,7 +235,7 @@ public class IPAddressExtensions
     [InlineData("64:ff9b::10.0.0.1")]
     [InlineData("2606:4700:10::6814:179a")]
     [InlineData("10.0.0.1")]
-    public void IsNAT64LocalUse_ReturnsFalseForNonLocalUseAddresses(string ipAddressAsString)
+    public void IsNAT64LocalUseReturnsFalseForNonLocalUseAddresses(string ipAddressAsString)
     {
         var ipAddress = IPAddress.Parse(ipAddressAsString);
 
@@ -244,7 +244,7 @@ public class IPAddressExtensions
 
     [Theory]
     [InlineData("64:ff9b::10.0.0.1", "10.0.0.1")]
-    public void MapNAT64ToIPv4_ReturnsMappedIPv4AddressForWellKnownPrefix(string ipAddressAsString, string expectedAsString)
+    public void MapNAT64ToIPv4ReturnsMappedIPv4AddressForWellKnownPrefix(string ipAddressAsString, string expectedAsString)
     {
         var ipAddress = IPAddress.Parse(ipAddressAsString);
         var expected = IPAddress.Parse(expectedAsString);
@@ -258,7 +258,7 @@ public class IPAddressExtensions
     [InlineData("::1")]
     [InlineData("::")]
     [InlineData("::ffff:127.0.0.1")]
-    public void IsIPv4CompatibleIPv6_ReturnsFalseForBoundaryAddresses(string ipAddressAsString)
+    public void IsIPv4CompatibleIPv6ReturnsFalseForBoundaryAddresses(string ipAddressAsString)
     {
         var ipAddress = IPAddress.Parse(ipAddressAsString);
 
@@ -269,7 +269,7 @@ public class IPAddressExtensions
     [InlineData("::1")]
     [InlineData("::")]
     [InlineData("::ffff:127.0.0.1")]
-    public void MapIPv6CompatibleToIPv4_ReturnsOriginalForBoundaryAddresses(string ipAddressAsString)
+    public void MapIPv6CompatibleToIPv4ReturnsOriginalForBoundaryAddresses(string ipAddressAsString)
     {
         var ipAddress = IPAddress.Parse(ipAddressAsString);
 
@@ -295,7 +295,7 @@ public class IPAddressExtensions
     [InlineData("2600:abcd::5efe:0a00:0001", "10.0.0.1")]
     [InlineData("2001:0:4136:e378:8000:63bf:3fff:fdd2", "192.0.2.45")]
     [InlineData("2606:4700:10::6814:179a", "2606:4700:10::6814:179a")]
-    public void NormalizeToIPv4_ReturnsExpectedAddress(string ipAddressAsString, string expectedAsString)
+    public void NormalizeToIPv4ReturnsExpectedAddress(string ipAddressAsString, string expectedAsString)
     {
         var ipAddress = IPAddress.Parse(ipAddressAsString);
         var expected = IPAddress.Parse(expectedAsString);
@@ -313,7 +313,7 @@ public class IPAddressExtensions
     //                                        ISATAP decode:  f5ff:fffe  = 245.255.255.254 (would appear safe).
     [InlineData("2001:0:abcd:1234:0200:5efe:f5ff:fffe")]
     [InlineData("2001:0:abcd:1234:0000:5efe:f5ff:fffe")]
-    public void NormalizeToIPv4_PrefersTeredoOverISATAPForAmbiguousAddresses(string ipAddressAsString)
+    public void NormalizeToIPv4PrefersTeredoOverISATAPForAmbiguousAddresses(string ipAddressAsString)
     {
         var ipAddress = IPAddress.Parse(ipAddressAsString);
 
@@ -325,7 +325,7 @@ public class IPAddressExtensions
     [Theory]
     [InlineData("2001:0:abcd:1234:0200:5efe:f5ff:fffe")]
     [InlineData("2001:0:abcd:1234:0000:5efe:f5ff:fffe")]
-    public void IsUnsafeIpAddress_ReturnsTrueForTeredoAddressWithISATAPShapedIdentifier(string ipAddressAsString)
+    public void IsUnsafeIpAddressReturnsTrueForTeredoAddressWithISATAPShapedIdentifier(string ipAddressAsString)
     {
         var ipAddress = IPAddress.Parse(ipAddressAsString);
 
@@ -348,7 +348,7 @@ public class IPAddressExtensions
     // IPv4-mapped IPv6 wrapping unsafe IPv4 addresses.
     [InlineData("::ffff:127.0.0.1")]
     [InlineData("::ffff:169.254.169.254")]
-    public void IsUnsafeIpAddress_ReturnsTrueForIPv6WrappedUnsafeIPv4(string ipAddressAsString)
+    public void IsUnsafeIpAddressReturnsTrueForIPv6WrappedUnsafeIPv4(string ipAddressAsString)
     {
         var ipAddress = IPAddress.Parse(ipAddressAsString);
 

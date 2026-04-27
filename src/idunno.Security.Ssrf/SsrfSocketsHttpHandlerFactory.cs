@@ -104,12 +104,17 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="meterFactory">An optional <see cref="IMeterFactory"/> to use for metrics. If not provided, a default <see cref="Meter"/>will be used.</param>
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="options"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="options"/> is of type <see cref="ProxiedSsrfOptions"/>.</exception>
     public static SocketsHttpHandler Create(
         SsrfOptions options,
         ILoggerFactory? loggerFactory = null,
         IMeterFactory? meterFactory = null)
     {
         ArgumentNullException.ThrowIfNull(options);
+        if (options is ProxiedSsrfOptions)
+        {
+            throw new ArgumentException("SsrfSocketsHttpHandlerFactory cannot accept ProxiedSsrfOptions. Use ProxiedSsrfSocketsHttpHandlerFactory for options that include proxy settings.", nameof(options));
+        }
 
         return InternalCreate(
             options: options,
@@ -125,6 +130,10 @@ public sealed class SsrfSocketsHttpHandlerFactory
         IMeterFactory? meterFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
+        if (options is ProxiedSsrfOptions)
+        {
+            throw new ArgumentException("SsrfSocketsHttpHandlerFactory cannot accept ProxiedSsrfOptions. Use ProxiedSsrfSocketsHttpHandlerFactory for options that include proxy settings.", nameof(options));
+        }
 
         return InternalCreate(
             connectionStrategy: options.ConnectionStrategy,
