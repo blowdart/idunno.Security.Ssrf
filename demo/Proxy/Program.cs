@@ -72,7 +72,7 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHand
 
     Console.WriteLine();
 
-    // This request will be blocked by the SSRF protection as it an unsafe loopback destination.
+    // This request will be blocked by the SSRF protection as it is an unsafe loopback destination.
     try
     {
         destinationUri = new("https://localhost:9999");

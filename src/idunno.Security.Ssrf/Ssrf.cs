@@ -187,8 +187,8 @@ public static class Ssrf
         // lists based on the embedded IPv4 address rather than against IPv6 transition or embedding prefixes
         // such as 6to4 (2002::/16) or the NAT64 well-known prefix (64:ff9b::/96).
         //
-        // The IPv6-range blocks like 6to4 (2002::/16) and NAT64 well-known prefix (64:ff9b::/96) are
-        // kept in the IPv6 blocked networks to offset potential evasion of blocks on the embedded IPv4 addresses.
+        // As a result, IPv6 unsafe-network entries for those prefixes apply only to addresses that remain IPv6
+        // after normalization; they do not provide additional coverage for addresses converted to IPv4 here.
         ipAddress = ipAddress.NormalizeToIPv4();
 
         // Perform safe list checks before unsafe checks so that specific safe addresses or networks can be allowed

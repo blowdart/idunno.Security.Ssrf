@@ -51,7 +51,12 @@ public static class IPAddressExtensions
                     return false;
                 }
 
-                byte[] bytes = ipAddress.GetAddressBytes();
+                Span<byte> bytes = stackalloc byte[16];
+                if (!ipAddress.TryWriteBytes(bytes, out _))
+                {
+                    bytes = ipAddress.GetAddressBytes();
+                }
+
                 for (int i = 0; i < 12; i++)
                 {
                     if (bytes[i] != 0)
@@ -102,7 +107,12 @@ public static class IPAddressExtensions
                     return false;
                 }
 
-                byte[] bytes = ipAddress.GetAddressBytes();
+                Span<byte> bytes = stackalloc byte[16];
+                if (!ipAddress.TryWriteBytes(bytes, out _))
+                {
+                    bytes = ipAddress.GetAddressBytes();
+                }
+
                 return (bytes[8] == 0x00 || bytes[8] == 0x02)
                     && bytes[9] == 0x00
                     && bytes[10] == 0x5E
@@ -149,7 +159,12 @@ public static class IPAddressExtensions
         {
             if (ipAddress.IsIPv4CompatibleIPv6)
             {
-                byte[] bytes = ipAddress.GetAddressBytes();
+                Span<byte> bytes = stackalloc byte[16];
+                if (!ipAddress.TryWriteBytes(bytes, out _))
+                {
+                    bytes = ipAddress.GetAddressBytes();
+                }
+
                 return new IPAddress(bytes[12..]);
             }
             return ipAddress;
@@ -169,7 +184,12 @@ public static class IPAddressExtensions
         {
             if (ipAddress.Is6to4)
             {
-                byte[] bytes = ipAddress.GetAddressBytes();
+                Span<byte> bytes = stackalloc byte[16];
+                if (!ipAddress.TryWriteBytes(bytes, out _))
+                {
+                    bytes = ipAddress.GetAddressBytes();
+                }
+
                 return new IPAddress(bytes[2..6]);
             }
             return ipAddress;
@@ -189,7 +209,12 @@ public static class IPAddressExtensions
         {
             if (ipAddress.IsISATAP)
             {
-                byte[] bytes = ipAddress.GetAddressBytes();
+                Span<byte> bytes = stackalloc byte[16];
+                if (!ipAddress.TryWriteBytes(bytes, out _))
+                {
+                    bytes = ipAddress.GetAddressBytes();
+                }
+
                 return new IPAddress(bytes[12..]);
             }
             return ipAddress;
@@ -220,6 +245,7 @@ public static class IPAddressExtensions
         /// Maps a Teredo IPv6 <see cref="IPAddress"/> object to an IPv4 address.
         /// </summary>
         /// <returns>The mapped IPv4 address if the IP address is a Teredo address; otherwise, the original IP address.</returns>
+        /// <exception cref="SsrfException">Thrown if the IP address bytes cannot be written.</exception>
         /// <remarks>
         /// <para>If you want to use <see cref="MapTeredoToIPv4(IPAddress)"/>to convert an IPv4 address from IPv6 format to IPv4 format, you must first ensure that you've got a
         /// compatible IPv6 address. Call <see cref="IPAddress.IsIPv6Teredo"/>, which will return <see langword="true"/> if the IP address is a Teredo address,
@@ -231,8 +257,13 @@ public static class IPAddressExtensions
             if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
                 && ipAddress.IsIPv6Teredo)
             {
-                byte[] bytes = ipAddress.GetAddressBytes();
-                byte[] ipV4Bytes =
+                Span<byte> bytes = stackalloc byte[16];
+                if (!ipAddress.TryWriteBytes(bytes, out _))
+                {
+                    bytes = ipAddress.GetAddressBytes();
+                }
+
+                ReadOnlySpan<byte> ipV4Bytes =
                 [
                     (byte)~bytes[12],
                     (byte)~bytes[13],
