@@ -257,7 +257,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         Uri requestedUri = request.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
 
         if (Ssrf.IsUnsafeUri(
-            uri: request.RequestUri,
+            uri: requestedUri,
             allowedSchemes: _allowedSchemes,
             allowLoopback: _allowLoopback,
             metrics: _metrics))
@@ -306,7 +306,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         Uri requestedUri = request.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
 
         if (Ssrf.IsUnsafeUri(
-            uri: request.RequestUri,
+            uri: requestedUri,
             allowedSchemes: _allowedSchemes,
             allowLoopback: _allowLoopback,
             metrics: _metrics))

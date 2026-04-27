@@ -198,7 +198,6 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 // If the handler wrapped inside the proxy handler the requestedUri will be the proxy URI.
 
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
-                Uri connectUri = new UriBuilder(requestedUri.Scheme, context.DnsEndPoint.Host, context.DnsEndPoint.Port).Uri;
                 IPAddress[] resolvedIPAddresses;
 
                 bool requestIsToProxy = proxy?.Address is Uri proxyAddress &&
@@ -207,6 +206,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
 
                 if (requestIsToProxy)
                 {
+                    Uri connectUri = new UriBuilder(requestedUri.Scheme, context.DnsEndPoint.Host, context.DnsEndPoint.Port).Uri;
+
                     try
                     {
                         resolvedIPAddresses = await CommonFunctions.GetHostEntryAsync(connectUri, logger, asyncHostEntryResolver, cancellationToken).ConfigureAwait(false);
