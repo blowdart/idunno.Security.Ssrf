@@ -1,13 +1,14 @@
 // Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Collections.ObjectModel;
 using System.Net;
 
 namespace idunno.Security;
 
 internal static class Defaults
 {
-    public static readonly string[] AllowedSchemes = ["https", "wss"];
+    public static ReadOnlyCollection<string> AllowedSchemes { get; } = Array.AsReadOnly(["https", "wss"]);
 
     public static Func<string, CancellationToken, Task<IPHostEntry>> GetHostEntryAsync { get; } = Dns.GetHostEntryAsync;
 

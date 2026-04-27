@@ -6,7 +6,6 @@ using System.Net;
 using System.Net.Security;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 
 namespace idunno.Security;
 
@@ -218,6 +217,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         _additionalUnsafeIPAddresses = options.AdditionalUnsafeIPAddresses;
         _safeIPNetworks = options.SafeIPNetworks;
         _safeIPAddresses = options.SafeIPAddresses;
+        _allowedHostnames = options.AllowedHostnames;
         _allowedSchemes = options.AllowedSchemes;
         _allowLoopback = options.AllowLoopback;
         _failMixedResults = options.FailMixedResults;
@@ -238,7 +238,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             safeIPAddresses: _safeIPAddresses,
             connectTimeout: options.ConnectTimeout,
             allowedSchemes: _allowedSchemes,
-            allowLoopback: webProxy.Address.IsLoopback,
+            allowLoopback: _allowLoopback,
             failMixedResults: _failMixedResults,
             allowAutoRedirect: options.AllowAutoRedirect,
             automaticDecompression: options.AutomaticDecompression,
