@@ -117,8 +117,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     /// <param name="options">The <see cref="ProxiedSsrfOptions"/> containing the configuration for the handler.</param>
     /// <param name="loggerFactory">An optional <see cref="ILoggerFactory"/> to use for logging. If not provided, a <see cref="NullLoggerFactory"/> will be used and no logs will be emitted.</param>
     /// <param name="meterFactory">An optional <see cref="IMeterFactory"/> to use for metrics. If not provided, a default <see cref="SsrfMetrics"/> instance will be used with a shared meter.</param>
-    /// <exception cref="ArgumentException">Thrown if the provided <paramref name="options"/> contains an invalid proxy configuration.</exception>
-    /// <exception cref="ArgumentNullException">Thrown if the provided <paramref name="options"/> or its Proxy property is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentNullException">Thrown if the provided <paramref name="options"/>, its Proxy property is <see langword="null"/> or the Proxy's Address property is <see langword="null"/>.</exception>
     public ProxiedSsrfDelegatingHandler(
         ProxiedSsrfOptions options,
         ILoggerFactory? loggerFactory = null,
@@ -131,15 +130,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(options.Proxy);
-
-        if (options.Proxy is not WebProxy webProxy)
-        {
-            throw new ArgumentException("Only WebProxy instances are supported for the options.Proxy property.", nameof(options));
-        }
-        if (webProxy.Address is null)
-        {
-            throw new ArgumentException("The WebProxy instance in the options.Proxy property must have a non-null Address property.", nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options.Proxy.Address);
     }
 
     internal ProxiedSsrfDelegatingHandler(
@@ -162,6 +153,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         ILoggerFactory? loggerFactory,
         IMeterFactory? meterFactory)
     {
+        ArgumentNullException.ThrowIfNull(proxy);
         if (proxy.Address is null)
         {
             throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
@@ -169,23 +161,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _additionalUnsafeIPNetworks = additionalUnsafeIPNetworks;
         _additionalUnsafeIPAddresses = additionalUnsafeIPAddresses;
-
-        //if (allowedHostnames is null)
-        //{
-        //    _allowedHostnames = [webProxy.Address.Host];
-        //}
-        //else
-        //{
-        //    _allowedHostnames = allowedHostnames;
-        //    if (!allowedHostnames.Contains(webProxy.Address.Host))
-        //    {
-        //        _allowedHostnames.Add(webProxy.Address.Host);
-        //    }
-        //}
-
         _allowedHostnames = allowedHostnames;
-
-
+        _safeIPNetworks = safeIPNetworks;
         _safeIPNetworks = safeIPNetworks;
         _safeIPAddresses = safeIPAddresses;
         _allowedSchemes = allowedSchemes != null ? [.. allowedSchemes] : Defaults.AllowedSchemes;
@@ -267,12 +244,6 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _metrics = new SsrfMetrics(meterFactory);
 
-        ICollection<string> innerHandlerAllowedSchemes = _allowedSchemes;
-        if (!innerHandlerAllowedSchemes.Contains(webProxy.Address.Scheme, StringComparer.OrdinalIgnoreCase))
-        {
-            innerHandlerAllowedSchemes = [.. innerHandlerAllowedSchemes, webProxy.Address.Scheme];
-        }
-
         InnerHandler = SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: options.ConnectionStrategy,
             additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
@@ -281,7 +252,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             safeIPNetworks: _safeIPNetworks,
             safeIPAddresses: _safeIPAddresses,
             connectTimeout: options.ConnectTimeout,
-            allowedSchemes: innerHandlerAllowedSchemes,
+            allowedSchemes: _allowedSchemes,
             allowLoopback: webProxy.Address.IsLoopback,
             failMixedResults: _failMixedResults,
             allowAutoRedirect: options.AllowAutoRedirect,

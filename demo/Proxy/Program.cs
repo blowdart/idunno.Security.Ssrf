@@ -90,6 +90,36 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHand
     // This request will be blocked by the SSRF protection as it a default dangerous destination.
     try
     {
+        destinationUri = new("https://127.0.0.1:9999");
+        Console.WriteLine($"Request to {destinationUri} will fail as it is a default dangerous destination.");
+        response = await httpClient.GetAsync(destinationUri);
+        Console.WriteLine($"Response status code: {response.StatusCode}");
+    }
+    catch (SsrfException ex)
+    {
+        Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+    }
+
+    Console.WriteLine();
+
+    // This request will be blocked by the SSRF protection as it a default dangerous destination.
+    try
+    {
+        destinationUri = new("https://[::1]:9999");
+        Console.WriteLine($"Request to {destinationUri} will fail as it is a default dangerous destination.");
+        response = await httpClient.GetAsync(destinationUri);
+        Console.WriteLine($"Response status code: {response.StatusCode}");
+    }
+    catch (SsrfException ex)
+    {
+        Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+    }
+
+    Console.WriteLine();
+
+    // This request will be blocked by the SSRF protection as it a default dangerous destination.
+    try
+    {
         destinationUri = new("https://10.0.0.1");
         Console.WriteLine($"Request to {destinationUri} will fail as it is a default dangerous destination.");
         response = await httpClient.GetAsync(destinationUri);
