@@ -18,10 +18,10 @@
 
  * **Breaking** `ProxiedSsrfDelegatingHandler` now takes a new options class, `ProxiedSsrfOptions`, instead of `SsrfOptions` to allow for proxy specific configuration. The new options class inherits from `SsrfOptions`
    so all existing configuration options are still available, and the `Proxy` property has been added
-  * `Proxy` - an instance of `WebProxy` that will be used for the handler.
+   * `Proxy` - an instance of `WebProxy` that will be used for the handler.
 
-* **Breaking** `ProxiedSsrfDelegatingHandler` constructor now takes a `WebProxy` instance rather than an `IWebProxy` instance to allow the automatic safe listing of the proxy address.
-of the proxy address.
+* **Breaking** `ProxiedSsrfDelegatingHandler` constructor now takes a `WebProxy` instance rather than an `IWebProxy`
+instance to allow the automatic safe listing of the proxy address.
 
 * Update OTEL dependencies to address [CVE-2026-40894 - OpenTelemetry dotnet: Excessive memory allocation when parsing OpenTelemetry propagation headers](https://github.com/advisories/GHSA-g94r-2vxg-569j)
 

@@ -72,11 +72,11 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHand
 
     Console.WriteLine();
 
-    // This request will be blocked by the SSRF protection as it a default dangerous destination.
+    // This request will be blocked by the SSRF protection as it an unsafe loopback destination.
     try
     {
         destinationUri = new("https://localhost:9999");
-        Console.WriteLine($"Request to {destinationUri} will fail as it is a default dangerous destination.");
+        Console.WriteLine($"Request to {destinationUri} will fail as it is an unsafe loopback destination.");
         response = await httpClient.GetAsync(destinationUri);
         Console.WriteLine($"Response status code: {response.StatusCode}");
     }
@@ -87,11 +87,11 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHand
 
     Console.WriteLine();
 
-    // This request will be blocked by the SSRF protection as it a default dangerous destination.
+    // This request will be blocked by the SSRF protection as it an unsafe loopback destination.
     try
     {
         destinationUri = new("https://127.0.0.1:9999");
-        Console.WriteLine($"Request to {destinationUri} will fail as it is a default dangerous destination.");
+        Console.WriteLine($"Request to {destinationUri} will fail as it is an unsafe loopback destination.");
         response = await httpClient.GetAsync(destinationUri);
         Console.WriteLine($"Response status code: {response.StatusCode}");
     }
@@ -102,11 +102,11 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHand
 
     Console.WriteLine();
 
-    // This request will be blocked by the SSRF protection as it a default dangerous destination.
+    // This request will be blocked by the SSRF protection as it an unsafe loopback destination.
     try
     {
         destinationUri = new("https://[::1]:9999");
-        Console.WriteLine($"Request to {destinationUri} will fail as it is a default dangerous destination.");
+        Console.WriteLine($"Request to {destinationUri} will fail as it is an unsafe loopback destination.");
         response = await httpClient.GetAsync(destinationUri);
         Console.WriteLine($"Response status code: {response.StatusCode}");
     }
@@ -117,11 +117,11 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHand
 
     Console.WriteLine();
 
-    // This request will be blocked by the SSRF protection as it a default dangerous destination.
+    // This request will be blocked by the SSRF protection as it a default dangerous IP address.
     try
     {
         destinationUri = new("https://10.0.0.1");
-        Console.WriteLine($"Request to {destinationUri} will fail as it is a default dangerous destination.");
+        Console.WriteLine($"Request to {destinationUri} will fail as it is a default dangerous IP address.");
         response = await httpClient.GetAsync(destinationUri);
         Console.WriteLine($"Response status code: {response.StatusCode}");
     }

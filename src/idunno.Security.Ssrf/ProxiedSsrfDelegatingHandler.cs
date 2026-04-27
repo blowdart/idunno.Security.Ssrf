@@ -163,7 +163,6 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         _additionalUnsafeIPAddresses = additionalUnsafeIPAddresses;
         _allowedHostnames = allowedHostnames;
         _safeIPNetworks = safeIPNetworks;
-        _safeIPNetworks = safeIPNetworks;
         _safeIPAddresses = safeIPAddresses;
         _allowedSchemes = allowedSchemes != null ? [.. allowedSchemes] : Defaults.AllowedSchemes;
         _allowLoopback = allowLoopback;
@@ -217,23 +216,9 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         _additionalUnsafeIPNetworks = options.AdditionalUnsafeIPNetworks;
         _additionalUnsafeIPAddresses = options.AdditionalUnsafeIPAddresses;
-
-        if (options.AllowedHostnames is null)
-        {
-            _allowedHostnames = [webProxy.Address.Host];
-        }
-        else
-        {
-            _allowedHostnames = options.AllowedHostnames;
-            if (!options.AllowedHostnames.Contains(webProxy.Address.Host))
-            {
-                _allowedHostnames.Add(webProxy.Address.Host);
-            }
-        }
-
         _safeIPNetworks = options.SafeIPNetworks;
         _safeIPAddresses = options.SafeIPAddresses;
-        _allowedSchemes = options.AllowedSchemes != null ? [.. options.AllowedSchemes] : Defaults.AllowedSchemes;
+        _allowedSchemes = options.AllowedSchemes;
         _allowLoopback = options.AllowLoopback;
         _failMixedResults = options.FailMixedResults;
         _hostEntryResolver = hostEntryResolver ?? Defaults.GetHostEntry;
