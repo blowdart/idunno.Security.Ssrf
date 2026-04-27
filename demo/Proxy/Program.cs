@@ -47,12 +47,14 @@ Console.Clear();
 #pragma warning disable CA1303 // Do not pass literals as localized parameters
 using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHandler: false))
 {
+    HttpResponseMessage response;
+
     Console.WriteLine($"Making requests through the {proxyUri}...");
     Console.WriteLine();
 
     Uri destinationUri = new("https://www.example.com/");
     Console.WriteLine($"Request to {destinationUri} will succeed as it is an allowed protocol and safe destination.");
-    HttpResponseMessage response = await httpClient.GetAsync(destinationUri);
+    response = await httpClient.GetAsync(destinationUri);
     Console.WriteLine($"Response status code: {response.StatusCode}");
 
     Console.WriteLine();
@@ -60,7 +62,7 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHand
     // This request will be blocked by the SSRF protection as it is not an allowed protocol.
     try
     {
-        destinationUri = new("http://localhost:9999");
+        destinationUri = new("http://localhost");
         Console.WriteLine($"Request to {destinationUri} will fail as it is an unsafe protocol.");
         response = await httpClient.GetAsync(destinationUri);
         Console.WriteLine($"Response status code: {response.StatusCode}");
@@ -75,7 +77,7 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHand
     // This request will be blocked by the SSRF protection as it is an unsafe loopback destination.
     try
     {
-        destinationUri = new("https://localhost:9999");
+        destinationUri = new("https://localhost");
         Console.WriteLine($"Request to {destinationUri} will fail as it is an unsafe loopback destination.");
         response = await httpClient.GetAsync(destinationUri);
         Console.WriteLine($"Response status code: {response.StatusCode}");
@@ -90,7 +92,7 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHand
     // This request will be blocked by the SSRF protection as it an unsafe loopback destination.
     try
     {
-        destinationUri = new("https://127.0.0.1:9999");
+        destinationUri = new("https://127.0.0.1");
         Console.WriteLine($"Request to {destinationUri} will fail as it is an unsafe loopback destination.");
         response = await httpClient.GetAsync(destinationUri);
         Console.WriteLine($"Response status code: {response.StatusCode}");
@@ -102,10 +104,26 @@ using (var httpClient = new HttpClient(proxiedSsrfDelegatingHandler, disposeHand
 
     Console.WriteLine();
 
+    // This request will be blocked by the SSRF protection as it an attempt to connect to the proxy.
+    try
+    {
+        destinationUri = proxyUri;
+        Console.WriteLine($"Request to {destinationUri} will fail as it is an attempt to connect to the proxy");
+        response = await httpClient.GetAsync(destinationUri);
+        Console.WriteLine($"Response status code: {response.StatusCode}");
+    }
+    catch (SsrfException ex)
+    {
+        Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+    }
+
+    Console.WriteLine();
+
+
     // This request will be blocked by the SSRF protection as it an unsafe loopback destination.
     try
     {
-        destinationUri = new("https://[::1]:9999");
+        destinationUri = new("https://[::1]");
         Console.WriteLine($"Request to {destinationUri} will fail as it is an unsafe loopback destination.");
         response = await httpClient.GetAsync(destinationUri);
         Console.WriteLine($"Response status code: {response.StatusCode}");
@@ -184,7 +202,7 @@ Console.WriteLine();
 using (var clientWebSocket = new ClientWebSocket())
 using (var invoker = new HttpClient(proxiedSsrfDelegatingHandler))
 {
-    Uri destinationUri = new("ws://localhost:9999");
+    Uri destinationUri = new("ws://localhost");
     Console.WriteLine($"WebSocket request to {destinationUri} will fail as it is an unsafe protocol.");
     try
     {

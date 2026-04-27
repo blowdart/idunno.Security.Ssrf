@@ -209,27 +209,19 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
                 IPAddress[] resolvedIPAddresses;
 
+
                 bool requestIsToProxy = proxy?.Address is Uri proxyAddress &&
                     context.DnsEndPoint.Host.Equals(proxyAddress.IdnHost, StringComparison.OrdinalIgnoreCase) &&
                     context.DnsEndPoint.Port == proxyAddress.Port;
 
                 if (requestIsToProxy)
                 {
-                    // We don't care about scheme or allowed hostnames when connecting to the proxy, since the proxy should be a trusted component within the network
-                    // and not subject to SSRF protections. This path resolves the configured proxy hostname for connection establishment only; it does not apply
-                    // SSRF safety validation to the proxy address and therefore relies on the proxy configuration itself being trusted.
-                    Uri connectUri = new UriBuilder(
-                        scheme:null,
-                        host: context.DnsEndPoint.Host,
-                        portNumber: context.DnsEndPoint.Port).Uri;
-
                     try
                     {
-                        resolvedIPAddresses = await CommonFunctions.GetHostEntryAsync(connectUri, logger, asyncHostEntryResolver, cancellationToken).ConfigureAwait(false);
+                        resolvedIPAddresses = await CommonFunctions.GetHostEntryAsync(context.DnsEndPoint.Host, logger, asyncHostEntryResolver, cancellationToken).ConfigureAwait(false);
                     }
                     catch (SsrfException)
                     {
-                        Log.DnsResolutionFailed(logger, connectUri);
                         metrics.IncrementBlockedRequests();
                         throw;
                     }
@@ -265,7 +257,6 @@ public sealed class SsrfSocketsHttpHandlerFactory
                     }
                     catch (SsrfException)
                     {
-                        Log.DnsResolutionFailed(logger, requestedUri);
                         metrics.IncrementBlockedRequests();
                         throw;
                     }
@@ -294,21 +285,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
                     }
                 }
 
-                // Ensure the Host header is set to the original host from the request URI, as some servers require this and
-                // it may not be set if the request URI was modified to use an IP address for connection.
-                if (context.InitialRequestMessage.Headers.Host is null)
-                {
-                    string host = requestedUri.HostNameType switch
-                    {
-                        UriHostNameType.IPv6 => $"[{requestedUri.Host}]",
-                        _ => requestedUri.IdnHost,
-                    };
-                    context.InitialRequestMessage.Headers.Host = requestedUri.IsDefaultPort
-                        ? host
-                        : $"{host}:{requestedUri.Port}";
-                }
-
-                // Attempt to connect to each safe IP address until a successful connection is made.
+                // As we don't rewrite the request, the Host header should already be correct and does not need setting or adjusting, so we can
+                // move on to attempt to connect to each safe IP address until a successful connection is made.
                 foreach (IPAddress ipAddress in resolvedIPAddresses)
                 {
                     Socket socket = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);

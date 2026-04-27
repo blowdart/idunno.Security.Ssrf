@@ -78,14 +78,59 @@ internal static class CommonFunctions
             catch (Exception ex) when (ex is not OperationCanceledException && ex is not OutOfMemoryException && ex is not ThreadAbortException)
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
-                Log.DnsResolutionException(logger, uri, ex);
+                Log.DnsResolutionException(logger, uri.Host, ex);
                 throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
             }
         }
 
         if (resolvedIpAddresses.Length == 0)
         {
-            Log.DnsResolutionFailed(logger, uri);
+            Log.DnsResolutionFailed(logger, uri.Host);
+            throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
+        }
+
+        return resolvedIpAddresses;
+    }
+
+    internal static async Task<IPAddress[]> GetHostEntryAsync(
+        string host,
+        ILogger logger,
+        Func<string, CancellationToken, Task<IPHostEntry>> asyncHostEntryResolver,
+        CancellationToken cancellationToken)
+    {
+        asyncHostEntryResolver ??= Defaults.GetHostEntryAsync;
+
+        IPAddress[] resolvedIpAddresses = [];
+
+        if (IPAddress.TryParse(host, out IPAddress? parsedAddress))
+        {
+            resolvedIpAddresses = [parsedAddress];
+        }
+        else
+        {
+            try
+            {
+                IPHostEntry entry = await asyncHostEntryResolver(host, cancellationToken).ConfigureAwait(false);
+
+                if (entry.AddressList is not null)
+                {
+                    resolvedIpAddresses = entry.AddressList;
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException && ex is not OutOfMemoryException && ex is not ThreadAbortException)
+            {
+                // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
+                Log.DnsResolutionException(logger, host, ex);
+
+                Uri uri = new UriBuilder() { Host = host }.Uri; // Create a URI with the host for the exception, even though we don't have a full URI to work with.
+                throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
+            }
+        }
+
+        if (resolvedIpAddresses.Length == 0)
+        {
+            Log.DnsResolutionFailed(logger, host);
+            Uri uri = new UriBuilder() { Host = host }.Uri; // Create a URI with the host for the exception, even though we don't have a full URI to work with.
             throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
         }
 
@@ -119,14 +164,14 @@ internal static class CommonFunctions
             catch (Exception ex) when (ex is not OperationCanceledException && ex is not OutOfMemoryException && ex is not ThreadAbortException)
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
-                Log.DnsResolutionException(logger, uri, ex);
+                Log.DnsResolutionException(logger, uri.Host, ex);
                 throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
             }
         }
 
         if (resolvedIpAddresses.Length == 0)
         {
-            Log.DnsResolutionFailed(logger, uri);
+            Log.DnsResolutionFailed(logger, uri.Host);
             throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
         }
 
