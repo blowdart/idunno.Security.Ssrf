@@ -24,6 +24,7 @@
   </PropertyGroup>
 
  <PropertyGroup>
+   <!-- LangVersion 14.0 is necessary for extension properties in src\idunno.Security.Ssrf\IPAddressExtensions.cs -->
    <LangVersion>14.0</LangVersion>
  </PropertyGroup>
 </Project>
