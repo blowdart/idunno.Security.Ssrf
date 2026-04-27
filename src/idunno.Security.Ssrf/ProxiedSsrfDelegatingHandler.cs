@@ -202,16 +202,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         IMeterFactory? meterFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
-
-        if (options.Proxy is not WebProxy webProxy)
-        {
-            throw new ArgumentException("Only WebProxy instances are supported for the options.Proxy property.", nameof(options));
-        }
-
-        if (webProxy.Address is null)
-        {
-            throw new ArgumentException("The WebProxy instance in the options.Proxy property must have a non-null Address property.", nameof(options));
-        }
+        ArgumentNullException.ThrowIfNull(options.Proxy);
+        ArgumentNullException.ThrowIfNull(options.Proxy.Address);
 
         ICollection<string>? snapshotAllowedSchemes = options.AllowedSchemes is null ? null : [.. options.AllowedSchemes];
 

@@ -182,9 +182,11 @@ public static class Ssrf
     {
         ArgumentNullException.ThrowIfNull(ipAddress);
 
-        // Normalize IPv4-embedded IPv6 forms to their IPv4 representation before any allow/block checks.
-        // This means those addresses are evaluated against the IPv4 safe/unsafe lists after normalization,
-        // rather than against IPv6 prefix entries that describe the embedding/translation format itself.
+        // Normalize IPv4-embedded or IPv4-translated IPv6 forms to their IPv4 representation before any
+        // allow/block checks. After normalization, those addresses are evaluated against the IPv4 safe/unsafe
+        // lists based on the embedded IPv4 address, not against IPv6 transition or embedding prefixes.
+        // However, the IPv6-range blocks like 6to4 (2002::/16) and NAT64 well-known prefix (64:ff9b::/96) are
+        // still blocked based on their original IPv6 form to prevent potential evasion of blocks on the embedded IPv4 addresses.
         ipAddress = ipAddress.NormalizeToIPv4();
 
         // Perform safe list checks before unsafe checks so that specific safe addresses or networks can be allowed
