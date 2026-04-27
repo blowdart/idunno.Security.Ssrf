@@ -409,10 +409,7 @@ public class ProxiedSsrfDelegatingHandler
             loggerFactory: null,
             meterFactory: null,
             hostEntryResolver: hostEntryResolver,
-            asyncHostEntryResolver: asyncHostEntryResolver)
-        {
-            InnerHandler = Security.SsrfSocketsHttpHandlerFactory.Create(options)
-        };
+            asyncHostEntryResolver: asyncHostEntryResolver);
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
 
         SsrfException ex = await Assert.ThrowsAsync<SsrfException>(async () => _ = await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
