@@ -329,12 +329,15 @@ public sealed class SsrfSocketsHttpHandlerFactory
             handler.SslOptions = sslOptions;
         }
 
-        if (proxy is not null)
+        if (proxy is null)
+        {
+            handler.UseProxy = false;
+        }
+        else
         {
             handler.Proxy = proxy;
             handler.UseProxy = true;
         }
-
         return handler;
     }
 
