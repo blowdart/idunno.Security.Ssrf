@@ -75,7 +75,7 @@ public class IsUnsafe
     [InlineData("104.18.27.120")]
     [InlineData("[2620:1ec:bdf::69]")]
     [InlineData("[2620:1ec:46::69]")]
-    public async Task ReturnsFalseForGoodUrisIfInsecureProtocolsAllowed(string host)
+    public async Task ReturnsFalseForGoodUrisIfTheyMatchTheAllowedSchemes(string host)
     {
         Assert.False(await Ssrf.IsUnsafe(
             new Uri($"https://{host}/"),
@@ -474,7 +474,7 @@ public class IsUnsafe
     [InlineData("localhost")]
     [InlineData("127.0.0.1")]
     [InlineData("[::1]")]
-    public async Task ReturnsTrueForLocalhostAndLoopbackAddressesIfAllowLoopbackIsTrueAndAllowInsecureProtocolsIsFalse(string host)
+    public async Task ReturnsTrueForLocalhostAndLoopbackAddressesIfAllowLoopbackIsTrueAndAllowedSchemesIsNotSet(string host)
     {
         Assert.True(await Ssrf.InternalIsUnsafe(
             new Uri($"http://{host}/"),

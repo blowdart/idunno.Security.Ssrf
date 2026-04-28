@@ -203,12 +203,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 // This may result in additional latency for connections due to DNS lookups, but is necessary as caching would introduce a TOCTOU (Time of Check to Time of Use)
                 // vulnerability where an attacker could change the resolved IP address after validation but before connection.
 
-                // If the handler is used directly requestedUri will be the destination URI.
-                // If the handler wrapped inside the proxy handler the requestedUri will be the proxy URI.
+                // requestedUri is always the original destination URI from the request message.
+                // When a proxy is in use, the proxy endpoint is represented by context.DnsEndPoint and handled separately below.
 
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
                 IPAddress[] resolvedIPAddresses;
-
 
                 bool requestIsToProxy = proxy?.Address is Uri proxyAddress &&
                     context.DnsEndPoint.Host.Equals(proxyAddress.IdnHost, StringComparison.OrdinalIgnoreCase) &&
