@@ -24,6 +24,7 @@ env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   NUPKG_DIRECTORY: ${{ github.workspace}}/nupkgs
+  ATTESTATION_INPUT: ${{ github.workspace }}/attestation
 
 permissions:
   contents: read
@@ -70,11 +71,11 @@ jobs:
 
     - name: 'Extract SBOMs'
       shell: pwsh
-      run: > 
+      run: | 
         Get-ChildItem -Path ${env:NUPKG_DIRECTORY} -Filter *.nupkg -Force | ForEach-Object { 
           Expand-Archive $_.FullName "$($_.DirectoryName)/$($_.Basename)" -Force 
-          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json" -Destination "${env:NUPKG_DIRECTORY}/manifest.spdx.json"
-          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json.sha256" -Destination "${env:NUPKG_DIRECTORY}/manifest.spdx.json.sha256"
+          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json" -Destination "${env:NUPKG_DIRECTORY}/$($_.Basename).spdx.json"
+          Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json.sha256" -Destination "${env:NUPKG_DIRECTORY}/$($_.Basename).spdx.json.sha256"
           Remove-Item "$($_.DirectoryName)/$($_.Basename)" -Force -Recurse }
 
     - name: Upload unsigned nupkgs to artifacts
@@ -110,7 +111,7 @@ jobs:
         path : ${{ env.NUPKG_DIRECTORY }}
 
     - name: Authenticate to Azure
-      uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # 3.0.0
+      uses: azure/login@532459ea530d8321f2fb9bb10d1e0bcf23869a43 # v3.0.0
       with:
         allow-no-subscriptions : true
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -122,11 +123,43 @@ jobs:
       run: >
         ./sign/sign code azure-key-vault *.nupkg --base-directory ${env:NUPKG_DIRECTORY} --azure-key-vault-url "${{ secrets.AZURE_KEY_VAULT_URL }}" --azure-key-vault-certificate "${{ secrets.AZURE_KEY_VAULT_CERTIFICATE }}"
 
-    - name: 'Attest signed nupkg'
+    - name: Expand signed nupkg for attestation
+      shell: pwsh
+      run: | 
+        # Create the attestation directory, if it doesn't exist, then delete whatever is in it, just in case.
+        New-Item -ItemType Directory -Force -Path ($env:ATTESTATION_INPUT) | Out-Null
+        $attestationItems = Get-ChildItem -Path $env:ATTESTATION_INPUT -Force -ErrorAction SilentlyContinue
+        if ($attestationItems)
+        {
+          Remove-Item -Path $attestationItems.FullName -Recurse -Force
+        }
+
+        # Build the bits to attest
+        Get-ChildItem -Path $env:NUPKG_DIRECTORY -Filter *.nupkg -Force | ForEach-Object { 
+          Copy-Item $_.FullName $($env:ATTESTATION_INPUT)
+          Expand-Archive $_.FullName "$($env:ATTESTATION_INPUT)/$($_.Basename)" -Force
+
+          # Place SBOM from the nupkg alongside the nupkg for attestation
+          Copy-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json" -Destination "$($env:ATTESTATION_INPUT)/$($_.Basename).spdx.json"
+          Copy-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json.sha256" -Destination "$($env:ATTESTATION_INPUT)/$($_.Basename).spdx.json.sha256"
+
+          # Remove the extraneous files from the nupkg extraction
+          Remove-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/_rels" -Recurse -Force
+          Remove-Item "$($env:ATTESTATION_INPUT)/$($_.Basename)/package" -Recurse -Force
+          # Need to special case [Content_Types].xml because of those pesky [] characters
+          $contentTypes=Join-Path "$($env:ATTESTATION_INPUT)/$($_.Basename)" -ChildPath "[Content_Types].xml"
+          Remove-Item -LiteralPath $contentTypes -Force
+        }
+
+    - name: 'List attestation artifacts'
+      shell: pwsh
+      run: >
+        Get-ChildItem -Path ${env:ATTESTATION_INPUT} -Recurse -Force
+
+    - name: 'Attest artifacts'
       uses: actions/attest@59d89421af93a897026c735860bf21b6eb4f7b26 # v4.1.0
       with:
-        subject-path: ${{env.NUPKG_DIRECTORY}}
-        sbom-path: ${{env.NUPKG_DIRECTORY}}/manifest.spdx.json
+        subject-path: ${{env.ATTESTATION_INPUT}}
 
     - name: Upload signed nupkgs to artifacts
       id: upload
@@ -160,7 +193,7 @@ jobs:
         path : ${{ env.NUPKG_DIRECTORY }}
 
     - name: Authenticate to nuget
-      uses: NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544 # v1.0.0
+      uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
       id: nugetlogin
       with:
         user: ${{secrets.NUGET_USERNAME}}

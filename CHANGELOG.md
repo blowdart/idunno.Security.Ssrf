@@ -1,3 +1,30 @@
+## 5.0.0 - Unreleased
+
+### Added
+
+* Add property and method extensions to `IPAddress` to check for various special types of IPv6 addresses that may be relevant for SSRF protection, including:
+  * Add check and normalization for IPv4-compatible IPv6 addresses, `IsIPv4CompatibleIPv6` and `MapIPv6CompatibleToIPv4()`.
+  * Add check and normalization for 6:4 IPv6 addresses, `Is6to4` and `Map6to4ToIPv4()`.
+  * Add check and normalization for ISATAP IPv6 addresses, `IsISATAP` and `MapISATAPToIPv4()`.
+  * Add check and normalization for NAT64 IPv6 addresses, `IsNAT64` and map `MapNAT64ToIPv4()`.
+  * Add normalization for Teredo IPv6 addresses, `MapTeredoToIPv4()`.
+
+### Changed
+
+* **Breaking** Replace `allowInsecureProtocols` parameter with `allowedSchemes` in `SsrfSocketsHttpHandlerFactory.Create()`, `ProxiedSsrfDelegatingHandler` constructor and as a property in `SsrfOptions` to allow for more flexible protocol allow listing.
+
+  To use the new collection replace `allowInsecureProtocols : true` with `allowedSchemes : ["https", "http", "wss", "ws"]`.
+  You can remove `wss` and `ws` if you have no WebSocket use.
+
+ * **Breaking** `ProxiedSsrfDelegatingHandler` now takes a new options class, `ProxiedSsrfOptions`, instead of `SsrfOptions` to allow for proxy specific configuration. The new options class inherits from `SsrfOptions`
+   so all existing configuration options are still available, and the `Proxy` property has been added
+   * `Proxy` - an instance of `WebProxy` that will be used for the handler.
+
+* **Breaking** `ProxiedSsrfDelegatingHandler` constructor now takes a `WebProxy` instance rather than an `IWebProxy`
+instance to allow the automatic safe listing of the proxy address.
+
+* Update OTEL dependencies to address [CVE-2026-40894 - OpenTelemetry dotnet: Excessive memory allocation when parsing OpenTelemetry propagation headers](https://github.com/advisories/GHSA-g94r-2vxg-569j)
+
 ## 4.0.0 - 2026-04-14
 
 ### Added

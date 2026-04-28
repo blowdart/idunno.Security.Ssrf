@@ -65,7 +65,6 @@ public class IsUnsafe
         Uri uri = new(uriAsString);
         Assert.True(await Ssrf.IsUnsafe(
             uri,
-            allowInsecureProtocols: true,
             cancellationToken: TestContext.Current.CancellationToken));
     }
 
@@ -76,23 +75,23 @@ public class IsUnsafe
     [InlineData("104.18.27.120")]
     [InlineData("[2620:1ec:bdf::69]")]
     [InlineData("[2620:1ec:46::69]")]
-    public async Task ReturnsFalseForGoodUrisIfInsecureProtocolsAllowed(string host)
+    public async Task ReturnsFalseForGoodUrisIfTheyMatchTheAllowedSchemes(string host)
     {
         Assert.False(await Ssrf.IsUnsafe(
             new Uri($"https://{host}/"),
-            allowInsecureProtocols: true,
+            allowedSchemes: ["https", "http", "wss", "ws"],
             cancellationToken: TestContext.Current.CancellationToken));
         Assert.False(await Ssrf.IsUnsafe(
             new Uri($"wss://{host}/"),
-            allowInsecureProtocols: true,
+            allowedSchemes: ["https", "http", "wss", "ws"],
             cancellationToken: TestContext.Current.CancellationToken));
         Assert.False(await Ssrf.IsUnsafe(
             new Uri($"http://{host}/"),
-            allowInsecureProtocols: true,
+            allowedSchemes: ["https", "http", "wss", "ws"],
             cancellationToken: TestContext.Current.CancellationToken));
         Assert.False(await Ssrf.IsUnsafe(
             new Uri($"ws://{host}/"),
-            allowInsecureProtocols: true,
+            allowedSchemes: ["https", "http", "wss", "ws"],
             cancellationToken: TestContext.Current.CancellationToken));
     }
 
@@ -106,7 +105,7 @@ public class IsUnsafe
             cancellationToken: TestContext.Current.CancellationToken));
         Assert.True(await Ssrf.IsUnsafe(
             new Uri(relativeUri, UriKind.Relative),
-            allowInsecureProtocols: true,
+            allowedSchemes: ["https", "http", "wss", "ws"],
             cancellationToken: TestContext.Current.CancellationToken));
     }
 
@@ -131,7 +130,6 @@ public class IsUnsafe
     {
         Assert.True(await Ssrf.IsUnsafe(
             new Uri($"https://{ipAddressAsString}"),
-            allowInsecureProtocols: false,
             additionalUnsafeIPNetworks:
             [
                 IPNetwork.Parse("104.16.0.0/12"),
@@ -150,7 +148,6 @@ public class IsUnsafe
     {
         Assert.True(await Ssrf.IsUnsafe(
             new Uri($"https://{ipAddressAsString}"),
-            allowInsecureProtocols: false,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses:
             [
@@ -171,7 +168,6 @@ public class IsUnsafe
     {
         Assert.True(await Ssrf.IsUnsafe(
             new Uri($"https://{ipAddressAsString}"),
-            allowInsecureProtocols: false,
             additionalUnsafeIPNetworks:
             [
                 IPNetwork.Parse("104.16.0.0/12"),
@@ -405,15 +401,32 @@ public class IsUnsafe
     [InlineData("64:ff9b::192.168.1.1")]     // NAT64 well-known prefix embedding private IPv4
     [InlineData("64:ff9b::127.0.0.1")]       // NAT64 well-known prefix embedding loopback
     [InlineData("64:ff9b::169.254.169.254")] // NAT64 well-known prefix embedding link-local
-    [InlineData("64:ff9b::8.8.8.8")]         // NAT64 well-known prefix embedding public IPv4
     [InlineData("64:ff9b:1::10.0.0.1")]      // NAT64 local-use prefix embedding private IPv4
-    [InlineData("64:ff9b:1::8.8.8.8")]       // NAT64 local-use prefix embedding public IPv4
     public async Task ReturnsTrueForNat64Addresses(string ipAddressAsString)
     {
         Assert.True(await Ssrf.IsUnsafe(
             new Uri($"https://[{ipAddressAsString}]"),
             cancellationToken: TestContext.Current.CancellationToken));
     }
+
+    [Theory]
+    [InlineData("64:ff9b::8.8.8.8")]         // NAT64 well-known prefix embedding public IPv4
+    public async Task ReturnsFalseForPublicNat64Addresses(string ipAddressAsString)
+    {
+        Assert.False(await Ssrf.IsUnsafe(
+            new Uri($"https://[{ipAddressAsString}]"),
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    [Theory]
+    [InlineData("64:ff9b:1::8.8.8.8")]       // NAT64 local-use prefix embedding public IPv4
+    public async Task ReturnsTrueForPublicButLocalUseNat64Addresses(string ipAddressAsString)
+    {
+        Assert.True(await Ssrf.IsUnsafe(
+            new Uri($"https://[{ipAddressAsString}]"),
+            cancellationToken: TestContext.Current.CancellationToken));
+    }
+
 
     [Fact]
     public async Task ReturnsTrueWhenDnsResolvesToEmptyAddressList()
@@ -425,8 +438,8 @@ public class IsUnsafe
 
         Assert.True(await Ssrf.InternalIsUnsafe(
             uri: new Uri("https://example.com"),
-            allowInsecureProtocols: false,
             allowLoopback: false,
+            allowedSchemes: null,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
             allowedHostnames: null,
@@ -445,8 +458,8 @@ public class IsUnsafe
     {
         Assert.False(await Ssrf.InternalIsUnsafe(
             new Uri($"https://{host}/"),
-            allowInsecureProtocols: false,
             allowLoopback: true,
+            allowedSchemes: null,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
             allowedHostnames: null,
@@ -461,12 +474,12 @@ public class IsUnsafe
     [InlineData("localhost")]
     [InlineData("127.0.0.1")]
     [InlineData("[::1]")]
-    public async Task ReturnsTrueForLocalhostAndLoopbackAddressesIfAllowLoopbackIsTrueAndAllowInsecureProtocolsIsFalse(string host)
+    public async Task ReturnsTrueForLocalhostAndLoopbackAddressesIfAllowLoopbackIsTrueAndAllowedSchemesIsNotSet(string host)
     {
         Assert.True(await Ssrf.InternalIsUnsafe(
             new Uri($"http://{host}/"),
-            allowInsecureProtocols: false,
             allowLoopback: true,
+            allowedSchemes: null,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
             allowedHostnames: null,
@@ -491,8 +504,8 @@ public class IsUnsafe
 
         Assert.False(await Ssrf.InternalIsUnsafe(
             new Uri("https://api.example.localhost/"),
-            allowInsecureProtocols: false,
             allowLoopback: false,
+            allowedSchemes: null,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
             allowedHostnames: ["*.example.localhost"],
@@ -508,7 +521,6 @@ public class IsUnsafe
     {
         Assert.False(await Ssrf.IsUnsafe(
             new Uri("https://loopback.ssrf.fail"),
-            allowInsecureProtocols: false,
             allowLoopback: false,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
@@ -526,7 +538,6 @@ public class IsUnsafe
     {
         Assert.False(await Ssrf.IsUnsafe(
             new Uri("https://loopback.ssrf.fail"),
-            allowInsecureProtocols: false,
             allowLoopback: false,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,

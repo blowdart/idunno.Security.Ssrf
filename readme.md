@@ -1,4 +1,4 @@
-﻿# idunno.Security.Ssrf
+# idunno.Security.Ssrf
 
 A .NET 8, 9 and 10 library to help mitigate Server Side Request Forgery (SSRF) vulnerabilities in .NET applications that use `HttpClient` or `ClientWebSocket`.
 
@@ -10,7 +10,6 @@ A .NET 8, 9 and 10 library to help mitigate Server Side Request Forgery (SSRF) v
 [![NuGet Version](https://img.shields.io/nuget/vpre/idunno.Security.Ssrf)](https://www.nuget.org/packages/idunno.Security.Ssrf/)
 [![NuGet Downloads](https://img.shields.io/nuget/dt/idunno.Security.Ssrf)](https://www.nuget.org/packages/idunno.Security.Ssrf/)
 [![Documentation deployment](https://img.shields.io/github/deployments/blowdart/idunno.Security.Ssrf/github-pages?label=documentation)](https://ssrf.idunno.dev)
-
 
 ## Getting Started
 
@@ -98,12 +97,11 @@ if (Ssrf.IsUnsafeIpAddress(IPAddress.Parse("127.0.0.1")))
 }
 ```
 
-
-
 ## Current Build Status
 
-[![Build Status](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/ci-build.yml/badge.svg?branch=main)](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/ci-build.yml)
-[![CodeQL Scan](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/blowdart/idunnoSecuritySsrf/actions/workflows/codeql-analysis.yml)
+[![Build Status](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/ci-build.yml/badge.svg?branch=main)](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/ci-build.yml)
+[![CodeQL Scan](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/codeql-analysis.yml)
+[![Dependency Review](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/dependency-review.yml/badge.svg)](https://github.com/blowdart/idunno.Security.Ssrf/actions/workflows/dependency-review.yml)
 
 ## License
 
@@ -126,37 +124,16 @@ If you want to give me the warm fuzzies, you can tag me on Bluesky at [@blowdart
 The [releases page](https://github.com/blowdart/idunno.Security.Ssrf/releases) provides details of each release and what was added, changed or removed.
 The [changelog](CHANGELOG.md) also contains this information, as well as information on upcoming releases.
 
-## Release Verification
+## Code Signing and Verification
 
-The project uses an Authenticode certificate to sign assemblies and to author sign the nupkg packages.
-nuget validates the signatures during its publication process.
+The project uses an Authenticode certificate to sign assemblies contained in the NuGet packages and to
+also author sign the nupkg package itself.
+NuGet verifies the signatures during the publication process and during
+[package installation on Windows and Linux](https://learn.microsoft.com/en-us/dotnet/core/tools/nuget-signed-package-verification).
 
-To validate these signatures use
-
-```
-dotnet nuget verify [<package-path(s)>]
-```
-
-The subject name of the signing certificate should be
-
-```
-Subject Name: CN=Barry Dorrans, O=Barry Dorrans, L=Bothell, S=Washington, C=US
-```
-
-In addition, GitHub artifacts are attested during build,
-and are also signed with [minisign](https://github.com/jedisct1/minisign) with the following public key.
-
-```
-RWTsT4BHHChe/Rj/GBAuZHg3RaZFnfBDqaZ7KzLvr44a7mO6fLCxSAFc
-```
-
-To validate a file using an artifact signature from a [release](https://github.com/blowdart/idunno.Security.Ssrf/releases)
-download the `.nupkg` from nuget and the appropriate the `.minisig` from the release page, then use the following command,
-replacing `<package-path>` with the file name you wish to verify.
-
-```
-minisign -Vm <package-path> -P RWTsT4BHHChe/Rj/GBAuZHg3RaZFnfBDqaZ7KzLvr44a7mO6fLCxSAFc
-```
+Instructions for validating signatures of my .NET assemblies, NuGet packages and Windows executables can be found in the
+[Code Signing Information](https://github.com/blowdart/#code-signing-information) page on my
+[GitHub profile](https://github.com/blowdart).
 
 ## Pre-releases
 
@@ -188,9 +165,6 @@ or through the [command line](https://learn.microsoft.com/en-us/dotnet/core/tool
 ```
 
 The package source URI is https://www.myget.org/F/blowdart/api/v3/index.json
-
-Please note that nightly builds are signed with Azure [Artifact Signing](https://azure.microsoft.com/en-us/products/artifact-signing/),
-the signing certificate chain will not match the signing chain of a release build. The subject name remains the same.
 
 ### External analyzers used during builds
 * [DotNetAnalyzers.DocumentationAnalyzers](https://github.com/DotNetAnalyzers/DocumentationAnalyzers) - used to validate XML docs on public types.

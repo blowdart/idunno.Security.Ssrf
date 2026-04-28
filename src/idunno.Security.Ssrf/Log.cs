@@ -11,11 +11,11 @@ internal static partial class Log
     [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Connection to {uri} blocked as it evaluated as unsafe.")]
     public static partial void UnsafeUri(ILogger logger, Uri uri);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Error, Message = "DNS resolution for {uri} threw an exception")]
-    public static partial void DnsResolutionException(ILogger logger, Uri uri, Exception ex);
+    [LoggerMessage(EventId = 2, Level = LogLevel.Error, Message = "DNS resolution for {host} threw an exception")]
+    public static partial void DnsResolutionException(ILogger logger, string host, Exception ex);
 
-    [LoggerMessage(EventId = 3, Level = LogLevel.Error, Message = "{uri} could not be resolved to an IP address.")]
-    public static partial void DnsResolutionFailed(ILogger logger, Uri uri);
+    [LoggerMessage(EventId = 3, Level = LogLevel.Error, Message = "{host} could not be resolved to an IP address.")]
+    public static partial void DnsResolutionFailed(ILogger logger, string host);
 
     [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "{uri} is unreachable")]
     public static partial void HostUnreachable(ILogger logger, Uri uri);

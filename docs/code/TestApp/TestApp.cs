@@ -1,7 +1,7 @@
 #!/usr/bin/env dotnet
 
 #:sdk Microsoft.NET.Sdk.Web
-#:package idunno.Security.Ssrf@4.0.0
+#:package idunno.Security.Ssrf@5.0.0
 #:property PublishAot=false
 using System.Net;
 using System.Text;
@@ -33,16 +33,16 @@ try
 {
     using (var client = new HttpClient())
     {
-        Console.WriteLine($"Making request to {hostUrl} without the SSRF handler");
+        Console.WriteLine($"Making request to {hostUrl} without the SSRF handler.\nShould succeed.");
         var getResult = await client.GetAsync(hostUrl);
-        Console.WriteLine($"Status Code: {getResult.StatusCode}");
+        Console.WriteLine($"✔️ Status Code: {getResult.StatusCode}");
     }
 }
 catch (Exception ex)
 {
-    var indent = 0;
+    var indent = 2;
 
-    Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+    Console.WriteLine($"❌ {ex.GetType().Name}: {ex.Message}");
 
     while (ex.InnerException is not null)
     {
@@ -60,16 +60,16 @@ try
 {
     using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create()))
     {
-        Console.WriteLine($"Making request to {hostUrl} with the SSRF handler");
+        Console.WriteLine($"Making request to {hostUrl} with the SSRF handler.\nShould fail.");
         var getResult = await client.GetAsync(hostUrl);
-        Console.WriteLine($"Status Code: {getResult.StatusCode}");
+        Console.WriteLine($"✔️ Status Code: {getResult.StatusCode}");
     }
 }
 catch (Exception ex)
 {
-    var indent = 0;
+    var indent = 2;
 
-    Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+    Console.WriteLine($"❌ {ex.GetType().Name}: {ex.Message}");
 
     while (ex.InnerException is not null)
     {
@@ -85,18 +85,18 @@ Console.WriteLine();
 
 try
 {
-    using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(allowInsecureProtocols: true)))
+    using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(allowedSchemes: ["http", "https"])))
     {
-        Console.WriteLine($"Making request to {hostUrl} with the SSRF handler, allowing insecure protocols");
+        Console.WriteLine($"Making request to {hostUrl} with the SSRF handler, allowing http.\nShould fail");
         var getResult = await client.GetAsync(hostUrl);
-        Console.WriteLine($"Status Code: {getResult.StatusCode}");
+        Console.WriteLine($"✔️ Status Code: {getResult.StatusCode}");
     }
 }
 catch (Exception ex)
 {
-    var indent = 0;
+    var indent = 2;
 
-    Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+    Console.WriteLine($"❌ {ex.GetType().Name}: {ex.Message}");
 
     while (ex.InnerException is not null)
     {
@@ -113,18 +113,18 @@ Console.WriteLine();
 hostUrl = "http://loopback.ssrf.fail:3000";
 try
 {
-    using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(allowInsecureProtocols: true)))
+    using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(allowedSchemes: ["http", "https"])))
     {
-        Console.WriteLine($"Making request to {hostUrl} with the SSRF handler, allowing insecure protocols");
+        Console.WriteLine($"Making request to {hostUrl} with the SSRF handler, allowing http.\nShould fail.");
         var getResult = await client.GetAsync(hostUrl);
-        Console.WriteLine($"Status Code: {getResult.StatusCode}");
+        Console.WriteLine($"✔️ Status Code: {getResult.StatusCode}");
     }
 }
 catch (Exception ex)
 {
-    var indent = 0;
+    var indent = 2;
 
-    Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+    Console.WriteLine($"❌ {ex.GetType().Name}: {ex.Message}");
 
     while (ex.InnerException is not null)
     {
@@ -144,19 +144,19 @@ try
     using (var client = new HttpClient(SsrfSocketsHttpHandlerFactory.Create(
             allowedHostnames: ["*.ssrf.fail"],
             connectTimeout: new TimeSpan(0, 0, 5),
-            allowInsecureProtocols: true,
+            allowedSchemes: ["http", "https"],
             automaticDecompression: DecompressionMethods.All)))
     {
-        Console.WriteLine($"Making request to {hostUrl} with the SSRF handler, safe listing *.ssrf.fail and allowing insecure protocols");
+        Console.WriteLine($"Making request to {hostUrl} with the SSRF handler, safe listing *.ssrf.fail and allowing http.\nShould succeed.");
         var getResult = await client.GetAsync(hostUrl);
-        Console.WriteLine($"Status Code: {getResult.StatusCode}");
+        Console.WriteLine($"✔️ Status Code: {getResult.StatusCode}");
     }
 }
 catch (Exception ex)
 {
     var indent = 0;
 
-    Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+    Console.WriteLine($"❌ {ex.GetType().Name}: {ex.Message}");
 
     while (ex.InnerException is not null)
     {

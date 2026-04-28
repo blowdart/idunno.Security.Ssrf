@@ -8,7 +8,7 @@
 <pre>
     builder.Services.AddHttpClient();
     builder.Services.ConfigureHttpClientDefaults(configure => 
-        configure.ConfigurePrimaryHttpMessageHandler(() => SsrfSocketsHttpHandlerFactory.Create(allowInsecureProtocols: true))
+        configure.ConfigurePrimaryHttpMessageHandler(() => SsrfSocketsHttpHandlerFactory.Create(allowedSchemes: ["https", "http"]))
     );
 </pre>
 

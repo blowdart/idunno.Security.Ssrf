@@ -10,9 +10,6 @@ namespace idunno.Security;
 
 internal static class CommonFunctions
 {
-    private static readonly Func<string, CancellationToken, Task<IPHostEntry>> s_defaultAsyncHostEntryResolver = Dns.GetHostEntryAsync;
-    private static readonly Func<string, IPHostEntry> s_defaultHostEntryResolver = Dns.GetHostEntry;
-
     [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations in a hot path.")]
     [SuppressMessage("Style", "IDE0028:Simplify collection initialization", Justification = "Suggested fix is language preview feature in some versions.")]
     internal static async Task<IPAddress[]> ResolveAndReturnSafeIPAddressesAsync(
@@ -59,7 +56,7 @@ internal static class CommonFunctions
         Func<string, CancellationToken, Task<IPHostEntry>> asyncHostEntryResolver,
         CancellationToken cancellationToken)
     {
-        asyncHostEntryResolver ??= s_defaultAsyncHostEntryResolver;
+        asyncHostEntryResolver ??= Defaults.GetHostEntryAsync;
 
         IPAddress[] resolvedIpAddresses = [];
 
@@ -78,17 +75,62 @@ internal static class CommonFunctions
                     resolvedIpAddresses = entry.AddressList;
                 }
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException && ex is not OutOfMemoryException && ex is not ThreadAbortException)
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
-                Log.DnsResolutionException(logger, uri, ex);
+                Log.DnsResolutionException(logger, uri.Host, ex);
                 throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
             }
         }
 
         if (resolvedIpAddresses.Length == 0)
         {
-            Log.DnsResolutionFailed(logger, uri);
+            Log.DnsResolutionFailed(logger, uri.Host);
+            throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
+        }
+
+        return resolvedIpAddresses;
+    }
+
+    internal static async Task<IPAddress[]> GetHostEntryAsync(
+        string host,
+        ILogger logger,
+        Func<string, CancellationToken, Task<IPHostEntry>> asyncHostEntryResolver,
+        CancellationToken cancellationToken)
+    {
+        asyncHostEntryResolver ??= Defaults.GetHostEntryAsync;
+
+        IPAddress[] resolvedIpAddresses = [];
+
+        if (IPAddress.TryParse(host, out IPAddress? parsedAddress))
+        {
+            resolvedIpAddresses = [parsedAddress];
+        }
+        else
+        {
+            try
+            {
+                IPHostEntry entry = await asyncHostEntryResolver(host, cancellationToken).ConfigureAwait(false);
+
+                if (entry.AddressList is not null)
+                {
+                    resolvedIpAddresses = entry.AddressList;
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException && ex is not OutOfMemoryException && ex is not ThreadAbortException)
+            {
+                // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
+                Log.DnsResolutionException(logger, host, ex);
+
+                Uri uri = new UriBuilder() { Host = host }.Uri; // Create a URI with the host for the exception, even though we don't have a full URI to work with.
+                throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
+            }
+        }
+
+        if (resolvedIpAddresses.Length == 0)
+        {
+            Log.DnsResolutionFailed(logger, host);
+            Uri uri = new UriBuilder() { Host = host }.Uri; // Create a URI with the host for the exception, even though we don't have a full URI to work with.
             throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
         }
 
@@ -100,7 +142,7 @@ internal static class CommonFunctions
         ILogger logger,
         Func<string, IPHostEntry> hostEntryResolver)
     {
-        hostEntryResolver ??= s_defaultHostEntryResolver;
+        hostEntryResolver ??= Defaults.GetHostEntry;
 
         IPAddress[] resolvedIpAddresses = [];
 
@@ -119,17 +161,17 @@ internal static class CommonFunctions
                     resolvedIpAddresses = entry.AddressList;
                 }
             }
-            catch (Exception ex) when (ex is not OperationCanceledException)
+            catch (Exception ex) when (ex is not OperationCanceledException && ex is not OutOfMemoryException && ex is not ThreadAbortException)
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
-                Log.DnsResolutionException(logger, uri, ex);
+                Log.DnsResolutionException(logger, uri.Host, ex);
                 throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
             }
         }
 
         if (resolvedIpAddresses.Length == 0)
         {
-            Log.DnsResolutionFailed(logger, uri);
+            Log.DnsResolutionFailed(logger, uri.Host);
             throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
         }
 
@@ -193,13 +235,7 @@ internal static class CommonFunctions
 
         foreach (IPAddress ipAddress in resolvedIpAddresses)
         {
-            IPAddress normalizedIPAddress = ipAddress;
-
-            // Normalize IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1) to IPv4 before range checks.
-            if (ipAddress.IsIPv4MappedToIPv6)
-            {
-                normalizedIPAddress = ipAddress.MapToIPv4();
-            }
+            IPAddress normalizedIPAddress = ipAddress.NormalizeToIPv4();
 
             if (Ssrf.IsInAllowedNetworks(normalizedIPAddress, safeIPNetworks))
             {

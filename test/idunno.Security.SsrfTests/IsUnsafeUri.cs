@@ -16,8 +16,8 @@ public class IsUnsafeUri
     {
         Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/")));
         Assert.False(Ssrf.IsUnsafeUri(new Uri($"wss://{host}/")));
-        Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowInsecureProtocols: true));
-        Assert.False(Ssrf.IsUnsafeUri(new Uri($"wss://{host}/"), allowInsecureProtocols: true));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowedSchemes: ["https"]));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"wss://{host}/"), allowedSchemes: ["https", "wss"]));
     }
 
     [Theory]
@@ -27,7 +27,7 @@ public class IsUnsafeUri
     [InlineData("104.18.27.120")]
     [InlineData("[2620:1ec:bdf::69]")]
     [InlineData("[2620:1ec:46::69]")]
-    public void ReturnsTrueForNonSecureUris(string host)
+    public void ReturnsTrueForNonSecureUrisIfAllowedSchemesIsNotSpecified(string host)
     {
         Assert.True(Ssrf.IsUnsafeUri(new Uri($"http://{host}/")));
         Assert.True(Ssrf.IsUnsafeUri(new Uri($"ws://{host}/")));
@@ -40,7 +40,7 @@ public class IsUnsafeUri
     {
         Uri uri = new(uriAsString);
         Assert.True(Ssrf.IsUnsafeUri(uri));
-        Assert.True(Ssrf.IsUnsafeUri(uri, allowInsecureProtocols: true));
+        Assert.True(Ssrf.IsUnsafeUri(uri, allowedSchemes: ["https", "http", "wss", "ws"]));
     }
 
     [Theory]
@@ -51,7 +51,7 @@ public class IsUnsafeUri
     {
         Uri uri = new(uriAsString);
         Assert.True(Ssrf.IsUnsafeUri(uri));
-        Assert.True(Ssrf.IsUnsafeUri(uri, allowInsecureProtocols: true));
+        Assert.True(Ssrf.IsUnsafeUri(uri, allowedSchemes: ["https", "http", "wss", "ws"]));
     }
 
     [Theory]
@@ -61,12 +61,12 @@ public class IsUnsafeUri
     [InlineData("104.18.27.120")]
     [InlineData("[2620:1ec:bdf::69]")]
     [InlineData("[2620:1ec:46::69]")]
-    public void ReturnsFalseForGoodUrisIfInsecureProtocolsAllowed(string host)
+    public void ReturnsFalseForGoodUrisIfHttpAndWsAllowed(string host)
     {
-        Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowInsecureProtocols: true));
-        Assert.False(Ssrf.IsUnsafeUri(new Uri($"wss://{host}/"), allowInsecureProtocols: true));
-        Assert.False(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowInsecureProtocols: true));
-        Assert.False(Ssrf.IsUnsafeUri(new Uri($"ws://{host}/"), allowInsecureProtocols: true));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"]));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"wss://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"]));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"]));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"ws://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"]));
     }
 
     [Theory]
@@ -75,10 +75,10 @@ public class IsUnsafeUri
     [InlineData("[::1]")]
     public void ReturnsTrueForLocalhostAndLoopbackAddresses(string host)
     {
-        Assert.True(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowInsecureProtocols: true));
-        Assert.True(Ssrf.IsUnsafeUri(new Uri($"https://{host}/")));
-        Assert.True(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowInsecureProtocols: true));
-        Assert.True(Ssrf.IsUnsafeUri(new Uri($"https://{host}/")));
+        Assert.True(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"]));
+        Assert.True(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"]));
+        Assert.True(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"]));
+        Assert.True(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"]));
     }
 
     [Theory]
@@ -87,7 +87,7 @@ public class IsUnsafeUri
     public void ReturnsTrueForRelativeUris(string relativeUri)
     {
         Assert.True(Ssrf.IsUnsafeUri(new Uri(relativeUri, UriKind.Relative)));
-        Assert.True(Ssrf.IsUnsafeUri(new Uri(relativeUri, UriKind.Relative), allowInsecureProtocols: true));
+        Assert.True(Ssrf.IsUnsafeUri(new Uri(relativeUri, UriKind.Relative), allowedSchemes: ["https", "http", "wss", "ws"]));
     }
 
     [Fact]
@@ -100,12 +100,12 @@ public class IsUnsafeUri
     [InlineData("localhost")]
     [InlineData("127.0.0.1")]
     [InlineData("[::1]")]
-    public void ReturnsFalseForLocalhostAndLoopbackAddressesIfAllowLoopbackIsTrue(string host)
+    public void ReturnsFalseForLocalhostAndLoopbackAddressesIfAllowLoopbackIsTrueAndSchemesAreAllowed(string host)
     {
-        Assert.False(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowInsecureProtocols: true, allowLoopback: true));
-        Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowInsecureProtocols: false, allowLoopback: true));
-        Assert.False(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowInsecureProtocols: true, allowLoopback: true));
-        Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowInsecureProtocols: false, allowLoopback: true));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"], allowLoopback: true));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"], allowLoopback: true));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"http://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"], allowLoopback: true));
+        Assert.False(Ssrf.IsUnsafeUri(new Uri($"https://{host}/"), allowedSchemes: ["https", "http", "wss", "ws"], allowLoopback: true));
     }
 
     [Fact]

@@ -10,7 +10,7 @@ builder.Services.AddRazorPages();
 
 builder.Services.AddHttpClient();
 builder.Services.ConfigureHttpClientDefaults(configure =>
-    configure.ConfigurePrimaryHttpMessageHandler(() => SsrfSocketsHttpHandlerFactory.Create(allowInsecureProtocols: true))
+    configure.ConfigurePrimaryHttpMessageHandler(() => SsrfSocketsHttpHandlerFactory.Create(allowedSchemes: ["https", "http"]))
 );
 
 WebApplication app = builder.Build();

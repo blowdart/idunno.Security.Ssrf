@@ -19,15 +19,14 @@ using (var httpClient = new HttpClient(timingHandler))
     Console.WriteLine($"Response status code: {response.StatusCode}");
 }
 
+Console.WriteLine();
+
+IPAddress[] exampleComIPs = await Dns.GetHostAddressesAsync("www.example.com");
+
 timingHandler = new TimingHandler()
 {
     InnerHandler = SsrfSocketsHttpHandlerFactory.Create(
-         additionalUnsafeIPAddresses: [
-             IPAddress.Parse("2606:4700::6812:1b78"),
-             IPAddress.Parse("2606:4700::6812:1a78"),
-             IPAddress.Parse("104.18.27.120"),
-             IPAddress.Parse("104.18.26.120")
-         ],
+         additionalUnsafeIPAddresses: exampleComIPs,
          connectTimeout: TimeSpan.FromSeconds(1))
 };
 

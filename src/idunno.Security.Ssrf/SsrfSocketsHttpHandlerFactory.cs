@@ -18,8 +18,6 @@ namespace idunno.Security;
 /// </summary>
 public sealed class SsrfSocketsHttpHandlerFactory
 {
-    private static readonly Func<string, CancellationToken, Task<IPHostEntry>> s_defaultHostEntryResolver = Dns.GetHostEntryAsync;
-
     [ExcludeFromCodeCoverage]
     private SsrfSocketsHttpHandlerFactory()
     {
@@ -42,7 +40,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="safeIPNetworks">Optional additional IP networks to consider safe, which can be used to allow specific safe ranges that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="safeIPAddresses">Optional additional IP addresses to consider safe, which can be used to allow specific safe addresses that would otherwise be blocked by the unsafe checks.</param>
     /// <param name="connectTimeout">The timespan to wait before the connection establishing times out. The default value is <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>.</param>
-    /// <param name="allowInsecureProtocols">Flag indicating whether http:// and ws:// URIs will be allowed or rejected.</param>
+    /// <param name="allowedSchemes">An optional collection of URI schemes that are allowed. This can be used to restrict or allow specific protocols such as "http" or "ws". If <see langword="null"/>, defaults to allow https and wss.</param>
     /// <param name="allowLoopback">Flag indicating whether loopback addresses will be allowed or rejected.</param>
     /// <param name="failMixedResults">Flag indicating whether to fail when a mixture of safe and unsafe addresses is found. Setting this to <see langword="true"/> will reject the connection if any unsafe addresses are found.</param>
     /// <param name="allowAutoRedirect">Flag indicating whether to allow auto-redirects. Setting this to <see langword="true"/> can introduce security vulnerabilities and should only be enabled if necessary.</param>
@@ -67,7 +65,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ICollection<IPNetwork>? safeIPNetworks = null,
         ICollection<IPAddress>? safeIPAddresses = null,
         TimeSpan? connectTimeout = null,
-        bool allowInsecureProtocols = false,
+        ICollection<string>? allowedSchemes = null,
         bool allowLoopback = false,
         bool failMixedResults = true,
         bool allowAutoRedirect = false,
@@ -84,7 +82,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: safeIPNetworks,
             safeIPAddresses: safeIPAddresses,
             connectTimeout: connectTimeout,
-            allowInsecureProtocols: allowInsecureProtocols,
+            allowedSchemes: allowedSchemes,
             allowLoopback: allowLoopback,
             failMixedResults: failMixedResults,
             allowAutoRedirect: allowAutoRedirect,
@@ -106,12 +104,17 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="meterFactory">An optional <see cref="IMeterFactory"/> to use for metrics. If not provided, a default <see cref="Meter"/>will be used.</param>
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     /// <exception cref="ArgumentNullException">Thrown if <paramref name="options"/> is <see langword="null"/>.</exception>
+    /// <exception cref="ArgumentException">Thrown if <paramref name="options"/> is of type <see cref="ProxiedSsrfOptions"/>.</exception>
     public static SocketsHttpHandler Create(
         SsrfOptions options,
         ILoggerFactory? loggerFactory = null,
         IMeterFactory? meterFactory = null)
     {
         ArgumentNullException.ThrowIfNull(options);
+        if (options is ProxiedSsrfOptions)
+        {
+            throw new ArgumentException("SsrfSocketsHttpHandlerFactory cannot accept ProxiedSsrfOptions. Use ProxiedSsrfDelegatingHandler with ProxiedSsrfOptions for configurations that include proxy settings.", nameof(options));
+        }
 
         return InternalCreate(
             options: options,
@@ -127,6 +130,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
         IMeterFactory? meterFactory)
     {
         ArgumentNullException.ThrowIfNull(options);
+        if (options is ProxiedSsrfOptions)
+        {
+            throw new ArgumentException("SsrfSocketsHttpHandlerFactory cannot accept ProxiedSsrfOptions. Use ProxiedSsrfDelegatingHandler with ProxiedSsrfOptions for configurations that include proxy settings.", nameof(options));
+        }
+
         return InternalCreate(
             connectionStrategy: options.ConnectionStrategy,
             additionalUnsafeIPNetworks: options.AdditionalUnsafeIPNetworks,
@@ -135,12 +143,12 @@ public sealed class SsrfSocketsHttpHandlerFactory
             safeIPNetworks: options.SafeIPNetworks,
             safeIPAddresses: options.SafeIPAddresses,
             connectTimeout: options.ConnectTimeout,
-            allowInsecureProtocols: options.AllowInsecureProtocols,
+            allowedSchemes: options.AllowedSchemes,
             failMixedResults: options.FailMixedResults,
             allowAutoRedirect: options.AllowAutoRedirect,
             allowLoopback: options.AllowLoopback,
             automaticDecompression: options.AutomaticDecompression,
-            proxy: options.Proxy,
+            proxy: null,
             sslOptions: options.SslOptions,
             asyncHostEntryResolver: hostEntryResolver,
             loggerFactory: loggerFactory,
@@ -155,21 +163,28 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ICollection<IPNetwork>? safeIPNetworks,
         ICollection<IPAddress>? safeIPAddresses,
         TimeSpan? connectTimeout,
-        bool allowInsecureProtocols,
+        ICollection<string>? allowedSchemes,
         bool allowLoopback,
         bool failMixedResults,
         bool allowAutoRedirect,
         DecompressionMethods? automaticDecompression,
-        IWebProxy? proxy,
+        WebProxy? proxy,
         SslClientAuthenticationOptions? sslOptions,
         Func<string, CancellationToken, Task<IPHostEntry>>? asyncHostEntryResolver,
         ILoggerFactory? loggerFactory,
         IMeterFactory? meterFactory)
     {
-        asyncHostEntryResolver ??= s_defaultHostEntryResolver;
+        if (proxy is not null && proxy.Address is null)
+        { 
+            throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
+        }
+
+        asyncHostEntryResolver ??= Defaults.GetHostEntryAsync;
         loggerFactory ??= NullLoggerFactory.Instance;
         ILogger logger = loggerFactory.CreateLogger<SsrfSocketsHttpHandlerFactory>();
         SsrfMetrics metrics = new(meterFactory);
+
+        ICollection<string> snapshottedAllowedSchemes = allowedSchemes != null ? [.. allowedSchemes] : Defaults.AllowedSchemes;
 
         SocketsHttpHandler handler = new()
         {
@@ -188,69 +203,90 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 // This may result in additional latency for connections due to DNS lookups, but is necessary as caching would introduce a TOCTOU (Time of Check to Time of Use)
                 // vulnerability where an attacker could change the resolved IP address after validation but before connection.
 
+                // requestedUri is always the original destination URI from the request message.
+                // When a proxy is in use, the proxy endpoint is represented by context.DnsEndPoint and handled separately below.
+
                 Uri requestedUri = context.InitialRequestMessage.RequestUri ?? throw new InvalidOperationException("The request message must have a RequestUri.");
+                IPAddress[] resolvedIPAddresses;
 
-                if (Ssrf.IsUnsafeUri(
-                    uri: requestedUri,
-                    allowInsecureProtocols: allowInsecureProtocols,
-                    allowLoopback: allowLoopback,
-                    metrics: metrics))
+                bool requestIsToProxy = proxy?.Address is Uri proxyAddress &&
+                    context.DnsEndPoint.Host.Equals(proxyAddress.IdnHost, StringComparison.OrdinalIgnoreCase) &&
+                    context.DnsEndPoint.Port == proxyAddress.Port;
+
+                if (requestIsToProxy)
                 {
-                    Log.UnsafeUri(logger, requestedUri);
-                    metrics.IncrementBlockedRequests();
-                    throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
+                    try
+                    {
+                        resolvedIPAddresses = await CommonFunctions.GetHostEntryAsync(context.DnsEndPoint.Host, logger, asyncHostEntryResolver, cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (SsrfException)
+                    {
+                        metrics.IncrementBlockedRequests();
+                        throw;
+                    }
                 }
-
-                IPAddress[] resolvedIpAddresses;
-
-                try
+                else
                 {
-                    resolvedIpAddresses = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
+                    if (Ssrf.IsUnsafeUri(
                         uri: requestedUri,
-                        additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
-                        additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
-                        allowedHostnames: allowedHostnames,
-                        safeIPNetworks: safeIPNetworks,
-                        safeIPAddresses: safeIPAddresses,
+                        allowedSchemes: snapshottedAllowedSchemes,
                         allowLoopback: allowLoopback,
-                        failMixedResults: failMixedResults,
-                        logger: logger,
-                        metrics: metrics,
-                        asyncHostEntryResolver: asyncHostEntryResolver,
-                        cancellationToken: cancellationToken).ConfigureAwait(false);
-                }
-                catch (SsrfException)
-                {
-                    Log.DnsResolutionFailed(logger, requestedUri);
-                    metrics.IncrementBlockedRequests();
-                    throw;
+                        metrics: metrics))
+                    {
+                        Log.UnsafeUri(logger, requestedUri);
+                        metrics.IncrementBlockedRequests();
+                        throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
+                    }
+
+                    try
+                    {
+                        resolvedIPAddresses = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
+                            uri: requestedUri,
+                            additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+                            additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
+                            allowedHostnames: allowedHostnames,
+                            safeIPNetworks: safeIPNetworks,
+                            safeIPAddresses: safeIPAddresses,
+                            allowLoopback: allowLoopback,
+                            failMixedResults: failMixedResults,
+                            logger: logger,
+                            metrics: metrics,
+                            asyncHostEntryResolver: asyncHostEntryResolver,
+                            cancellationToken: cancellationToken).ConfigureAwait(false);
+                    }
+                    catch (SsrfException)
+                    {
+                        metrics.IncrementBlockedRequests();
+                        throw;
+                    }
                 }
 
                 // Reorder the list of safe IP addresses based on the specified connection strategy, if there are multiple addresses to choose from.
-                if (resolvedIpAddresses.Length > 1)
+                if (resolvedIPAddresses.Length > 1)
                 {
                     if (connectionStrategy.HasFlag(ConnectionStrategy.Random))
                     {
                         // Shuffle in place O(n) in-place vs linq based O(n log n) OrderBy + new list allocation.
-                        for (int i = resolvedIpAddresses.Length - 1; i > 0; i--)
+                        for (int i = resolvedIPAddresses.Length - 1; i > 0; i--)
                         {
                             int j = RandomNumberGenerator.GetInt32(0, i + 1);
-                            (resolvedIpAddresses[i], resolvedIpAddresses[j]) = (resolvedIpAddresses[j], resolvedIpAddresses[i]);
+                            (resolvedIPAddresses[i], resolvedIPAddresses[j]) = (resolvedIPAddresses[j], resolvedIPAddresses[i]);
                         }
                     }
 
                     if (connectionStrategy.HasFlag(ConnectionStrategy.Ipv4Preferred))
                     {
-                        SortIpAddressListByFamily(resolvedIpAddresses, AddressFamily.InterNetwork);
+                        SortIpAddressListByFamily(resolvedIPAddresses, AddressFamily.InterNetwork);
                     }
                     else if (connectionStrategy.HasFlag(ConnectionStrategy.Ipv6Preferred))
                     {
-                        SortIpAddressListByFamily(resolvedIpAddresses, AddressFamily.InterNetworkV6);
+                        SortIpAddressListByFamily(resolvedIPAddresses, AddressFamily.InterNetworkV6);
                     }
                 }
 
-                // Attempt to connect to each safe IP address until a successful connection is made.
-                foreach (IPAddress ipAddress in resolvedIpAddresses)
+                // As we don't rewrite the request, the Host header should already be correct and does not need setting or adjusting, so we can
+                // move on to attempt to connect to each safe IP address until a successful connection is made.
+                foreach (IPAddress ipAddress in resolvedIPAddresses)
                 {
                     Socket socket = new(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                     try
@@ -293,12 +329,15 @@ public sealed class SsrfSocketsHttpHandlerFactory
             handler.SslOptions = sslOptions;
         }
 
-        if (proxy is not null)
+        if (proxy is null)
+        {
+            handler.UseProxy = false;
+        }
+        else
         {
             handler.Proxy = proxy;
             handler.UseProxy = true;
         }
-
         return handler;
     }
 

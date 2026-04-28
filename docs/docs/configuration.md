@@ -47,16 +47,18 @@ This is useful for cases where you have a known safe IP address or network that 
 such as a local development environment or a trusted internal service.
 
 > [!Warning]
-> Careless use of `safeIPNetworks`and `safeIPAddresses` can lead to security vulnerabilities by allowing
-> genuinely  unsafe IP addresses or network to be considered safe.
+> Careless use of `safeIPNetworks` and `safeIPAddresses` can lead to security vulnerabilities by allowing
+> genuinely unsafe IP addresses or networks to be considered safe.
 > Use with caution and constrain the values specified to the smallest network range or individual IP addresses needed.
 > Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address matches
 > both a safe and unsafe address, or is within a safe network, it will be considered safe.
 
-## Allowing HTTP and WS URIs
+## Setting allowed schemes
 
-You may have some `http` or `ws` URIs you need to access. You can mark those protocols as safe using the
-`allowInsecureProtocols` parameter.
+You may have some `http` or `ws` URIs you need to access. You can add to the default allowed schemes of `https` and `wss` using the `allowedSchemes` parameter.
+For example, to allow `http` and `ws` schemes you would set `allowedSchemes` to `[ "https", "wss", "http", "ws" ]`.
+
+If you are not going to use WebSockets you can remove `wss` from the allowed schemes, by passing `[ "https" ]` to `allowedSchemes`.
 
 ## Allowing loopback connections
 
@@ -78,8 +80,11 @@ safe IP addresses using the `connectionStrategy` parameter. There are four flags
 If you have a truly weird setup you may wish to allow a connection to continue if the IP address list returned
 during name resolution returns a mixture of safe and unsafe IP addresses. If you set the `failMixedResults`
 parameter to `false` all unsafe addresses will be removed from the potential connection list, and, if any safe IP addresses
-remain, a connection will be attempted to each. Such a strange DNS setup could be an indicator of attack, so use
-this option with care, as it may introduce an SSRF vulnerability.
+remain, a connection will be attempted to each.
+
+> [!Warning]
+> DNS resolution that returns a mix of safe and unsafe IP addresses is likely to be an indicator of attack.
+> Do not set `failMixedResults` to `false` unless you have a specific need to allow this, and you understand the risks of doing so.
 
 ## Other configuration parameters
 
