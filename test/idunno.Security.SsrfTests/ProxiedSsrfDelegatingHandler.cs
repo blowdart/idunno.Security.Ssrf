@@ -142,7 +142,7 @@ public class ProxiedSsrfDelegatingHandler
     [Theory]
     [InlineData("http://example.org/")]
     [InlineData("http://github.com/")]
-    public async Task ConnectionDoesNotThrowForSafeHostButUnsafeProtocolButHttpIsAllowed(string hostName)
+    public async Task ConnectionDoesNotThrowForSafeHostButDefaultUnsafeProtocolWhenAllowedSchemesIncludeHttp(string hostName)
     {
         using var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
             connectTimeout: TimeSpan.FromSeconds(1),

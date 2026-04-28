@@ -27,7 +27,7 @@ public class IsUnsafeUri
     [InlineData("104.18.27.120")]
     [InlineData("[2620:1ec:bdf::69]")]
     [InlineData("[2620:1ec:46::69]")]
-    public void ReturnsTrueForNonSecureUrisIfNotAllowedSchemes(string host)
+    public void ReturnsTrueForNonSecureUrisIfAllowedSchemesIsNotSpecified(string host)
     {
         Assert.True(Ssrf.IsUnsafeUri(new Uri($"http://{host}/")));
         Assert.True(Ssrf.IsUnsafeUri(new Uri($"ws://{host}/")));

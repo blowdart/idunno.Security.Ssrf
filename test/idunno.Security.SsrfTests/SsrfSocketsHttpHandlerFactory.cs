@@ -149,7 +149,7 @@ public class SsrfSocketsHttpHandlerFactory
     [Theory]
     [InlineData("http://example.org/")]
     [InlineData("http://github.com/")]
-    public async Task ConnectionDoesNotThrowForSafeHostButUnsafeProtocolIfAllowHttpAndWsAreAllowed(string uri)
+    public async Task ConnectionDoesNotThrowForSafeHostOnHttpIfHttpAndWsAreSpecifiedInAllowedSchemes(string uri)
     {
         using HttpClient httpClient = new(Security.SsrfSocketsHttpHandlerFactory.Create(
             connectionStrategy: ConnectionStrategy.None,
