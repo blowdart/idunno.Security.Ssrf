@@ -242,6 +242,31 @@ public class Metrics
     }
 
     [Fact]
+    public void IsUnsafeUriIncrementsMetricsWithCredentialContainingUri()
+    {
+        IServiceProvider services = CreateServiceProvider();
+        IMeterFactory meterFactory = services.GetRequiredService<IMeterFactory>();
+        SsrfMetrics metrics = services.GetRequiredService<SsrfMetrics>();
+
+        var blockedRequestsCounter = new MetricCollector<long>(meterFactory, SsrfMetrics.MeterName, BlockedRequestsInstrumentName);
+        var unsafeUriCounter = new MetricCollector<long>(meterFactory, SsrfMetrics.MeterName, UnsafeUriInstrumentName);
+        var unsafeIpAddressCounter = new MetricCollector<long>(meterFactory, SsrfMetrics.MeterName, UnsafeIPAddressInstrumentName);
+
+        Assert.True(Ssrf.IsUnsafeUri(new Uri("https://user:password@example.org"), metrics: metrics));
+
+        IReadOnlyList<CollectedMeasurement<long>> blockedRequestMeasurements = blockedRequestsCounter.GetMeasurementSnapshot();
+        Assert.Empty(blockedRequestMeasurements);
+
+        IReadOnlyList<CollectedMeasurement<long>> unsafeUriMeasurements = unsafeUriCounter.GetMeasurementSnapshot();
+        Assert.Single(unsafeUriMeasurements);
+        Assert.True(unsafeUriMeasurements[0].ContainsTags("reason"));
+        Assert.Equal("user_info_uri", unsafeUriMeasurements[0].Tags["reason"]);
+
+        IReadOnlyList<CollectedMeasurement<long>> unsafeIpAddressMeasurements = unsafeIpAddressCounter.GetMeasurementSnapshot();
+        Assert.Empty(unsafeIpAddressMeasurements);
+    }
+
+    [Fact]
     public void IsUnsafeIpAddressDoesNotIncrementMetricsIfUnsafeIpAddressIsInSafeIpAddressCollection()
     {
         IServiceProvider services = CreateServiceProvider();

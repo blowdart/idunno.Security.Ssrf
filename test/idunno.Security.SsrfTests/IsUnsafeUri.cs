@@ -114,4 +114,17 @@ public class IsUnsafeUri
         Assert.True(Ssrf.IsUnsafeUri(new Uri("//example.com")));
         Assert.True(Ssrf.IsUnsafeUri(new Uri("//example.com", UriKind.RelativeOrAbsolute)));
     }
+
+    [Theory]
+    [InlineData("example.com")]
+    [InlineData("www.example.com")]
+    [InlineData("104.18.26.120")]
+    [InlineData("104.18.27.120")]
+    [InlineData("[2620:1ec:bdf::69]")]
+    [InlineData("[2620:1ec:46::69]")]
+    public void ReturnsTrueForUrisWithUserInfo(string host)
+    {
+        Assert.True(Ssrf.IsUnsafeUri(new Uri($"https://username:password@{host}/")));
+        Assert.True(Ssrf.IsUnsafeUri(new Uri($"https://username@{host}/"), allowedSchemes: ["https"]));
+    }
 }

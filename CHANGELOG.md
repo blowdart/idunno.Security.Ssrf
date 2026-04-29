@@ -1,3 +1,9 @@
+## 5.1.0 - Unreleased
+
+### Changed
+
+* URIs containing user information, e.g. `https://user:pass@example.com`, are now considered unsafe by `IsUnsafeUri`. `IsUnsafe` and the handlers.
+
 ## 5.0.0 - 2026-04-27
 
 ### Added

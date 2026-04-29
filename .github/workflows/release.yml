@@ -1,23 +1,8 @@
-name: Release Build, Test, Sign, Publish
+name: Release
 on:
-  workflow_dispatch:
-    inputs:
-      public_release:
-        description: 'Public Release'
-        type: boolean
-        required: true
-        default: true
-      perform_sign:
-        description: 'Sign'
-        type: boolean
-        required: true
-        default: true
-      perform_publish:
-        description: 'nuget publish'
-        type: boolean
-        required: true
-        default: false
-
+  push:
+    tags:
+      - '^v[0-9]+.[0-9]+.[0-9]+$'
 env:
   DOTNET_NOLOGO: true
   DOTNET_GENERATE_ASPNET_CERTIFICATE: false
@@ -37,6 +22,7 @@ jobs:
       id-token: write
 
     name: Build release
+    if: ${{ github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     steps:
       ## Do not harden the runner in this workflow since it needs to run build and test tasks that may require network access and other permissions.
@@ -46,7 +32,15 @@ jobs:
       with:
         fetch-depth: 0 # avoid shallow clone so nbgv can do its work.
         persist-credentials: false
- 
+
+    - name: "Validate pushed tag"
+      uses: lfreleng-actions/tag-validate-action@461d187a53b5de27b068c2cea5af972c085a4a6a # v1.0.2
+      with:
+        require_type: semver
+        require_signed: ssh
+        require_owner: blowdart
+        reject_development: true
+
     - name: 'Setup .NET SDK'
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
       with:
@@ -56,13 +50,13 @@ jobs:
           10.0.x
 
     - name: 'Build'
-      run: dotnet build --configuration Release --property:PublicRelease=${{ inputs.public_release }}
+      run: dotnet build --configuration Release --property:PublicRelease=true
 
     - name: 'Test'
-      run: dotnet test --configuration Release --no-restore --no-build --property:PublicRelease=${{ inputs.public_release }}
+      run: dotnet test --configuration Release --no-restore --no-build --property:PublicRelease=true
 
     - name: 'Pack release'
-      run: dotnet pack --configuration Release --no-restore --no-build --output ${NUPKG_DIRECTORY} --property:PublicRelease=${{ inputs.public_release }}
+      run: dotnet pack --configuration Release --no-restore --no-build --output ${NUPKG_DIRECTORY} --property:PublicRelease=true
 
     - name: 'List artifact directory'
       shell: pwsh
@@ -90,7 +84,6 @@ jobs:
     name: Sign
     needs: build
     runs-on: windows-latest
-    if:  ${{ inputs.perform_sign }} 
     environment: release
     permissions:
       attestations: write
@@ -173,7 +166,6 @@ jobs:
     name: Publish
     needs: sign
     runs-on: ubuntu-latest
-    if:  ${{ inputs.perform_publish }}
     environment: release
     permissions:
       id-token: write
