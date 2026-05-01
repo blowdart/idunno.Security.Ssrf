@@ -39,6 +39,7 @@ jobs:
         require_signed: ssh
         require_owner: blowdart
         reject_development: true
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: 'Setup .NET SDK'
       uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
