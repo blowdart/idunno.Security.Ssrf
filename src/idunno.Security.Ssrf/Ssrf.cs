@@ -87,7 +87,7 @@ public static class Ssrf
 
     /// <summary>
     /// Evaluates the given <paramref name="uri"/> to determine if it is potentially unsafe for use in server-side requests,
-    /// based on its host name type, whether it is absolute, loopback, UNC, and its scheme. Uris that are not absolute,
+    /// based on its host name type, whether it is absolute, loopback, UNC, and its scheme. URIs that are not absolute,
     /// have an unknown host name type, contain user info, are UNC paths, are loopback (if not allowed), or have a scheme
     /// that is not in the allowed list are considered unsafe.
     /// </summary>
