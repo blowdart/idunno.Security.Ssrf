@@ -78,6 +78,8 @@
     <File Path=".gitattributes" />
     <File Path=".gitignore" />
     <File Path=".runsettings" />
+    <File Path=".ssh-allowed-signers" />
+    <File Path=".ssh-allowed-signers.md" />
     <File Path=".vsconfig" />
     <File Path="buildDocs.ps1" />
     <File Path="CHANGELOG.md" />
