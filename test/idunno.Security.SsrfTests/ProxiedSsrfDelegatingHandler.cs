@@ -83,10 +83,51 @@ public class ProxiedSsrfDelegatingHandler
     [InlineData("https://mixed.ipv6.ssrf.fail/")]
     public async Task ConnectionContinuesForHostsThatReturnAMixOfSafeAndUnsafeIPAddressesIfFailMixedResultsIsFalse(string hostName)
     {
+        static async Task<IPHostEntry> asyncHostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("2001:db8::1"),
+                    IPAddress.Parse("2606:4700:4700::1111"),
+                    IPAddress.Parse("fdff:ffff:ffff:ffff:ffff:ffff:ffff:fffe")
+                ]
+            };
+        }
+
+        static IPHostEntry hostEntryResolver(string uri)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("2001:db8::1"),
+                    IPAddress.Parse("2606:4700:4700::1111"),
+                    IPAddress.Parse("fdff:ffff:ffff:ffff:ffff:ffff:ffff:fffe")
+                ]
+            };
+        }
+
         using var proxiedSsrfDelegatingHandler = new Security.ProxiedSsrfDelegatingHandler(
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPNetworks: null,
+            safeIPAddresses: null,
             connectTimeout: TimeSpan.FromSeconds(1),
+            allowedSchemes: [ "https" ],
+            allowLoopback: false,
             failMixedResults: false,
-            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")));
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            sslOptions: null,
+            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: asyncHostEntryResolver,
+            loggerFactory: null,
+            meterFactory: null);
         using HttpClient httpClient = new(proxiedSsrfDelegatingHandler);
         Exception? ex = await Record.ExceptionAsync(async () => await httpClient.GetAsync(hostName, cancellationToken: TestContext.Current.CancellationToken));
 

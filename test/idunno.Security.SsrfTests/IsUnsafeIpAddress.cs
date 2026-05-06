@@ -365,4 +365,299 @@ public class IsUnsafeIpAddress
             safeIPAddresses: null,
             allowLoopback: false));
     }
+
+    // The following tests match the naming of blocks by the Azure Anti-SSRF team
+    // in their code, https://github.com/microsoft/AntiSSRF.
+    // While it does duplicate some of the tests above, it also makes for
+    // an easier comparison to ensure that all of the same blocks are included in this implementation.
+
+    [Fact]
+    public void ReturnsTrueForAzureWireServerIpAddresses()
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse("168.63.129.16")));
+    }
+
+    [Theory]
+    [InlineData("192.0.0.11")]
+    [InlineData("2001:0001:0000:0000:0000:0000:0000:0001")]
+    public void ReturnsTrueForNATAnyCast(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("192.52.193.1")]
+    [InlineData("192.52.193.254")]
+    [InlineData("2001:0003:0000:0000:0000:0000:0000:0001")]
+    [InlineData("2001:0003:ffff:ffff:ffff:ffff:ffff:fffe")]
+    public void ReturnsTrueForAmt(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("192.31.196.1")]
+    [InlineData("192.31.196.254")]
+    [InlineData("192.175.48.1")]
+    [InlineData("192.175.48.254")]
+    [InlineData("2001:4:112::1")]
+    [InlineData("2001:4:112::ff")]
+    [InlineData("2620:4f:8000::1")]
+    [InlineData("2620:4f:8000::ff")]
+    public void ReturnsTrueForAS112(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("192.88.99.1")]
+    [InlineData("192.88.99.254")]
+    [InlineData("2001:10::1")]
+    [InlineData("2001:10::ff")]
+    public void ReturnsTrueForDeprecatedIpAddresses(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("2001:30::1")]
+    [InlineData("2001:30::ff")]
+    public void ReturnsTrueForDroneRemoteIDProtocolEntityTagsPrefix(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("100::1")]
+    [InlineData("100::ff")]
+    public void ReturnsTrueForDiscardOnly(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Fact]
+    public void ReturnsTrueForAnyCast()
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse("2001:0001:0000:0000:0000:0000:0000:0003")));
+    }
+
+    [Theory]
+    [InlineData("192.0.2.1")]
+    [InlineData("192.0.2.254")]
+    [InlineData("198.51.100.1")]
+    [InlineData("198.51.100.254")]
+    [InlineData("203.0.113.1")]
+    [InlineData("203.0.113.254")]
+    [InlineData("2001:db8::1")]
+    [InlineData("2001:db8::ff")]
+    [InlineData("3fff::1")]
+    [InlineData("3fff::ff")]
+    public void ReturnsTrueForDocumentationIPAddresses(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("192.0.0.8")]
+    [InlineData("100:0:0:1::1")]
+    [InlineData("0100:0000:0000:0001:ffff:ffff:ffff:ffff")]
+    public void ReturnsTrueForDummyAddresses(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("192.0.0.1")]
+    [InlineData("192.0.0.254")]
+    [InlineData("2001:0000:0000:0000:0000:0000:0000:0000")]
+    [InlineData("2001:01ff:ffff:ffff:ffff:ffff:ffff:ffff")]
+    public void ReturnsTrueForProtocolAssignments(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("192.0.0.1")]
+    [InlineData("192.0.0.254")]
+    [InlineData("2001:0000:0000:0000:0000:0000:0000:0001")]
+    [InlineData("2001:01ff:ffff:ffff:ffff:ffff:ffff:fffe")]
+    public void ReturnsTrueForIETFProtocolAssignmentAddresses(string ipaddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipaddressAsString)));
+    }
+
+    [Fact]
+    public void ReturnsTrueForInstanceMetadataService()
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse("169.254.169.254")));
+    }
+
+    [Theory]
+    [InlineData("0064:ff9b:0000:0000:0000:0000:0000:0001")]
+    [InlineData("0064:ff9b:0000:0000:0000:0000:ffff:ffff")]
+    [InlineData("0064:ff9b:0001:0000:0000:0000:0000:0000")]
+    [InlineData("0064:ff9b:0001:ffff:ffff:ffff:ffff:ffff")]
+    public void ReturnsTrueForIPv4IPv6Translated(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("192.0.0.1")]
+    [InlineData("192.0.0.6")]
+    public void ReturnsTrueForIpv4ContinuityPrefix(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Fact]
+    public void ReturnsTrueForLimitedBroadcastAddresses()
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse("255.255.255.255")));
+    }
+
+    [Theory]
+    [InlineData("169.254.0.1")]
+    [InlineData("169.254.255.254")]
+    [InlineData("fe80:0000:0000:0000:0000:0000:0000:0000")]
+    [InlineData("febf:ffff:ffff:ffff:ffff:ffff:ffff:fffe")]
+    public void ReturnsTrueForLinkLocal(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("127.0.0.1")]
+    [InlineData("127.255.255.254")]
+    [InlineData("0000:0000:0000:0000:0000:0000:0000:0001")]
+    public void ReturnsTrueForLoopback(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("224.0.0.1")]
+    [InlineData("239.255.255.254")]
+    [InlineData("ff00:0000:0000:0000:0000:0000:0000:0001")]
+    [InlineData("ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")]
+    public void ReturnsTrueForMulticast(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("192.0.0.170")]
+    [InlineData("192.0.0.171")]
+    public void ReturnsTrueForNat64Dns64Discovery(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("2001:0020:0000:0000:0000:0000:0000:0001")]
+    [InlineData("2001:002f:ffff:ffff:ffff:ffff:ffff:fffe")]
+    public void ReturnsTrueForORCHIDv2Addresses(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("192.0.0.9")]
+    [InlineData("2001:1::1")]
+    public void ReturnsTrueForPCPAnycast(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("10.0.0.1")]
+    [InlineData("10.255.255.254")]
+    [InlineData("172.16.0.1")]
+    [InlineData("172.31.255.254")]
+    [InlineData("192.168.0.1")]
+    [InlineData("192.168.255.254")]
+    public void ReturnsTrueForPrivateUseAddresses(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("240.0.0.1")]
+    [InlineData("255.255.255.254")]
+    public void ReturnsTrueForReservedAddresses(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("100.64.0.1")]
+    [InlineData("100.127.255.254")]
+    public void ReturnsTrueForSharedAddressSpace(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("fec0:0000:0000:0000:0000:0000:0000:0001")]
+    [InlineData("feff:ffff:ffff:ffff:ffff:ffff:ffff:fffe")]
+    public void ReturnsTrueForSiteLocal(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("192.88.99.2")]
+    public void ReturnsTrueForSix4aaRelayAnycast(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("2002:0000:0000:0000:0000:0000:0000:0001")]
+    [InlineData("2002:ffff:ffff:ffff:ffff:ffff:ffff:fffe")]
+    public void ReturnsTrueForSixtoFour(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("5f00:0000:0000:0000:0000:0000:0000:0001")]
+    [InlineData("5f00:ffff:ffff:ffff:ffff:ffff:ffff:fffe")]
+    public void ReturnsTrueForSegmentRoutingSIDs(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("2001:0000:0000:0000:0000:0000:0000:0001")]
+    [InlineData("2001:0000:ffff:ffff:ffff:ffff:ffff:ffff")]
+    public void ReturnsTrueForTeradoAddresses(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("192.0.0.10")]
+    [InlineData("2001:0001:0000:0000:0000:0000:0000:0002")]
+    public void ReturnsTrueForNATAnycast(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("fc00:0000:0000:0000:0000:0000:0000:0001")]
+    [InlineData("fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")]
+    public void ReturnsTrueForUniqueLocalUnicast(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
+
+    [Theory]
+    [InlineData("0.0.0.1")]
+    [InlineData("0.255.255.254")]
+    // Note ::/128 is an invalid IP address 
+    public void ReturnsTrueForThisHostUnspecifiedNetwork(string ipAddressAsString)
+    {
+        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
+    }
 }

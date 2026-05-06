@@ -74,17 +74,38 @@ public class SsrfSocketsHttpHandlerFactory
     [InlineData("https://mixed.ipv6.ssrf.fail/")]
     public async Task ConnectionContinuesForHostsThatReturnAMixOfSafeAndUnsafeIPAddressesIfFailMixedResultsIsFalse(string uri)
     {
-        using HttpClient httpClient = new(Security.SsrfSocketsHttpHandlerFactory.Create(
+        static async Task<IPHostEntry> asyncHostEntryResolver(string uri, CancellationToken cancellationToken)
+        {
+            return new IPHostEntry
+            {
+                HostName = uri,
+                AddressList = [
+                    IPAddress.Parse("2001:db8::1"),
+                    IPAddress.Parse("2606:4700:4700::1111"),
+                    IPAddress.Parse("fdff:ffff:ffff:ffff:ffff:ffff:ffff:fffe")
+                ]
+            };
+        }
+
+
+        using HttpClient httpClient = new(Security.SsrfSocketsHttpHandlerFactory.InternalCreate(
             connectionStrategy: ConnectionStrategy.None,
             additionalUnsafeIPNetworks: null,
             additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPNetworks: null,
+            safeIPAddresses: null,
             connectTimeout: new TimeSpan(0,0,1),
             allowedSchemes: null,
             allowLoopback: false,
             failMixedResults: false,
             allowAutoRedirect: false,
             automaticDecompression: null,
-            sslOptions: null));
+            proxy: null,
+            sslOptions: null,
+            asyncHostEntryResolver: asyncHostEntryResolver,
+            loggerFactory: null,
+            meterFactory: null));
 
         try
         {

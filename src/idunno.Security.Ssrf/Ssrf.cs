@@ -45,7 +45,20 @@ public static class Ssrf
             // IPv4 multicast https://datatracker.ietf.org/doc/html/rfc1112
             new(IPAddress.Parse("224.0.0.0"), 4),
             // IPv4 reserved https://datatracker.ietf.org/doc/html/rfc1112
-            new(IPAddress.Parse("240.0.0.0"), 4)
+            new(IPAddress.Parse("240.0.0.0"), 4),
+
+            // Azure WireServer https://learn.microsoft.com/en-us/azure/virtual-network/what-is-ip-address-168-63-129-16
+            new (IPAddress.Parse("168.63.129.16"), 32),
+
+            // GLOBAL-UNICAST (reserved for AMT) https://datatracker.ietf.org/doc/html/rfc7450
+            new (IPAddress.Parse("192.52.193.0"), 24),
+
+            // AS112 https://datatracker.ietf.org/doc/html/rfc7534
+            new (IPAddress.Parse("192.31.196.0"), 24),
+            new (IPAddress.Parse("192.175.48.0"), 24),
+
+            // Deprecated "limited broadcast" range https://www.rfc-editor.org/rfc/rfc7526
+            new (IPAddress.Parse("192.88.99.0"), 24)
         ];
 
     private static readonly IPNetwork[] s_ipv6UnsafeRanges =
@@ -82,7 +95,20 @@ public static class Ssrf
 
             // IPv6 discard-only prefix https://datatracker.ietf.org/doc/html/rfc6666
             // while this range silently drops traffic so there is no SSRF risk, blocking it prevents potential connection-hanging probes.
-            new (IPAddress.Parse("100::"), 64)
+            new (IPAddress.Parse("100::"), 64),
+
+            // GLOBAL-UNICAST (reserved for AMT) https://datatracker.ietf.org/doc/html/rfc7450
+            new (IPAddress.Parse("2001:3::"), 32),
+
+            // AS112 https://datatracker.ietf.org/doc/html/rfc7534
+            new (IPAddress.Parse("2001:4:112::"), 48),
+            new (IPAddress.Parse("2620:4f:8000::"), 48),
+
+            // Discard addresses https://datatracker.ietf.org/doc/html/rfc6666
+            new (IPAddress.Parse("100:0:0:1::"), 64),
+
+            // Segment Routing (SRv6) SIDs https://datatracker.ietf.org/doc/html/rfc4291
+            new (IPAddress.Parse("5f00::"), 16)
         ];
 
     /// <summary>
