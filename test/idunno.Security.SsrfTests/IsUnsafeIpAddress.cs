@@ -631,7 +631,7 @@ public class IsUnsafeIpAddress
     [Theory]
     [InlineData("2001:0000:0000:0000:0000:0000:0000:0001")]
     [InlineData("2001:0000:ffff:ffff:ffff:ffff:ffff:ffff")]
-    public void ReturnsTrueForTeradoAddresses(string ipAddressAsString)
+    public void ReturnsTrueForTeredoAddresses(string ipAddressAsString)
     {
         Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
     }
@@ -655,7 +655,7 @@ public class IsUnsafeIpAddress
     [Theory]
     [InlineData("0.0.0.1")]
     [InlineData("0.255.255.254")]
-    // Note ::/128 is an invalid IP address 
+    // Note ::/128 from the AntiSSRF list is not an actual IP address, but rather a network containing only the unspecified IPv6 address.
     public void ReturnsTrueForThisHostUnspecifiedNetwork(string ipAddressAsString)
     {
         Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));

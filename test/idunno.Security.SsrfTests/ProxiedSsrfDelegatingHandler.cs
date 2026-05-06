@@ -218,6 +218,7 @@ public class ProxiedSsrfDelegatingHandler
             };
         }
 
+
         static async Task<IPHostEntry> asyncHostEntryResolver(string uri, CancellationToken cancellationToken)
         {
             return new IPHostEntry

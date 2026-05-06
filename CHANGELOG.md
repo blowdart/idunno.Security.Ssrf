@@ -5,14 +5,14 @@
 * Add Azure WireServer IP range.
 * Add AMT/Global-Unicast range.
 * Add AS112 ranges.
-* Add Depreacted Anycast Prefix for 6to4 Relay Routers.
+* Add Deprecated Anycast Prefix for 6to4 Relay Routers.
 * Add IPv6 discard/dummy range.
 * Add Segment Routing (SRv6) SIDs range.
-* Add tests for the specifc ranges [AntiSSRF](https://github.com/microsoft/AntiSSRF/blob/main/config/IPAddressRanges.json) uses.
+* Add tests for the specific ranges [AntiSSRF](https://github.com/microsoft/AntiSSRF/blob/main/config/IPAddressRanges.json) uses.
 
 ### Changed
 
-* Stubbed the dns resolver for mixed.ipv6.ssrf.fail tests because corpnet is being very odd with that host.
+* Stubbed the DNS resolver for mixed.ipv6.ssrf.fail tests because corpnet is being very odd with that host.
 
 ## 5.1.0 - 2026-04-30
 

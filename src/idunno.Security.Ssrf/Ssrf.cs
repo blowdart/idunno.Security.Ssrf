@@ -57,7 +57,7 @@ public static class Ssrf
             new (IPAddress.Parse("192.31.196.0"), 24),
             new (IPAddress.Parse("192.175.48.0"), 24),
 
-            // Deprecated "limited broadcast" range https://www.rfc-editor.org/rfc/rfc7526
+            // Deprecated 6to4 relay anycast prefix" range https://www.rfc-editor.org/rfc/rfc7526
             new (IPAddress.Parse("192.88.99.0"), 24)
         ];
 
@@ -107,7 +107,7 @@ public static class Ssrf
             // Discard addresses https://datatracker.ietf.org/doc/html/rfc6666
             new (IPAddress.Parse("100:0:0:1::"), 64),
 
-            // Segment Routing (SRv6) SIDs https://datatracker.ietf.org/doc/html/rfc4291
+            // Segment Routing (SRv6) SIDs https://datatracker.ietf.org/doc/rfc9602/ / https://www.ietf.org/archive/id/draft-ek-srv6ops-sidspace-experiment-00.html
             new (IPAddress.Parse("5f00::"), 16)
         ];
 
