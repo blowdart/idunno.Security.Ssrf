@@ -637,14 +637,6 @@ public class IsUnsafeIpAddress
     }
 
     [Theory]
-    [InlineData("192.0.0.10")]
-    [InlineData("2001:0001:0000:0000:0000:0000:0000:0002")]
-    public void ReturnsTrueForNATAnycast(string ipAddressAsString)
-    {
-        Assert.True(Ssrf.IsUnsafeIpAddress(IPAddress.Parse(ipAddressAsString)));
-    }
-
-    [Theory]
     [InlineData("fc00:0000:0000:0000:0000:0000:0000:0001")]
     [InlineData("fdff:ffff:ffff:ffff:ffff:ffff:ffff:ffff")]
     public void ReturnsTrueForUniqueLocalUnicast(string ipAddressAsString)

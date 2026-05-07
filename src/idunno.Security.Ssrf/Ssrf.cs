@@ -57,7 +57,7 @@ public static class Ssrf
             new (IPAddress.Parse("192.31.196.0"), 24),
             new (IPAddress.Parse("192.175.48.0"), 24),
 
-            // Deprecated 6to4 relay anycast prefix" range https://www.rfc-editor.org/rfc/rfc7526
+            // Deprecated 6to4 relay anycast prefix range https://www.rfc-editor.org/rfc/rfc7526
             new (IPAddress.Parse("192.88.99.0"), 24)
         ];
 
