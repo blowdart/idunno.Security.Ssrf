@@ -1,6 +1,7 @@
 // Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
+using System.Diagnostics;
 using System.Net;
 
 namespace idunno.Security;
@@ -52,10 +53,12 @@ public static class IPAddressExtensions
                 }
 
                 Span<byte> bytes = stackalloc byte[16];
-                if (!ipAddress.TryWriteBytes(bytes, out _))
-                {
-                    bytes = ipAddress.GetAddressBytes();
-                }
+
+                // TryWriteBytes only fails if the buffer is too small,
+                // i.e. only if the span passed in is smaller than 4 or 16 bytes
+                // so this will never fail.
+                bool succeeded = ipAddress.TryWriteBytes(bytes, out _);
+                Debug.Assert(succeeded);
 
                 for (int i = 0; i < 12; i++)
                 {
@@ -108,10 +111,12 @@ public static class IPAddressExtensions
                 }
 
                 Span<byte> bytes = stackalloc byte[16];
-                if (!ipAddress.TryWriteBytes(bytes, out _))
-                {
-                    bytes = ipAddress.GetAddressBytes();
-                }
+
+                // TryWriteBytes only fails if the buffer is too small,
+                // i.e. only if the span passed in is smaller than 4 or 16 bytes
+                // so this will never fail.
+                bool succeeded = ipAddress.TryWriteBytes(bytes, out _);
+                Debug.Assert(succeeded);
 
                 return (bytes[8] == 0x00 || bytes[8] == 0x02)
                     && bytes[9] == 0x00
@@ -160,10 +165,12 @@ public static class IPAddressExtensions
             if (ipAddress.IsIPv4CompatibleIPv6)
             {
                 Span<byte> bytes = stackalloc byte[16];
-                if (!ipAddress.TryWriteBytes(bytes, out _))
-                {
-                    bytes = ipAddress.GetAddressBytes();
-                }
+
+                // TryWriteBytes only fails if the buffer is too small,
+                // i.e. only if the span passed in is smaller than 4 or 16 bytes
+                // so this will never fail.
+                bool succeeded = ipAddress.TryWriteBytes(bytes, out _);
+                Debug.Assert(succeeded);
 
                 return new IPAddress(bytes[12..]);
             }
@@ -185,10 +192,12 @@ public static class IPAddressExtensions
             if (ipAddress.Is6to4)
             {
                 Span<byte> bytes = stackalloc byte[16];
-                if (!ipAddress.TryWriteBytes(bytes, out _))
-                {
-                    bytes = ipAddress.GetAddressBytes();
-                }
+
+                // TryWriteBytes only fails if the buffer is too small,
+                // i.e. only if the span passed in is smaller than 4 or 16 bytes
+                // so this will never fail.
+                bool succeeded = ipAddress.TryWriteBytes(bytes, out _);
+                Debug.Assert(succeeded);
 
                 return new IPAddress(bytes[2..6]);
             }
