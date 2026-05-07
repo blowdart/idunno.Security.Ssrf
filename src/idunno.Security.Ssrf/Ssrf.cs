@@ -496,15 +496,142 @@ public static class Ssrf
             return false;
         }
 
+        // AllowedHostnames is a DNS hostname allow-list. IP-literal Hosts must be controlled via
+        // SafeIPAddresses / SafeIPNetworks, which compose with the unsafe-range checks in the
+        // correct order. Skipping IP-literal hosts here also closes the wildcard-matches-IP
+        // bypass (e.g. an entry like "*.169.254" textually matching "169.254.169.254").
+        if (uri.HostNameType is not UriHostNameType.Dns)
+        {
+            return false;
+        }
+
         foreach (string safeHostName in allowedHostnames)
         {
-            bool isWildcard = safeHostName.StartsWith("*.", StringComparison.OrdinalIgnoreCase) && safeHostName != "*.";
+            // Layer 1 (defense-in-depth): silently skip entries that are not DNS-shaped patterns.
+            // Public entry points reject these at construction time via ValidateAllowedHostnamePatterns,
+            // but runtime mutation of the underlying collection could re-introduce them.
+            if (!TryValidateAllowedHostnamePattern(safeHostName, out _))
+            {
+                continue;
+            }
+
+            bool isWildcard = safeHostName.StartsWith("*.", StringComparison.Ordinal);
 
             if (!isWildcard && string.Equals(uri.Host, safeHostName, StringComparison.OrdinalIgnoreCase))
             {
                 return true;
             }
-            else if (isWildcard && uri.Host.EndsWith(safeHostName[1..], StringComparison.OrdinalIgnoreCase))
+            else if (isWildcard && uri.Host.AsSpan().EndsWith(safeHostName.AsSpan(1), StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Validates every entry in <paramref name="allowedHostnames"/>, throwing <see cref="ArgumentException"/>
+    /// for any entry that is not a DNS hostname pattern.
+    /// </summary>
+    /// <param name="allowedHostnames">The collection of patterns to validate. May be <see langword="null"/>.</param>
+    /// <param name="paramName">The parameter name to report on the thrown <see cref="ArgumentException"/>.</param>
+    /// <exception cref="ArgumentException">Thrown when an entry in <paramref name="allowedHostnames"/> is not a valid DNS hostname pattern.</exception>
+    internal static void ValidateAllowedHostnamePatterns(
+        ICollection<string>? allowedHostnames,
+        string paramName)
+    {
+        if (allowedHostnames is null)
+        {
+            return;
+        }
+
+        foreach (string entry in allowedHostnames)
+        {
+            if (!TryValidateAllowedHostnamePattern(entry, out string? errorMessage))
+            {
+                throw new ArgumentException(errorMessage, paramName);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Determines whether <paramref name="entry"/> is a valid DNS hostname allow-list pattern.
+    /// </summary>
+    /// <remarks>
+    /// <para>A valid pattern is either a DNS hostname (e.g. <c>example.com</c>) or a leading-wildcard
+    /// suffix pattern (e.g. <c>*.example.com</c>). Patterns whose body parses as an IP address, contains
+    /// characters that cannot appear in a DNS host (<c>:</c>, <c>/</c>, <c>@</c>, <c>?</c>, <c>#</c>,
+    /// embedded <c>*</c>, or whitespace), or whose right-most label is purely numeric, are rejected.
+    /// The numeric-label rule prevents wildcard suffixes such as <c>*.0.0.1</c> or <c>*.169.254</c>
+    /// from being matched against IPv4 literals via <see cref="string.EndsWith(string, StringComparison)"/>.</para>
+    /// </remarks>
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoid allocations.")]
+    internal static bool TryValidateAllowedHostnamePattern(
+        string? entry,
+        [NotNullWhen(false)] out string? errorMessage)
+    {
+        if (string.IsNullOrEmpty(entry))
+        {
+            errorMessage = "AllowedHostnames entries must be non-null and non-empty.";
+            return false;
+        }
+
+        if (entry is "*" or "*.")
+        {
+            errorMessage = $"'{entry}' is not a valid AllowedHostnames pattern.";
+            return false;
+        }
+
+        bool isWildcard = entry.StartsWith("*.", StringComparison.Ordinal);
+        ReadOnlySpan<char> body = isWildcard ? entry.AsSpan(2) : entry.AsSpan();
+
+        if (body.IsEmpty)
+        {
+            errorMessage = $"'{entry}' is not a valid AllowedHostnames pattern.";
+            return false;
+        }
+
+        foreach (char c in body)
+        {
+            if (c is '*' or '/' or ':' or '@' or '?' or '#' or ' ')
+            {
+                errorMessage = $"AllowedHostnames entry '{entry}' contains the unsupported character '{c}'. " +
+                               "Wildcards are only supported as a leading '*.'.";
+                return false;
+            }
+        }
+
+        if (IPAddress.TryParse(body, out _))
+        {
+            errorMessage = $"AllowedHostnames entry '{entry}' is an IP address. " +
+                           "Use SafeIPAddresses or SafeIPNetworks to allow specific IP addresses or ranges.";
+            return false;
+        }
+
+        if (!HasNonNumericRightmostLabel(body))
+        {
+            errorMessage = $"AllowedHostnames entry '{entry}' is not a DNS hostname pattern. " +
+                           "The right-most label must contain at least one non-digit character.";
+            return false;
+        }
+
+        errorMessage = null;
+        return true;
+    }
+
+    private static bool HasNonNumericRightmostLabel(ReadOnlySpan<char> suffix)
+    {
+        int lastDot = suffix.LastIndexOf('.');
+        ReadOnlySpan<char> rightmost = lastDot < 0 ? suffix : suffix[(lastDot + 1)..];
+        if (rightmost.IsEmpty)
+        {
+            return false;
+        }
+
+        foreach (char c in rightmost)
+        {
+            if (c is < '0' or > '9')
             {
                 return true;
             }

@@ -1187,4 +1187,50 @@ public class ProxiedSsrfDelegatingHandler
             }
         }
     }
+
+    [Theory]
+    [InlineData("127.0.0.1")]
+    [InlineData("169.254.169.254")]
+    [InlineData("::1")]
+    [InlineData("*.0.0.1")]
+    [InlineData("*.169.254")]
+    [InlineData("")]
+    [InlineData("*")]
+    [InlineData("*.")]
+    [InlineData("user@example.com")]
+    public void ConstructorThrowsArgumentExceptionForInvalidAllowedHostnameWithExplicitParameters(string entry)
+    {
+        ArgumentException ex = Assert.Throws<ArgumentException>(() =>
+            new Security.ProxiedSsrfDelegatingHandler(
+                proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+                allowedHostnames: [entry]));
+        Assert.Equal("allowedHostnames", ex.ParamName);
+    }
+
+    [Theory]
+    [InlineData("127.0.0.1")]
+    [InlineData("*.0.0.1")]
+    [InlineData("*.169.254")]
+    [InlineData("")]
+    public void ConstructorThrowsArgumentExceptionForInvalidAllowedHostnameInOptions(string entry)
+    {
+        var options = new ProxiedSsrfOptions
+        {
+            Proxy = new WebProxy(new Uri("http://127.0.0.1:9999")),
+            AllowedHostnames = [entry],
+        };
+
+        ArgumentException ex = Assert.Throws<ArgumentException>(
+            () => new Security.ProxiedSsrfDelegatingHandler(options));
+        Assert.Equal("options", ex.ParamName);
+    }
+
+    [Fact]
+    public void ConstructorDoesNotThrowForValidAllowedHostnames()
+    {
+        using var handler = new Security.ProxiedSsrfDelegatingHandler(
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            allowedHostnames: ["example.com", "*.example.com", "*.xn--p1ai", "co.uk"]);
+        Assert.NotNull(handler);
+    }
 }

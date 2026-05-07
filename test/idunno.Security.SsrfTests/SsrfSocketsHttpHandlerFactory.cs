@@ -1174,30 +1174,53 @@ public class SsrfSocketsHttpHandlerFactory
     }
 
     [Fact]
-    public async Task IpLiteralHostIsNotBypassedByAllowedHostnames()
+    public void IpLiteralHostIsNotBypassedByAllowedHostnames()
     {
-        string uri = "https://10.0.0.1/";
-
+        // With construction-time validation enabled (Layer 2), an IP literal in AllowedHostnames is
+        // rejected up-front rather than only at request time. Use SafeIPAddresses / SafeIPNetworks
+        // for IP-based allow-listing.
         var options = new SsrfOptions { AllowedHostnames = ["10.0.0.1"] };
-        using var httpClient = new HttpClient(Security.SsrfSocketsHttpHandlerFactory.Create(options));
+        ArgumentException ex = Assert.Throws<ArgumentException>(
+            () => Security.SsrfSocketsHttpHandlerFactory.Create(options));
+        Assert.Equal(nameof(options), ex.ParamName);
+    }
 
-        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async() =>
-            _ = await httpClient.GetAsync(
-                    uri,
-                    cancellationToken: TestContext.Current.CancellationToken));
+    [Theory]
+    [InlineData("127.0.0.1")]
+    [InlineData("169.254.169.254")]
+    [InlineData("::1")]
+    [InlineData("*.0.0.1")]
+    [InlineData("*.169.254")]
+    [InlineData("")]
+    [InlineData("*")]
+    [InlineData("*.")]
+    [InlineData("user@example.com")]
+    [InlineData("https://example.com")]
+    public void CreateThrowsArgumentExceptionForInvalidAllowedHostnameWithExplicitParameters(string entry)
+    {
+        ArgumentException ex = Assert.Throws<ArgumentException>(
+            () => Security.SsrfSocketsHttpHandlerFactory.Create(allowedHostnames: [entry]));
+        Assert.Equal("allowedHostnames", ex.ParamName);
+    }
 
-        Exception? innermostException = ex;
-        while (innermostException.InnerException is not null)
-        {
-            innermostException = innermostException.InnerException;
+    [Theory]
+    [InlineData("127.0.0.1")]
+    [InlineData("*.0.0.1")]
+    [InlineData("*.169.254")]
+    [InlineData("")]
+    public void CreateThrowsArgumentExceptionForInvalidAllowedHostnameInOptions(string entry)
+    {
+        var options = new SsrfOptions { AllowedHostnames = [entry] };
+        ArgumentException ex = Assert.Throws<ArgumentException>(
+            () => Security.SsrfSocketsHttpHandlerFactory.Create(options));
+        Assert.Equal("options", ex.ParamName);
+    }
 
-            if (innermostException is SsrfException)
-            {
-                break;
-            }
-        }
-
-        Assert.IsType<SsrfException>(innermostException);
-        Assert.Equal(uri, ((SsrfException)ex.InnerException!).Uri!.ToString());
+    [Fact]
+    public void CreateDoesNotThrowForValidAllowedHostnames()
+    {
+        using SocketsHttpHandler handler = Security.SsrfSocketsHttpHandlerFactory.Create(
+            allowedHostnames: ["example.com", "*.example.com", "*.xn--p1ai", "co.uk"]);
+        Assert.NotNull(handler);
     }
 }

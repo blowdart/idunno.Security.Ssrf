@@ -173,6 +173,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
         }
 
+        Ssrf.ValidateAllowedHostnamePatterns(allowedHostnames, nameof(allowedHostnames));
+
         _additionalUnsafeIPNetworks = additionalUnsafeIPNetworks != null ? [.. additionalUnsafeIPNetworks] : null;
         _additionalUnsafeIPAddresses = additionalUnsafeIPAddresses != null ? [.. additionalUnsafeIPAddresses] : null;
         _allowedHostnames = allowedHostnames != null ? [.. allowedHostnames] : null;
@@ -219,6 +221,8 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(options.Proxy);
         ArgumentNullException.ThrowIfNull(options.Proxy.Address);
+
+        Ssrf.ValidateAllowedHostnamePatterns(options.AllowedHostnames, nameof(options));
 
         // Snapshot all the collection based settings to ignore any mutation after the handler has been constructed.
         _additionalUnsafeIPNetworks = options.AdditionalUnsafeIPNetworks != null ? [.. options.AdditionalUnsafeIPNetworks] : null;

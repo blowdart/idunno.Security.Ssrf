@@ -146,6 +146,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
             throw new ArgumentException("SsrfSocketsHttpHandlerFactory cannot accept ProxiedSsrfOptions. Use ProxiedSsrfDelegatingHandler with ProxiedSsrfOptions for configurations that include proxy settings.", nameof(options));
         }
 
+        Ssrf.ValidateAllowedHostnamePatterns(options.AllowedHostnames, nameof(options));
+
         return InternalCreate(
             connectionStrategy: options.ConnectionStrategy,
             additionalUnsafeIPNetworks: options.AdditionalUnsafeIPNetworks,
@@ -189,6 +191,8 @@ public sealed class SsrfSocketsHttpHandlerFactory
         { 
             throw new ArgumentException("The WebProxy instance must have a non-null Address property.", nameof(proxy));
         }
+
+        Ssrf.ValidateAllowedHostnamePatterns(allowedHostnames, nameof(allowedHostnames));
 
         asyncHostEntryResolver ??= Defaults.GetHostEntryAsync;
         loggerFactory ??= NullLoggerFactory.Instance;
