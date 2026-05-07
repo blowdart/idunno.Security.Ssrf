@@ -98,9 +98,13 @@ public static class Ssrf
             new (IPAddress.Parse("100::"), 64),
 
             // GLOBAL-UNICAST (reserved for AMT) https://datatracker.ietf.org/doc/html/rfc7450
+            // Whilst this is already covered in the IETF Protocol Assignments block above, this specific /32 has a well known unsafe meaning,
+            // and is duplicated here for clarity and to catch any future changes to the larger block that might remove this range.
             new (IPAddress.Parse("2001:3::"), 32),
 
             // AS112 https://datatracker.ietf.org/doc/html/rfc7534
+            // Whilst this is already covered in the IETF Protocol Assignments block above, this specific /48 has a well known unsafe meaning,
+            // and is duplicated here for clarity and to catch any future changes to the larger block that might remove this range.
             new (IPAddress.Parse("2001:4:112::"), 48),
             new (IPAddress.Parse("2620:4f:8000::"), 48),
 

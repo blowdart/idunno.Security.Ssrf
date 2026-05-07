@@ -181,3 +181,7 @@ The package source URI is https://www.myget.org/F/blowdart/api/v3/index.json
 * [ReportGenerator](https://github.com/danielpalme/ReportGenerator) - used to produce code coverage reports.
 * [sign](https://github.com/dotnet/sign) - used to code sign assemblies and nuget packages.
 * [xunit](https://github.com/xunit/xunit) - used for unit tests.
+
+## Other .NET SSRF Mitigation Libraries
+
+* [Microsoft AntiSSRF](https://github.com/microsoft/AntiSSRF/).
