@@ -13,7 +13,7 @@
 ### Changed
 
 * Stubbed the DNS resolver for mixed.ipv6.ssrf.fail tests because some corporate DNS servers can be flakey with that host, so
-the tests are now deterministic.
+  the tests are now deterministic.
 
 ## 5.1.0 - 2026-04-30
 

@@ -104,10 +104,10 @@ public static class Ssrf
             new (IPAddress.Parse("2001:4:112::"), 48),
             new (IPAddress.Parse("2620:4f:8000::"), 48),
 
-            // Discard addresses https://datatracker.ietf.org/doc/html/rfc6666
+            //  IPv6 dummy address prefix https://datatracker.ietf.org/doc/html/rfc6666
             new (IPAddress.Parse("100:0:0:1::"), 64),
 
-            // Segment Routing (SRv6) SIDs https://datatracker.ietf.org/doc/rfc9602/ / https://www.ietf.org/archive/id/draft-ek-srv6ops-sidspace-experiment-00.html
+            // Segment Routing (SRv6) SIDs https://datatracker.ietf.org/doc/rfc9602/, https://www.ietf.org/archive/id/draft-ek-srv6ops-sidspace-experiment-00.html
             new (IPAddress.Parse("5f00::"), 16)
         ];
 
