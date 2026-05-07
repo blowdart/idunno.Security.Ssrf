@@ -1,3 +1,11 @@
+## 5.3.0 - Unreleased
+
+### Changed
+
+* Skip allowedHostname checks for ip literal hosts, as they're not a host name.
+* Add documentation warnings to configuration for hostnames
+* Add documentation warnings about TOCTOU warning to `Ssrf.IsUnsafe`
+
 ## 5.2.0 - 2026-05-07
 
 ### Added

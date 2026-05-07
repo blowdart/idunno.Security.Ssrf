@@ -361,6 +361,13 @@ public static class Ssrf
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="uri"/> is <see langword="null"/>.</exception>
     /// <remarks>
     /// <para>
+    ///   Warning! This method is for non-HTTP scenarios, input validation or pre-flight only. For HTTP or WebSocket
+    ///   requests <see cref="SsrfSocketsHttpHandlerFactory"/>  or <see cref="ProxiedSsrfDelegatingHandler"/>
+    ///   should be preferred to avoid DNS - rebinding Time of Check, Time of Use (TOCTOU) issues,
+    ///   and to provide more comprehensive protection by integrating SSRF checks directly into the
+    ///   HTTP request pipeline.
+    /// </para>
+    /// <para>
     ///   Careless use of <paramref name="safeIPNetworks"/> and <paramref name="safeIPAddresses"/> can lead to security vulnerabilities by allowing potentially unsafe IP addresses or networks
     ///   to be considered safe. Use with caution and constrain the values specified to the smallest network range or individual IP addresses needed.
     ///   Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address matches both a safe and unsafe address, or is within a safe network,

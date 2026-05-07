@@ -32,8 +32,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="additionalUnsafeIPNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
     /// <param name="additionalUnsafeIPAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
     /// <param name="allowedHostnames">
-    ///     An optional collection of hostnames that are allowed to bypass SSRF IP address protections.
-    ///     This can be used to allow specific trusted hosts names.
+    ///     An optional collection of hostnames that will bypass all SSRF checks.
     ///     Wild cards are supported only at the start of the hostname, and must be followed by a dot
     ///     (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
     /// </param>
@@ -51,10 +50,22 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <returns>An new instance of a <see cref="SocketsHttpHandler"/> with SSRF protections.</returns>
     /// <remarks>
     /// <para>
+    ///   Specifying a hostname or wildcard pattern in <paramref name="allowedHostnames"/> will allow that
+    ///    hostname to bypass all SSRF checks, including checks for unsafe IP addresses.
+    ///    Take care when using this setting to only allow specific trusted hostnames or patterns.
+    ///    Only specify a hostname under your control.
+    ///    Use of wildcards for shared hosting domains such as *.s3.amazonaws.com, *.blob.core.windows.net,
+    ///    *.herokuapp.com, or *.vercel.app would allow an attacker who can 
+    ///    register a subdomain to point it at 127.0.0.1, 169.254.169.254 (cloud metadata), or any RFC1918 address and
+    ///    obtain a full SSRF.
+    /// </para>
+    /// <para>
     ///   Careless use of <paramref name="safeIPNetworks"/> and <paramref name="safeIPAddresses"/> can lead to security vulnerabilities by allowing potentially unsafe IP addresses or networks
     ///   to be considered safe. Use with caution and constrain the values specified to the smallest network range or individual IP addresses needed.
     ///   Safe entries take precedence over both built-in and additional unsafe entries, so if an IP address matches both a safe and unsafe address, or is within a safe network,
     ///   it will be considered safe.
+    ///
+    ///   Add additional entries in normalized IPv4 form for IPv4-embedded IPv6 addresses or networks.
     ///</para>
     /// </remarks>
     public static SocketsHttpHandler Create(
@@ -184,6 +195,12 @@ public sealed class SsrfSocketsHttpHandlerFactory
         ILogger logger = loggerFactory.CreateLogger<SsrfSocketsHttpHandlerFactory>();
         SsrfMetrics metrics = new(meterFactory);
 
+        // Snapshot all the collection based settings to ignore any mutation after the handler has been constructed.
+        ICollection<IPNetwork>? snapshottedAdditionalUnsafeIPNetworks = additionalUnsafeIPNetworks != null? [.. additionalUnsafeIPNetworks] : null;
+        ICollection<IPAddress>? snapshottedAdditionalUnsafeIPAddresses = additionalUnsafeIPAddresses != null ? [.. additionalUnsafeIPAddresses] : null;
+        ICollection<string>? snapshottedAllowedHostnames = allowedHostnames != null ? [.. allowedHostnames] : null;
+        ICollection<IPNetwork>? snapshottedSafeIPNetworks = safeIPNetworks != null ? [.. safeIPNetworks] : null;
+        ICollection<IPAddress>? snapshottedSafeIPAddresses = safeIPAddresses != null ? [.. safeIPAddresses] : null;
         ICollection<string> snapshottedAllowedSchemes = allowedSchemes != null ? [.. allowedSchemes] : Defaults.AllowedSchemes;
 
         SocketsHttpHandler handler = new()
@@ -242,11 +259,11 @@ public sealed class SsrfSocketsHttpHandlerFactory
                     {
                         resolvedIPAddresses = await CommonFunctions.ResolveAndReturnSafeIPAddressesAsync(
                             uri: requestedUri,
-                            additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
-                            additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
-                            allowedHostnames: allowedHostnames,
-                            safeIPNetworks: safeIPNetworks,
-                            safeIPAddresses: safeIPAddresses,
+                            additionalUnsafeIPNetworks: snapshottedAdditionalUnsafeIPNetworks,
+                            additionalUnsafeIPAddresses: snapshottedAdditionalUnsafeIPAddresses,
+                            allowedHostnames: snapshottedAllowedHostnames,
+                            safeIPNetworks: snapshottedSafeIPNetworks,
+                            safeIPAddresses: snapshottedSafeIPAddresses,
                             allowLoopback: allowLoopback,
                             failMixedResults: failMixedResults,
                             logger: logger,

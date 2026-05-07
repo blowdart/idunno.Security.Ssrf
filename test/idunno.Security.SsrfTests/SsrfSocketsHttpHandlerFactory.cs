@@ -3,6 +3,8 @@
 
 using System.Net;
 using System.Net.Sockets;
+using Microsoft.Extensions.Primitives;
+using static System.Net.WebRequestMethods;
 
 namespace idunno.Security.SsrfTests;
 
@@ -1169,5 +1171,33 @@ public class SsrfSocketsHttpHandlerFactory
         Assert.Equal(AddressFamily.InterNetworkV6, addresses[1].AddressFamily);
         Assert.Equal(AddressFamily.InterNetwork, addresses[2].AddressFamily);
         Assert.Equal(AddressFamily.InterNetwork, addresses[3].AddressFamily);
+    }
+
+    [Fact]
+    public async Task IpLiteralHostIsNotBypassedByAllowedHostnames()
+    {
+        string uri = "https://10.0.0.1/";
+
+        var options = new SsrfOptions { AllowedHostnames = ["10.0.0.1"] };
+        using var httpClient = new HttpClient(Security.SsrfSocketsHttpHandlerFactory.Create(options));
+
+        HttpRequestException ex = await Assert.ThrowsAsync<HttpRequestException>(async() =>
+            _ = await httpClient.GetAsync(
+                    uri,
+                    cancellationToken: TestContext.Current.CancellationToken));
+
+        Exception? innermostException = ex;
+        while (innermostException.InnerException is not null)
+        {
+            innermostException = innermostException.InnerException;
+
+            if (innermostException is SsrfException)
+            {
+                break;
+            }
+        }
+
+        Assert.IsType<SsrfException>(innermostException);
+        Assert.Equal(uri, ((SsrfException)ex.InnerException!).Uri!.ToString());
     }
 }

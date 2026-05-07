@@ -27,27 +27,39 @@ internal static class CommonFunctions
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(uri);
-        IPAddress[] resolvedIpAddresses = await GetHostEntryAsync(uri, logger, asyncHostEntryResolver, cancellationToken).ConfigureAwait(false);
 
-        if (Ssrf.IsInAllowedHostnames(uri, allowedHostnames))
+        IPAddress[] resolvedIpAddresses;
+
+        if (uri.HostNameType == UriHostNameType.IPv4 || uri.HostNameType == UriHostNameType.IPv6)
         {
-            Log.ChecksBypassedForAllowedHostnames(logger, uri);
-            return resolvedIpAddresses;
+            resolvedIpAddresses = [IPAddress.Parse(uri.Host)];
         }
         else
         {
-            return ReduceResolvedIPAddressesToSafeIPAddresses(
-                uri: uri,
-                resolvedIpAddresses: resolvedIpAddresses,
-                additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
-                additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
-                safeIPNetworks: safeIPNetworks,
-                safeIPAddresses: safeIPAddresses,
-                allowLoopback: allowLoopback,
-                failMixedResults: failMixedResults,
-                logger: logger,
-                metrics: metrics);
+            resolvedIpAddresses = await GetHostEntryAsync(uri, logger, asyncHostEntryResolver, cancellationToken).ConfigureAwait(false);
+
+            // Ignore IP literal hosts for the hostname check as these should be added
+            // via safeIPNetworks or safeIPAddresses
+            if (uri.HostNameType != UriHostNameType.IPv4 &&
+                uri.HostNameType != UriHostNameType.IPv6 &&
+                Ssrf.IsInAllowedHostnames(uri, allowedHostnames))
+            {
+                Log.ChecksBypassedForAllowedHostnames(logger, uri);
+                return resolvedIpAddresses;
+            }
         }
+
+        return ReduceResolvedIPAddressesToSafeIPAddresses(
+            uri: uri,
+            resolvedIpAddresses: resolvedIpAddresses,
+            additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+            additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
+            safeIPNetworks: safeIPNetworks,
+            safeIPAddresses: safeIPAddresses,
+            allowLoopback: allowLoopback,
+            failMixedResults: failMixedResults,
+            logger: logger,
+            metrics: metrics);
     }
 
     internal static async Task<IPAddress[]> GetHostEntryAsync(
@@ -122,16 +134,42 @@ internal static class CommonFunctions
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
                 Log.DnsResolutionException(logger, host, ex);
 
-                Uri uri = new UriBuilder() { Host = host }.Uri; // Create a URI with the host for the exception, even though we don't have a full URI to work with.
-                throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
+                try
+                {
+                    Uri uri = new UriBuilder() { Host = host }.Uri; // Create a URI with the host for the exception, even though we don't have a full URI to work with.
+                    throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
+                }
+                catch (UriFormatException)
+                {
+                    // If the host is not a valid URI host, we can still throw the exception without the URI information.
+                    throw new SsrfException(null, "Connection blocked as host could not be resolved.", inner: ex);
+                }
+                catch (ArgumentException)
+                {
+                    // If the host is not a valid URI host, we can still throw the exception without the URI information.
+                    throw new SsrfException(null, "Connection blocked as host could not be resolved.", inner: ex);
+                }
             }
         }
 
         if (resolvedIpAddresses.Length == 0)
         {
             Log.DnsResolutionFailed(logger, host);
-            Uri uri = new UriBuilder() { Host = host }.Uri; // Create a URI with the host for the exception, even though we don't have a full URI to work with.
-            throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
+            try
+            {
+                Uri uri = new UriBuilder() { Host = host }.Uri; // Create a URI with the host for the exception, even though we don't have a full URI to work with.
+                throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
+            }
+            catch (UriFormatException)
+            {
+                // If the host is not a valid URI host, we can still throw the exception without the URI information.
+                throw new SsrfException(null, "Connection blocked as host could not be resolved.");
+            }
+            catch (ArgumentException)
+            {
+                // If the host is not a valid URI host, we can still throw the exception without the URI information.
+                throw new SsrfException(null, "Connection blocked as host could not be resolved.");
+            }
         }
 
         return resolvedIpAddresses;
