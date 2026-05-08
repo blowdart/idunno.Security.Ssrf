@@ -1173,6 +1173,21 @@ public class SsrfSocketsHttpHandlerFactory
         Assert.Equal(AddressFamily.InterNetwork, addresses[3].AddressFamily);
     }
 
+    [Theory]
+    [InlineData("example.com", "example.com", true)]
+    [InlineData("EXAMPLE.com", "example.COM", true)]
+    [InlineData("127.0.0.1", "127.0.0.1", true)]
+    [InlineData("[::1]", "::1", true)]
+    [InlineData("[2001:db8::1]", "2001:db8::1", true)]
+    [InlineData("[::1]", "[::1]", false)]
+    [InlineData("xn--wgv71a.jp", "xn--wgv71a.jp", true)]
+    [InlineData("example.com", "example.org", false)]
+    [InlineData("[::1]", "::2", false)]
+    public void DnsEndpointHostEqualsUriHostStripsBracketsAndCompares(string endpointHost, string uriIdnHost, bool expected)
+    {
+        Assert.Equal(expected, Security.SsrfSocketsHttpHandlerFactory.DnsEndpointHostEqualsUriHost(endpointHost, uriIdnHost));
+    }
+
     [Fact]
     public void IpLiteralHostIsNotBypassedByAllowedHostnames()
     {

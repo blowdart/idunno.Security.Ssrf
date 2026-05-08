@@ -231,7 +231,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
                 IPAddress[] resolvedIPAddresses;
 
                 bool requestIsToProxy = proxy?.Address is Uri proxyAddress &&
-                    context.DnsEndPoint.Host.Equals(proxyAddress.IdnHost, StringComparison.OrdinalIgnoreCase) &&
+                    DnsEndpointHostEqualsUriHost(context.DnsEndPoint.Host, proxyAddress.IdnHost) &&
                     context.DnsEndPoint.Port == proxyAddress.Port;
 
                 if (requestIsToProxy)
@@ -257,6 +257,21 @@ public sealed class SsrfSocketsHttpHandlerFactory
                         Log.UnsafeUri(logger, requestedUri);
                         metrics.IncrementBlockedRequests();
                         throw new SsrfException(requestedUri, $"Connection blocked as the uri is considered unsafe.");
+                    }
+
+                    // Defense-in-depth: SocketsHttpHandler is expected to invoke this callback with a DnsEndPoint
+                    // whose Host and Port match the request URI when no proxy is in use. If those ever diverge
+                    // (e.g. due to a future runtime change, an injected handler that rewrites the connect target,
+                    // or an unexpected codepath) the SSRF validation we are about to perform on requestedUri would
+                    // not describe what we are actually about to connect to. Fail closed if the invariant breaks.
+                    if (!DnsEndpointHostEqualsUriHost(context.DnsEndPoint.Host, requestedUri.IdnHost) ||
+                        context.DnsEndPoint.Port != requestedUri.Port)
+                    {
+                        Log.UnsafeUri(logger, requestedUri);
+                        metrics.IncrementBlockedRequests();
+                        throw new SsrfException(
+                            requestedUri,
+                            $"Connection blocked as the connect endpoint '{context.DnsEndPoint.Host}:{context.DnsEndPoint.Port}' does not match the request URI authority.");
                     }
 
                     try
@@ -360,6 +375,32 @@ public sealed class SsrfSocketsHttpHandlerFactory
             handler.UseProxy = true;
         }
         return handler;
+    }
+
+    /// <summary>
+    /// Compares <paramref name="endpointHost"/> (as supplied by <see cref="SocketsHttpHandler"/> via
+    /// <see cref="System.Net.DnsEndPoint.Host"/>) to <paramref name="uriIdnHost"/> (as supplied by
+    /// <see cref="Uri.IdnHost"/>), normalizing the bracketed form that <see cref="SocketsHttpHandler"/> uses
+    /// for IPv6 literals (e.g. <c>[::1]</c>) before comparing.
+    /// </summary>
+    /// <remarks>
+    /// <para><see cref="SocketsHttpHandler"/> emits IPv6 literals in <see cref="System.Net.DnsEndPoint.Host"/>
+    /// in the bracketed form (<c>[::1]</c>), but <see cref="Uri.IdnHost"/> strips the brackets (<c>::1</c>).
+    /// A naïve <see cref="string.Equals(string, StringComparison)"/> would therefore mis-classify IPv6 proxies
+    /// or IPv6 request URIs. For IDN names and IPv4 literals both sides agree without normalization.</para>
+    /// </remarks>
+    internal static bool DnsEndpointHostEqualsUriHost(string endpointHost, string uriIdnHost)
+    {
+        ArgumentNullException.ThrowIfNull(endpointHost);
+        ArgumentNullException.ThrowIfNull(uriIdnHost);
+
+        ReadOnlySpan<char> endpoint = endpointHost.AsSpan();
+        if (endpoint.Length >= 2 && endpoint[0] == '[' && endpoint[^1] == ']')
+        {
+            endpoint = endpoint[1..^1];
+        }
+
+        return endpoint.Equals(uriIdnHost.AsSpan(), StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>
