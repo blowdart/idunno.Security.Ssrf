@@ -307,6 +307,13 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             throw;
         }
 
+        // Pin the request URI to the validated reference so that any mutation to request.RequestUri
+        // between this validation and the inner handler dispatching to the proxy does not change the
+        // destination behind the SSRF check. The proxy receives request.RequestUri verbatim from the
+        // SocketsHttpHandler, which reads it lazily; without this assignment a sibling handler could
+        // swap RequestUri for a different value after validation completes.
+        request.RequestUri = requestedUri;
+
         return await base.SendAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
@@ -354,6 +361,9 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             _metrics.IncrementBlockedRequests();
             throw;
         }
+
+        // Pin the request URI to the validated reference. See the comment in SendAsync for rationale.
+        request.RequestUri = requestedUri;
 
         return base.Send(request, cancellationToken);
     }

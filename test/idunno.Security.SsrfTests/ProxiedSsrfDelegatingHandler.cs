@@ -1233,4 +1233,115 @@ public class ProxiedSsrfDelegatingHandler
             allowedHostnames: ["example.com", "*.example.com", "*.xn--p1ai", "co.uk"]);
         Assert.NotNull(handler);
     }
+
+    [Fact]
+    public async Task SendAsyncPinsValidatedRequestUriOnRequestBeforeDispatchingToInnerHandler()
+    {
+        static IPHostEntry hostEntryResolver(string host)
+            => new() { HostName = host, AddressList = [IPAddress.Parse("93.184.216.34")] };
+
+        static Task<IPHostEntry> asyncHostEntryResolver(string host, CancellationToken cancellationToken)
+            => Task.FromResult(hostEntryResolver(host));
+
+        var capturingInner = new CapturingHandler();
+
+        using var handler = new Security.ProxiedSsrfDelegatingHandler(
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPNetworks: null,
+            safeIPAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowedSchemes: ["https"],
+            allowLoopback: false,
+            failMixedResults: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            sslOptions: null,
+            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: asyncHostEntryResolver,
+            loggerFactory: null,
+            meterFactory: null)
+        {
+            InnerHandler = capturingInner,
+        };
+
+        using var client = new HttpClient(handler);
+        Uri originalUri = new("https://example.com/path");
+        using var request = new HttpRequestMessage(HttpMethod.Get, originalUri);
+
+        using HttpResponseMessage response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Same(originalUri, capturingInner.ObservedRequestUri);
+        Assert.Same(originalUri, request.RequestUri);
+    }
+
+    [Fact]
+    public void SendPinsValidatedRequestUriOnRequestBeforeDispatchingToInnerHandler()
+    {
+        static IPHostEntry hostEntryResolver(string host)
+            => new() { HostName = host, AddressList = [IPAddress.Parse("93.184.216.34")] };
+
+        static Task<IPHostEntry> asyncHostEntryResolver(string host, CancellationToken cancellationToken)
+            => Task.FromResult(hostEntryResolver(host));
+
+        var capturingInner = new CapturingHandler();
+
+        using var handler = new Security.ProxiedSsrfDelegatingHandler(
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPNetworks: null,
+            safeIPAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowedSchemes: ["https"],
+            allowLoopback: false,
+            failMixedResults: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            sslOptions: null,
+            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: asyncHostEntryResolver,
+            loggerFactory: null,
+            meterFactory: null)
+        {
+            InnerHandler = capturingInner,
+        };
+
+        using var client = new HttpClient(handler);
+        Uri originalUri = new("https://example.com/path");
+        using var request = new HttpRequestMessage(HttpMethod.Get, originalUri);
+
+        using HttpResponseMessage response = client.Send(request, TestContext.Current.CancellationToken);
+
+        Assert.Same(originalUri, capturingInner.ObservedRequestUri);
+        Assert.Same(originalUri, request.RequestUri);
+    }
+
+    private sealed class CapturingHandler : HttpMessageHandler
+    {
+        public Uri? ObservedRequestUri { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            ObservedRequestUri = request.RequestUri;
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                RequestMessage = request,
+            });
+        }
+
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            ObservedRequestUri = request.RequestUri;
+            return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                RequestMessage = request,
+            };
+        }
+    }
 }
