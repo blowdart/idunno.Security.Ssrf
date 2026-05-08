@@ -2,13 +2,11 @@
 // Licensed under the MIT License.
 
 using System.Diagnostics.Metrics;
-using System.Drawing;
 using System.Net;
 using System.Net.Security;
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Win32;
 
 namespace idunno.Security;
 
