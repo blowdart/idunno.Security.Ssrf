@@ -634,13 +634,6 @@ public static class Ssrf
 
             currentLabelLength++;
             previousChar = c;
-
-
-            if (currentLabelLength == 0 || previousChar == '-')
-            {
-                errorMessage = $"'{entry}' is not a valid AllowedHostnames pattern.";
-                return false;
-            }
         }
 
         if (IPAddress.TryParse(body, out _))
