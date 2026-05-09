@@ -133,17 +133,17 @@ internal static class CommonFunctions
                 try
                 {
                     Uri uri = new UriBuilder() { Host = host }.Uri; // Create a URI with the host for the exception, even though we don't have a full URI to work with.
-                    throw new SsrfException(uri, $"Connection blocked as {host} could not be resolved.", inner: ex);
+                    throw new SsrfException(uri, $"Connection blocked as {host} could not be resolved to any IP addresses.", inner: ex);
                 }
                 catch (UriFormatException)
                 {
                     // If the host is not a valid URI host, we can still throw the exception without the URI information.
-                    throw new SsrfException(null, $"Connection blocked as {host} could not be resolved.", inner: ex);
+                    throw new SsrfException(null, $"Connection blocked as {host} could not be resolved to any IP addresses.", inner: ex);
                 }
                 catch (ArgumentException)
                 {
                     // If the host is not a valid URI host, we can still throw the exception without the URI information.
-                    throw new SsrfException(null, $"Connection blocked as {host} could not be resolved.", inner: ex);
+                    throw new SsrfException(null, $"Connection blocked as {host} could not be resolved to any IP addresses.", inner: ex);
                 }
             }
         }
@@ -159,12 +159,12 @@ internal static class CommonFunctions
             catch (UriFormatException)
             {
                 // If the host is not a valid URI host, we can still throw the exception without the URI information.
-                throw new SsrfException(null, $"Connection blocked as {host} could not be resolved.");
+                throw new SsrfException(null, $"Connection blocked as {host} could not be resolved to any IP addresses.");
             }
             catch (ArgumentException)
             {
                 // If the host is not a valid URI host, we can still throw the exception without the URI information.
-                throw new SsrfException(null, $"Connection blocked as {host} could not be resolved.");
+                throw new SsrfException(null, $"Connection blocked as {host} could not be resolved to any IP addresses.");
             }
         }
 
@@ -199,7 +199,7 @@ internal static class CommonFunctions
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
                 Log.DnsResolutionException(logger, uri.Host, ex);
-                throw new SsrfException(uri, $"Connection blocked as {uri.Host} could not be resolved.", inner: ex);
+                throw new SsrfException(uri, $"Connection blocked as {uri.Host} could not be resolved to any IP addresses.", inner: ex);
             }
         }
 

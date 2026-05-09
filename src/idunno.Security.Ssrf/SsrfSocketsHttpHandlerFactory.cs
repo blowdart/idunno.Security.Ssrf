@@ -200,7 +200,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
         SsrfMetrics metrics = new(meterFactory);
 
         // Snapshot all the collection based settings to ignore any mutation after the handler has been constructed.
-        ICollection<IPNetwork>? snapshottedAdditionalUnsafeIPNetworks = additionalUnsafeIPNetworks != null? [.. additionalUnsafeIPNetworks] : null;
+        ICollection<IPNetwork>? snapshottedAdditionalUnsafeIPNetworks = additionalUnsafeIPNetworks != null ? [.. additionalUnsafeIPNetworks] : null;
         ICollection<IPAddress>? snapshottedAdditionalUnsafeIPAddresses = additionalUnsafeIPAddresses != null ? [.. additionalUnsafeIPAddresses] : null;
         ICollection<string>? snapshottedAllowedHostnames = allowedHostnames != null ? [.. allowedHostnames] : null;
         ICollection<IPNetwork>? snapshottedSafeIPNetworks = safeIPNetworks != null ? [.. safeIPNetworks] : null;
