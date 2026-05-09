@@ -2,7 +2,7 @@
 
 ### Changed
 
-* Skip allowedHostname checks for ip literal hosts, as they're not a host name.
+* Skip allowedHostname checks for IP literal hosts, as they're not a host name.
 * Add verification to allowedHostnames to ensure they don't contain any IP literals, and throw an exception if they do.
 * Fix IPv6 proxy detection to check for IPv6 literals in the proxy address, not just hostnames that resolve to IPv6 addresses.
 * Add documentation warnings to configuration for hostnames
