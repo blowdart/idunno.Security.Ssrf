@@ -38,11 +38,7 @@ internal static class CommonFunctions
         {
             resolvedIpAddresses = await GetHostEntryAsync(uri, logger, asyncHostEntryResolver, cancellationToken).ConfigureAwait(false);
 
-            // Ignore IP literal hosts for the hostname check as these should be added
-            // via safeIPNetworks or safeIPAddresses
-            if (uri.HostNameType != UriHostNameType.IPv4 &&
-                uri.HostNameType != UriHostNameType.IPv6 &&
-                Ssrf.IsInAllowedHostnames(uri, allowedHostnames))
+            if (Ssrf.IsInAllowedHostnames(uri, allowedHostnames))
             {
                 Log.ChecksBypassedForAllowedHostnames(logger, uri);
                 return resolvedIpAddresses;
@@ -91,14 +87,14 @@ internal static class CommonFunctions
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
                 Log.DnsResolutionException(logger, uri.Host, ex);
-                throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
+                throw new SsrfException(uri, $"Connection blocked as {uri.Host} could not be resolved.", inner: ex);
             }
         }
 
         if (resolvedIpAddresses.Length == 0)
         {
             Log.DnsResolutionFailed(logger, uri.Host);
-            throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
+            throw new SsrfException(uri, $"Connection blocked as {uri.Host} could not be resolved to any IP addresses.");
         }
 
         return resolvedIpAddresses;
@@ -137,17 +133,17 @@ internal static class CommonFunctions
                 try
                 {
                     Uri uri = new UriBuilder() { Host = host }.Uri; // Create a URI with the host for the exception, even though we don't have a full URI to work with.
-                    throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
+                    throw new SsrfException(uri, $"Connection blocked as {host} could not be resolved.", inner: ex);
                 }
                 catch (UriFormatException)
                 {
                     // If the host is not a valid URI host, we can still throw the exception without the URI information.
-                    throw new SsrfException(null, "Connection blocked as host could not be resolved.", inner: ex);
+                    throw new SsrfException(null, $"Connection blocked as {host} could not be resolved.", inner: ex);
                 }
                 catch (ArgumentException)
                 {
                     // If the host is not a valid URI host, we can still throw the exception without the URI information.
-                    throw new SsrfException(null, "Connection blocked as host could not be resolved.", inner: ex);
+                    throw new SsrfException(null, $"Connection blocked as {host} could not be resolved.", inner: ex);
                 }
             }
         }
@@ -158,17 +154,17 @@ internal static class CommonFunctions
             try
             {
                 Uri uri = new UriBuilder() { Host = host }.Uri; // Create a URI with the host for the exception, even though we don't have a full URI to work with.
-                throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
+                throw new SsrfException(uri, $"Connection blocked as {host} could not be resolved to any IP addresses.");
             }
             catch (UriFormatException)
             {
                 // If the host is not a valid URI host, we can still throw the exception without the URI information.
-                throw new SsrfException(null, "Connection blocked as host could not be resolved.");
+                throw new SsrfException(null, $"Connection blocked as {host} could not be resolved.");
             }
             catch (ArgumentException)
             {
                 // If the host is not a valid URI host, we can still throw the exception without the URI information.
-                throw new SsrfException(null, "Connection blocked as host could not be resolved.");
+                throw new SsrfException(null, $"Connection blocked as {host} could not be resolved.");
             }
         }
 
@@ -203,14 +199,14 @@ internal static class CommonFunctions
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
                 Log.DnsResolutionException(logger, uri.Host, ex);
-                throw new SsrfException(uri, "Connection blocked as host could not be resolved.", inner: ex);
+                throw new SsrfException(uri, $"Connection blocked as {uri.Host} could not be resolved.", inner: ex);
             }
         }
 
         if (resolvedIpAddresses.Length == 0)
         {
             Log.DnsResolutionFailed(logger, uri.Host);
-            throw new SsrfException(uri, "Connection blocked as host could not be resolved to any IP addresses.");
+            throw new SsrfException(uri, $"Connection blocked as {uri.Host} could not be resolved to any IP addresses.");
         }
 
         return resolvedIpAddresses;
@@ -304,7 +300,7 @@ internal static class CommonFunctions
         {
             Log.AllResolvedIpAddressesUnsafe(logger, uri);
             metrics?.IncrementUnsafeIPAddress(1, "all_resolved_addresses_unsafe");
-            throw new SsrfException(uri, "Connection blocked as all resolved addresses are unsafe.");
+            throw new SsrfException(uri, $"Connection blocked as all resolved addresses for {uri.Host} are unsafe.");
         }
 
         // If failMixedResults is set to true, block the connection if any unsafe addresses were found, even if some safe addresses remain.
@@ -314,7 +310,7 @@ internal static class CommonFunctions
         {
             Log.SomeResolvedIpAddressesUnsafe(logger, uri);
             metrics?.IncrementUnsafeIPAddress(1, "some_resolved_addresses_unsafe");
-            throw new SsrfException(uri, "Connection blocked as some resolved addresses are unsafe.");
+            throw new SsrfException(uri, $"Connection blocked as some resolved addresses for {uri.Host} are unsafe.");
         }
 
         return [.. safeResolvedIPAddresses];
