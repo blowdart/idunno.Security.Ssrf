@@ -363,7 +363,7 @@ public static class Ssrf
     /// <para>
     ///   Warning! This method is for non-HTTP scenarios, input validation or pre-flight only. For HTTP or WebSocket
     ///   requests <see cref="SsrfSocketsHttpHandlerFactory"/> or <see cref="ProxiedSsrfDelegatingHandler"/>
-    ///   should be preferred to avoid DNS - rebinding Time of Check, Time of Use (TOCTOU) issues,
+    ///   should be preferred to avoid DNS rebinding Time of Check, Time of Use (TOCTOU) issues,
     ///   and to provide more comprehensive protection by integrating SSRF checks directly into the
     ///   HTTP request pipeline.
     /// </para>
