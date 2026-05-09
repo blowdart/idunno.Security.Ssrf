@@ -1,8 +1,6 @@
 // Copyright (c) Barry Dorrans. All rights reserved.
 // Licensed under the MIT License.
 
-using static Microsoft.ApplicationInsights.MetricDimensionNames.TelemetryContext;
-
 namespace idunno.Security.SsrfTests;
 
 public class IsInAllowedHostNames
@@ -142,7 +140,7 @@ public class IsInAllowedHostNames
     }
 }
 
-public class TryValidateAllowedHostnamePattern
+public class TryValidateAllowedHostname
 {
     [Theory]
     [InlineData("example.com")]
@@ -196,7 +194,7 @@ public class TryValidateAllowedHostnamePattern
     }
 }
 
-public class ValidateAllowedHostnamePatterns
+public class ValidateAllowedHostname
 {
     [Fact]
     public void DoesNotThrowForNullCollection()
@@ -214,7 +212,12 @@ public class ValidateAllowedHostnamePatterns
     public void DoesNotThrowForCollectionOfValidPatterns()
     {
         Ssrf.ValidateAllowedHostnamePatterns(
-            ["example.com", "*.example.com", "co.uk", "*.xn--p1ai"],
+            [
+                "example.com",
+                "*.example.com",
+                "co.uk",
+                "*.xn--p1ai"
+            ],
             "test");
     }
 
@@ -227,6 +230,10 @@ public class ValidateAllowedHostnamePatterns
     [InlineData("*")]
     [InlineData("*.")]
     [InlineData("user@example.com")]
+    [InlineData("!nvalid.com")]
+    [InlineData("test.*example.com")]
+    [InlineData("*.test.*example.com")]
+    [InlineData("_test.example.com")]
     public void ThrowsArgumentExceptionForInvalidEntry(string entry)
     {
         ArgumentException ex = Assert.Throws<ArgumentException>(
@@ -239,7 +246,11 @@ public class ValidateAllowedHostnamePatterns
     {
         Assert.Throws<ArgumentException>(
             () => Ssrf.ValidateAllowedHostnamePatterns(
-                ["example.com", "*.0.0.1", "test.com"],
+                [
+                    "example.com",
+                    "*.0.0.1",
+                    "test.com"
+                ],
                 "test"));
     }
 }

@@ -594,7 +594,7 @@ public static class Ssrf
 
         foreach (char c in body)
         {
-            if (c is '*' or '/' or ':' or '@' or '?' or '#' or ' ')
+            if (!char.IsLetterOrDigit(c) && c != '-' && c != '.')
             {
                 errorMessage = $"AllowedHostnames entry '{entry}' contains the unsupported character '{c}'. " +
                                "Wildcards are only supported as a leading '*.'.";

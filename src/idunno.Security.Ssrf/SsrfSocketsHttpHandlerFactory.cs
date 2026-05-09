@@ -32,7 +32,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <param name="additionalUnsafeIPNetworks">An optional collection of additional <see cref="IPNetwork"/> ranges to consider unsafe. This can be used to block additional IP ranges beyond the built-in defaults, such as internal application IP ranges or other known unsafe addresses.</param>
     /// <param name="additionalUnsafeIPAddresses">An optional collection of additional <see cref="IPAddress"/> addresses to consider unsafe. This can be used to block additional IP addresses beyond the built-in defaults, such as internal application IP addresses or other known unsafe addresses.</param>
     /// <param name="allowedHostnames">
-    ///     An optional collection of hostnames that will bypass all SSRF checks.
+    ///     An optional collection of hostnames that bypass hostname and IP/DNS-based SSRF validation after URI-level safety checks have passed.
     ///     Wild cards are supported only at the start of the hostname, and must be followed by a dot
     ///     (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
     /// </param>
@@ -51,13 +51,13 @@ public sealed class SsrfSocketsHttpHandlerFactory
     /// <remarks>
     /// <para>
     ///   Specifying a hostname or wildcard pattern in <paramref name="allowedHostnames"/> will allow that
-    ///    hostname to bypass all SSRF checks, including checks for unsafe IP addresses.
-    ///    Take care when using this setting to only allow specific trusted hostnames or patterns.
-    ///    Only specify a hostname under your control.
-    ///    Use of wildcards for shared hosting domains such as *.s3.amazonaws.com, *.blob.core.windows.net,
-    ///    *.herokuapp.com, or *.vercel.app would allow an attacker who can 
-    ///    register a subdomain to point it at 127.0.0.1, 169.254.169.254 (cloud metadata), or any RFC1918 address and
-    ///    obtain a full SSRF.
+    ///   hostname to bypass the checks for unsafe IP addresses.
+    ///   Take care when using this setting to only allow specific trusted hostnames or patterns.
+    ///   Only specify a hostname under your control.
+    ///   Use of wildcards for shared hosting domains such as *.s3.amazonaws.com, *.blob.core.windows.net,
+    ///   *.herokuapp.com, or *.vercel.app would allow an attacker who can 
+    ///   register a subdomain to point it at 127.0.0.1, 169.254.169.254 (cloud metadata), or any RFC1918 address and
+    ///   obtain a full SSRF.
     /// </para>
     /// <para>
     ///   Careless use of <paramref name="safeIPNetworks"/> and <paramref name="safeIPAddresses"/> can lead to security vulnerabilities by allowing potentially unsafe IP addresses or networks
@@ -262,7 +262,7 @@ public sealed class SsrfSocketsHttpHandlerFactory
                     // Defense-in-depth: SocketsHttpHandler is expected to invoke this callback with a DnsEndPoint
                     // whose Host and Port match the request URI when no proxy is in use. If those ever diverge
                     // (e.g. due to a future runtime change, an injected handler that rewrites the connect target,
-                    // or an unexpected codepath) the SSRF validation we are about to perform on requestedUri would
+                    // or an unexpected code path) the SSRF validation we are about to perform on requestedUri would
                     // not describe what we are actually about to connect to. Fail closed if the invariant breaks.
                     if (!DnsEndpointHostEqualsUriHost(context.DnsEndPoint.Host, requestedUri.IdnHost) ||
                         context.DnsEndPoint.Port != requestedUri.Port)

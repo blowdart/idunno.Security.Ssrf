@@ -3,8 +3,6 @@
 
 using System.Net;
 using System.Net.Sockets;
-using Microsoft.Extensions.Primitives;
-using static System.Net.WebRequestMethods;
 
 namespace idunno.Security.SsrfTests;
 

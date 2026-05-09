@@ -39,9 +39,9 @@ a range of services within a trusted domain without having to list each one indi
 apply to the leftmost part of the hostname, so `*.example.localhost` would match `service1.example.localhost`
 and `live.database.example.localhost`, but not `example.localhost` itself.
 
->! [!Warning]
+> [!Warning]
 > Specifying a hostname or wildcard pattern in allowedHostnames will allow that
-> hostname to bypass all SSRF checks, including checks for unsafe IP addresses.
+> hostname to bypass the checks for unsafe IP addresses.
 > Take care when using this setting to only allow specific trusted hostnames or patterns.
 > Only specify a hostname under your control.
 > Use of wildcards for shared hosting domains such as *.s3.amazonaws.com, *.blob.core.windows.net,
