@@ -362,7 +362,7 @@ public static class Ssrf
     /// <remarks>
     /// <para>
     ///   Warning! This method is for non-HTTP scenarios, input validation or pre-flight only. For HTTP or WebSocket
-    ///   requests <see cref="SsrfSocketsHttpHandlerFactory"/>  or <see cref="ProxiedSsrfDelegatingHandler"/>
+    ///   requests <see cref="SsrfSocketsHttpHandlerFactory"/> or <see cref="ProxiedSsrfDelegatingHandler"/>
     ///   should be preferred to avoid DNS - rebinding Time of Check, Time of Use (TOCTOU) issues,
     ///   and to provide more comprehensive protection by integrating SSRF checks directly into the
     ///   HTTP request pipeline.
@@ -601,23 +601,44 @@ public static class Ssrf
             return false;
         }
 
-        string[] segments = body.ToString().Split('.');
-        foreach (string segment in segments)
+        int currentLabelLength = 0;
+        char previousChar = '\0';
+
+        foreach (char c in body)
         {
-            if (string.IsNullOrWhiteSpace(segment) || segment.StartsWith('.') || segment.EndsWith('.') || segment.StartsWith('-') || segment.EndsWith('-') ||
-                segment.Contains("..", StringComparison.InvariantCultureIgnoreCase))
+            if (c == '.')
+            {
+                if (currentLabelLength == 0 || previousChar == '-')
+                {
+                    errorMessage = $"'{entry}' is not a valid AllowedHostnames pattern.";
+                    return false;
+                }
+
+                currentLabelLength = 0;
+                previousChar = c;
+                continue;
+            }
+
+            if (!char.IsLetterOrDigit(c) && c != '-')
+            {
+                errorMessage = $"AllowedHostnames entry '{entry}' contains the unsupported character '{c}'. " +
+                               "Wildcards are only supported as a leading '*.'.";
+                return false;
+            }
+
+            if (currentLabelLength == 0 && c == '-')
             {
                 errorMessage = $"'{entry}' is not a valid AllowedHostnames pattern.";
                 return false;
             }
-        }
 
-        foreach (char c in body)
-        {
-            if (!char.IsLetterOrDigit(c) && c != '-' && c != '.')
+            currentLabelLength++;
+            previousChar = c;
+
+
+            if (currentLabelLength == 0 || previousChar == '-')
             {
-                errorMessage = $"AllowedHostnames entry '{entry}' contains the unsupported character '{c}'. " +
-                               "Wildcards are only supported as a leading '*.'.";
+                errorMessage = $"'{entry}' is not a valid AllowedHostnames pattern.";
                 return false;
             }
         }

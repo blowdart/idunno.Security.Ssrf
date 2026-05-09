@@ -34,7 +34,7 @@ This is useful for cases where you have a known safe host that may resolve to an
 or a trusted internal service.
 
 `allowedHostnames` supports wildcard patterns, so you can specify a pattern like `*.example.localhost`
-to allow all subdomains of `example.localhost`.This can be particularly useful for allowing access to
+to allow all subdomains of `example.localhost`. This can be particularly useful for allowing access to
 a range of services within a trusted domain without having to list each one individually. Wildcard patterns only
 apply to the leftmost part of the hostname, so `*.example.localhost` would match `service1.example.localhost`
 and `live.database.example.localhost`, but not `example.localhost` itself.

@@ -1187,7 +1187,7 @@ public class SsrfSocketsHttpHandlerFactory
     }
 
     [Fact]
-    public void IpLiteralHostIsNotBypassedByAllowedHostnames()
+    public void IpLiteralHostInAllowedHostnamesThrowsArgumentException()
     {
         // With construction-time validation enabled (Layer 2), an IP literal in AllowedHostnames is
         // rejected up-front rather than only at request time. Use SafeIPAddresses / SafeIPNetworks
