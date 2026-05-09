@@ -4,7 +4,7 @@
 
 * Add verification to allowedHostnames to ensure they don't contain any IP literals, and throw an exception if they do.
 * Fix IPv6 proxy detection to check for IPv6 literals in the proxy address, not just hostnames that resolve to IPv6 addresses.
-* Add documentation warnings to configuration for hostnames
+* Add documentation warnings to configuration for allowedHostnames.
 * Add a TOCTOU warning to `Ssrf.IsUnsafe` documentation.
 
 ## 5.2.0 - 2026-05-07

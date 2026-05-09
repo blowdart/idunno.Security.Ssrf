@@ -592,6 +592,13 @@ public static class Ssrf
             return false;
         }
 
+        if (IPAddress.TryParse(body, out _))
+        {
+            errorMessage = $"AllowedHostnames entry '{entry}' is an IP address. " +
+                           "Use SafeIPAddresses or SafeIPNetworks to allow specific IP addresses or ranges.";
+            return false;
+        }
+
         int lastDotIndex = body.LastIndexOf('.');
         ReadOnlySpan<char> rightmostLabel = lastDotIndex >= 0 ? body[(lastDotIndex + 1)..] : body;
 
@@ -634,13 +641,6 @@ public static class Ssrf
 
             currentLabelLength++;
             previousChar = c;
-        }
-
-        if (IPAddress.TryParse(body, out _))
-        {
-            errorMessage = $"AllowedHostnames entry '{entry}' is an IP address. " +
-                           "Use SafeIPAddresses or SafeIPNetworks to allow specific IP addresses or ranges.";
-            return false;
         }
 
         if (!HasNonNumericRightmostLabel(body))
