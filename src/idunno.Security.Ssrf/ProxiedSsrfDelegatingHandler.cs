@@ -206,7 +206,7 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
             sslOptions: sslOptions,
             asyncHostEntryResolver: _asyncHostEntryResolver,
             loggerFactory: loggerFactory,
-            meterFactory: meterFactory); 
+            meterFactory: meterFactory);
     }
 
     internal ProxiedSsrfDelegatingHandler(
@@ -341,18 +341,18 @@ public class ProxiedSsrfDelegatingHandler : DelegatingHandler
 
         try
         {
-        _ = CommonFunctions.ResolveAndReturnSafeIPAddresses(
-            uri: requestedUri,
-            additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
-            additionalUnsafeIPAddresses: _additionalUnsafeIPAddresses,
-            allowedHostnames: _allowedHostnames,
-            safeIPNetworks: _safeIPNetworks,
-            safeIPAddresses: _safeIPAddresses,
-            allowLoopback: _allowLoopback,
-            failMixedResults: _failMixedResults,
-            logger: _logger,
-            metrics: _metrics,
-            hostEntryResolver: _hostEntryResolver);
+            _ = CommonFunctions.ResolveAndReturnSafeIPAddresses(
+                uri: requestedUri,
+                additionalUnsafeIPNetworks: _additionalUnsafeIPNetworks,
+                additionalUnsafeIPAddresses: _additionalUnsafeIPAddresses,
+                allowedHostnames: _allowedHostnames,
+                safeIPNetworks: _safeIPNetworks,
+                safeIPAddresses: _safeIPAddresses,
+                allowLoopback: _allowLoopback,
+                failMixedResults: _failMixedResults,
+                logger: _logger,
+                metrics: _metrics,
+                hostEntryResolver: _hostEntryResolver);
         }
         catch (SsrfException)
         {

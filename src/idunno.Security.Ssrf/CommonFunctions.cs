@@ -199,7 +199,7 @@ internal static class CommonFunctions
             {
                 // Some DNS proxies or internal servers may already strip dangerous lookups, so if the host cannot be resolved, we can treat it as unsafe and block the connection.
                 Log.DnsResolutionException(logger, uri.Host, ex);
-                throw new SsrfException(uri, $"Connection blocked as {uri.Host} could not be resolved to any IP addresses.", inner: ex);
+                throw new SsrfException(uri, $"Connection was blocked as an exception was thrown when resolving {uri.Host}.", inner: ex);
             }
         }
 
