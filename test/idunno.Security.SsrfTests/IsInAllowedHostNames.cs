@@ -180,6 +180,13 @@ public class TryValidateAllowedHostname
     [InlineData("example.com:8080")]
     [InlineData("user@example.com")]
     [InlineData("with space.example.com")]
+    [InlineData(".example.com")]
+    [InlineData(".example.com.")]
+    [InlineData("example.com.")]
+    [InlineData("example..com")]
+    [InlineData("-example.com")]
+    [InlineData("example-.com")]
+
     public void ReturnsFalseForInvalidPatterns(string pattern)
     {
         Assert.False(Ssrf.TryValidateAllowedHostnamePattern(pattern, out string? error));

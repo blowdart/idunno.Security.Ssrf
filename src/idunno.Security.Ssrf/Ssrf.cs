@@ -586,10 +586,30 @@ public static class Ssrf
         bool isWildcard = entry.StartsWith("*.", StringComparison.Ordinal);
         ReadOnlySpan<char> body = isWildcard ? entry.AsSpan(2) : entry.AsSpan();
 
-        if (body.IsEmpty)
+        if (body.IsEmpty || body.StartsWith(".") || body.EndsWith(".") || body.IndexOf("..") >= 0 || body.StartsWith("-") || body.EndsWith("-"))
         {
             errorMessage = $"'{entry}' is not a valid AllowedHostnames pattern.";
             return false;
+        }
+
+        int lastDotIndex = body.LastIndexOf('.');
+        ReadOnlySpan<char> rightmostLabel = lastDotIndex >= 0 ? body[(lastDotIndex + 1)..] : body;
+
+        if (rightmostLabel.IsEmpty)
+        {
+            errorMessage = $"'{entry}' is not a valid AllowedHostnames pattern.";
+            return false;
+        }
+
+        string[] segments = body.ToString().Split('.');
+        foreach (string segment in segments)
+        {
+            if (string.IsNullOrWhiteSpace(segment) || segment.StartsWith('.') || segment.EndsWith('.') || segment.StartsWith('-') || segment.EndsWith('-') ||
+                segment.Contains("..", StringComparison.InvariantCultureIgnoreCase))
+            {
+                errorMessage = $"'{entry}' is not a valid AllowedHostnames pattern.";
+                return false;
+            }
         }
 
         foreach (char c in body)
