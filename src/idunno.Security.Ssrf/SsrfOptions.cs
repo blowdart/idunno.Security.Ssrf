@@ -68,7 +68,7 @@ public record SsrfOptions
 
     /// <summary>
     /// Gets or sets a collection of hostnames that bypass hostname and IP/DNS-based SSRF validation after URI-level safety checks have passed.
-    /// This can be used to allow specific trusted host names.
+    /// This can be used to allow specific trusted hosts.
     /// Wild cards are supported only at the start of the hostname, and must be followed by a dot
     /// (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
     /// </summary>
