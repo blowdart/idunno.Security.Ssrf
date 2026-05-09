@@ -67,14 +67,22 @@ public record SsrfOptions
     public bool AllowLoopback { get; set; }
 
     /// <summary>
-    /// Gets or a collection of hostnames that are allowed to bypass SSRF IP address protections.
-    /// This can be used to allow specific trusted hosts names.
+    /// Gets or sets a collection of hostnames that bypass hostname and IP/DNS-based SSRF validation after URI-level safety checks have passed.
+    /// This can be used to allow specific trusted hosts.
     /// Wild cards are supported only at the start of the hostname, and must be followed by a dot
     /// (e.g. "*.example.com" would allow "api.example.com", "test.api.example.com", but not "example.com").
     /// </summary>
     /// <remarks>
-    /// <para>This list does not affect the evaluation of the URI scheme, loopback status, or other built-in SSRF protections.</para>
-    /// <para>The list is considered trusted data. No validation is performed on it. Do not use user-controlled input to build the list.</para>
+    /// <para>
+    ///   Specifying a hostname or wildcard pattern in <see cref="AllowedHostnames"/> will allow that
+    ///   hostname to bypass the checks for unsafe IP addresses.
+    ///   Take care when using this setting to only allow specific trusted hostnames or patterns.
+    ///   Only specify a hostname under your control.
+    ///   Use of wildcards for shared hosting domains such as *.s3.amazonaws.com, *.blob.core.windows.net,
+    ///   *.herokuapp.com, or *.vercel.app would allow an attacker who can 
+    ///   register a subdomain to point it at 127.0.0.1, 169.254.169.254 (cloud metadata), or any RFC1918 address and
+    ///   obtain a full SSRF.
+    /// </para>
     /// </remarks>
     public ICollection<string>? AllowedHostnames { get; init; } = [];
 

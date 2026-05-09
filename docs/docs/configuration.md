@@ -34,10 +34,20 @@ This is useful for cases where you have a known safe host that may resolve to an
 or a trusted internal service.
 
 `allowedHostnames` supports wildcard patterns, so you can specify a pattern like `*.example.localhost`
-to allow all subdomains of `example.localhost`.This can be particularly useful for allowing access to
+to allow all subdomains of `example.localhost`. This can be particularly useful for allowing access to
 a range of services within a trusted domain without having to list each one individually. Wildcard patterns only
 apply to the leftmost part of the hostname, so `*.example.localhost` would match `service1.example.localhost`
 and `live.database.example.localhost`, but not `example.localhost` itself.
+
+> [!Warning]
+> Specifying a hostname or wildcard pattern in allowedHostnames will allow that
+> hostname to bypass the checks for unsafe IP addresses.
+> Take care when using this setting to only allow specific trusted hostnames or patterns.
+> Only specify a hostname under your control.
+> Use of wildcards for shared hosting domains such as *.s3.amazonaws.com, *.blob.core.windows.net,
+> *.herokuapp.com, or *.vercel.app would allow an attacker who can 
+> register a subdomain to point it at 127.0.0.1, 169.254.169.254 (cloud metadata), or any RFC1918 address and
+> obtain a full SSRF.
 
 ## Safe listing IP addresses and networks
 
@@ -45,6 +55,8 @@ The `safeIPAddresses` and `safeIPNetworks` parameters allow you to specify indiv
 that are safe to connect to, even if they would normally be considered unsafe.
 This is useful for cases where you have a known safe IP address or network that may fall within an unsafe range,
 such as a local development environment or a trusted internal service.
+
+Add additional entries in normalized IPv4 form for IPv4-embedded IPv6 addresses or networks.
 
 > [!Warning]
 > Careless use of `safeIPNetworks` and `safeIPAddresses` can lead to security vulnerabilities by allowing

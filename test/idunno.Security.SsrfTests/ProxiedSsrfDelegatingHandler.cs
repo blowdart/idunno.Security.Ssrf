@@ -1187,4 +1187,212 @@ public class ProxiedSsrfDelegatingHandler
             }
         }
     }
+
+    [Theory]
+    [InlineData("127.0.0.1")]
+    [InlineData("169.254.169.254")]
+    [InlineData("::1")]
+    [InlineData("*.0.0.1")]
+    [InlineData("*.169.254")]
+    [InlineData("")]
+    [InlineData("*")]
+    [InlineData("*.")]
+    [InlineData("user@example.com")]
+    public void ConstructorThrowsArgumentExceptionForInvalidAllowedHostnameWithExplicitParameters(string entry)
+    {
+        ArgumentException ex = Assert.Throws<ArgumentException>(() =>
+            new Security.ProxiedSsrfDelegatingHandler(
+                proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+                allowedHostnames: [entry]));
+        Assert.Equal("allowedHostnames", ex.ParamName);
+    }
+
+    [Theory]
+    [InlineData("127.0.0.1")]
+    [InlineData("*.0.0.1")]
+    [InlineData("*.169.254")]
+    [InlineData("")]
+    public void ConstructorThrowsArgumentExceptionForInvalidAllowedHostnameInOptions(string entry)
+    {
+        var options = new ProxiedSsrfOptions
+        {
+            Proxy = new WebProxy(new Uri("http://127.0.0.1:9999")),
+            AllowedHostnames = [entry],
+        };
+
+        ArgumentException ex = Assert.Throws<ArgumentException>(
+            () => new Security.ProxiedSsrfDelegatingHandler(options));
+        Assert.Equal("options", ex.ParamName);
+    }
+
+    [Fact]
+    public void ConstructorDoesNotThrowForValidAllowedHostnames()
+    {
+        using var handler = new Security.ProxiedSsrfDelegatingHandler(
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            allowedHostnames: ["example.com", "*.example.com", "*.xn--p1ai", "co.uk"]);
+        Assert.NotNull(handler);
+    }
+
+    [Fact]
+    public async Task SendAsyncPinsValidatedRequestUriOnRequestBeforeDispatchingToInnerHandler()
+    {
+        static IPHostEntry hostEntryResolver(string host)
+            => new() { HostName = host, AddressList = [IPAddress.Parse("93.184.216.34")] };
+
+        static Task<IPHostEntry> asyncHostEntryResolver(string host, CancellationToken cancellationToken)
+            => Task.FromResult(hostEntryResolver(host));
+
+        var capturingInner = new CapturingHandler();
+
+        using var handler = new Security.ProxiedSsrfDelegatingHandler(
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPNetworks: null,
+            safeIPAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowedSchemes: ["https"],
+            allowLoopback: false,
+            failMixedResults: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            sslOptions: null,
+            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: asyncHostEntryResolver,
+            loggerFactory: null,
+            meterFactory: null)
+        {
+            InnerHandler = capturingInner,
+        };
+
+        using var client = new HttpClient(handler);
+        Uri originalUri = new("https://example.com/path");
+        using var request = new HttpRequestMessage(HttpMethod.Get, originalUri);
+
+        using HttpResponseMessage response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Same(originalUri, capturingInner.ObservedRequestUri);
+        Assert.Same(originalUri, request.RequestUri);
+    }
+
+    [Fact]
+    public void SendPinsValidatedRequestUriOnRequestBeforeDispatchingToInnerHandler()
+    {
+        static IPHostEntry hostEntryResolver(string host)
+            => new() { HostName = host, AddressList = [IPAddress.Parse("93.184.216.34")] };
+
+        static Task<IPHostEntry> asyncHostEntryResolver(string host, CancellationToken cancellationToken)
+            => Task.FromResult(hostEntryResolver(host));
+
+        var capturingInner = new CapturingHandler();
+
+        using var handler = new Security.ProxiedSsrfDelegatingHandler(
+            proxy: new WebProxy(new Uri("http://127.0.0.1:9999")),
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPNetworks: null,
+            safeIPAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowedSchemes: ["https"],
+            allowLoopback: false,
+            failMixedResults: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            sslOptions: null,
+            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: asyncHostEntryResolver,
+            loggerFactory: null,
+            meterFactory: null)
+        {
+            InnerHandler = capturingInner,
+        };
+
+        using var client = new HttpClient(handler);
+        Uri originalUri = new("https://example.com/path");
+        using var request = new HttpRequestMessage(HttpMethod.Get, originalUri);
+
+        using HttpResponseMessage response = client.Send(request, TestContext.Current.CancellationToken);
+
+        Assert.Same(originalUri, capturingInner.ObservedRequestUri);
+        Assert.Same(originalUri, request.RequestUri);
+    }
+
+    private sealed class CapturingHandler : HttpMessageHandler
+    {
+        public Uri? ObservedRequestUri { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            ObservedRequestUri = request.RequestUri;
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                RequestMessage = request,
+            });
+        }
+
+        protected override HttpResponseMessage Send(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            ObservedRequestUri = request.RequestUri;
+            return new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                RequestMessage = request,
+            };
+        }
+    }
+
+    [Fact]
+    public async Task ProxyDetectionRecognizesIPv6LiteralProxy()
+    {
+        // The DnsEndPoint that SocketsHttpHandler hands to the connect callback uses the bracketed form
+        // for IPv6 literals (e.g. "[::1]"), while Uri.IdnHost strips them ("::1"). A naive ordinal compare
+        // would mis-classify an IPv6 proxy as a non-proxy connection target. With proxy detection working,
+        // the connect callback should attempt the proxy at [::1]:9999 (no listener -> transport failure),
+        // and crucially should NOT throw SsrfException (which would indicate either the request URI was
+        // re-validated as a connect target, or the defense-in-depth host/port mismatch check fired).
+
+        static IPHostEntry hostEntryResolver(string host)
+            => new() { AddressList = [IPAddress.Parse("93.184.216.34")] };
+
+        static Task<IPHostEntry> asyncHostEntryResolver(string host, CancellationToken cancellationToken)
+            => Task.FromResult(hostEntryResolver(host));
+
+        using var handler = new Security.ProxiedSsrfDelegatingHandler(
+            proxy: new WebProxy(new Uri("http://[::1]:9999")),
+            connectionStrategy: ConnectionStrategy.None,
+            additionalUnsafeIPNetworks: null,
+            additionalUnsafeIPAddresses: null,
+            allowedHostnames: null,
+            safeIPNetworks: null,
+            safeIPAddresses: null,
+            connectTimeout: TimeSpan.FromSeconds(1),
+            allowedSchemes: ["https"],
+            allowLoopback: false,
+            failMixedResults: false,
+            allowAutoRedirect: false,
+            automaticDecompression: null,
+            sslOptions: null,
+            hostEntryResolver: hostEntryResolver,
+            asyncHostEntryResolver: asyncHostEntryResolver,
+            loggerFactory: null,
+            meterFactory: null);
+
+        using var client = new HttpClient(handler);
+
+        Exception? ex = await Record.ExceptionAsync(
+            () => client.GetAsync("https://example.com/", TestContext.Current.CancellationToken));
+
+        Assert.NotNull(ex);
+        Assert.IsNotType<SsrfException>(ex);
+        Exception? innermost = ex;
+        while (innermost.InnerException is not null)
+        {
+            innermost = innermost.InnerException;
+            Assert.IsNotType<SsrfException>(innermost);
+        }
+    }
 }
