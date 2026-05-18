@@ -1,6 +1,7 @@
-﻿# Get started
+# Get started
 
-Let's get your .NET application protected against [Server Side Request Forgery](docs/ssrf.md) attacks.
+Let's get your .NET application protected against [Server Side Request Forgery](docs/ssrf.md) (SSRF) attacks using
+[idunno.Security.Ssrf](https://www.nuget.org/packages/idunno.Security.Ssrf).
 
 ## Create a .NET project with the idunno.Security.Ssrf nuget package
 
@@ -18,7 +19,7 @@ Let's get your .NET application protected against [Server Side Request Forgery](
 1. Create a new .NET Command Line project by opening the File menu, and choosing **New ▶ Project**.
 1. In the "**Create a new project**" dialog select C# as the language, choose **Console App** as the project type then click Next.
 1. In the "**Configure your new project**" dialog name the project `NoSsrf` and click Next.
-1. In the "**Additional information**" dialog choose a Framework as .NET 10.0, uncheck the "Do not use top level statements" check box then click **Create**.
+1. In the "**Additional information**" dialog choose the Framework as .NET 10.0, uncheck the "Do not use top level statements" check box then click **Create**.
 1. Under the **Project** menu Select **Manage nuget packages**, select the *Browse* tab. Search for `idunno.Security.Ssrf`, and click **Install**.
 1. Close the **Manage nuget packages** dialog.
 
@@ -106,5 +107,6 @@ Congratulations, you have an `HttpClient` with protection from SSRF!
 ### Advanced Topics
 
 * [Configuring the handler](docs/configuration.md)
+* [Using with ASP.NET's HttpClientFactory](docs/httpClientFactory.md)
 * [Using Proxy Servers](docs/usingProxies.md)
 * [Testing the SSRF handler works as expected](docs/sampleBadApplication.md)

@@ -13,6 +13,10 @@ builder.Services.ConfigureHttpClientDefaults(configure =>
     configure.ConfigurePrimaryHttpMessageHandler(() => SsrfSocketsHttpHandlerFactory.Create(allowedSchemes: ["https", "http"]))
 );
 
+builder.Services.AddHttpClient("mcpClient").ConfigurePrimaryHttpMessageHandler(() =>
+    SsrfSocketsHttpHandlerFactory.Create(allowedSchemes: ["https", "http"], allowLoopback: true)
+);
+
 WebApplication app = builder.Build();
 
 app.UseRouting();
