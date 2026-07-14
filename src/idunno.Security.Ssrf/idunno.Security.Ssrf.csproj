@@ -11,7 +11,7 @@
   <!-- Nuget package properties -->
   <PropertyGroup>
     <Description>A .NET library to help mitigate Server Side Request Forgery (SSRF) vulnerabilities in .NET applications that use HttpClient or ClientWebSocket.</Description>
-    <PackageTags>security;ssrf;serverssiderequestforgery;</PackageTags>
+    <PackageTags>security;ssrf;serverssiderequestforgery;anti-ssrf;web-security;injection;http;httpclient;httprequest;</PackageTags>
     <PackageReadmeFile>readme.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
     <NeutralLanguage>en</NeutralLanguage>

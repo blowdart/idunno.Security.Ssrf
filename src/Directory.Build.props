@@ -1,4 +1,4 @@
-﻿<Project>
+<Project>
   <Import Project="..\Directory.Build.props" />
 
   <PropertyGroup>
@@ -25,13 +25,14 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisMode>All</AnalysisMode>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <!-- Always treat "S1133 Deprecated code should be removed" as a warning -->
     <!-- Always treat "S1135 Complete the task associated to this 'TODO'" as a warning -->
     <!-- Always treat "S125 Remove this commented out code" as a warning -->
-    <WarningsNotAsErrors>S1133,S1135,S125</WarningsNotAsErrors>
+    <WarningsNotAsErrors>S1133,S1135,S125</WarningsNotAsErrors>   
   </PropertyGroup>
 
   <!-- AOT -->
@@ -52,6 +53,7 @@
         <PackageReference Include="DotNet.ReproducibleBuilds" PrivateAssets="All" />
         <PackageReference Include="Nerdbank.GitVersioning" PrivateAssets="All" />
         <PackageReference Include="SonarAnalyzer.CSharp" PrivateAssets="All" />
+        <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="All" />
       </ItemGroup>
     </When>
   </Choose>

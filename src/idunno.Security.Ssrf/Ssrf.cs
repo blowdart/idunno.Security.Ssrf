@@ -12,6 +12,7 @@ namespace idunno.Security;
 /// </summary>
 public static class Ssrf
 {
+#pragma warning disable S1313 // IP addresses should not be hardcoded
     private static readonly IPNetwork[] s_ipv4UnsafeRanges =
         [
             // IPv4 private address ranges https://datatracker.ietf.org/doc/html/rfc1918
@@ -114,6 +115,7 @@ public static class Ssrf
             // Segment Routing (SRv6) SIDs https://datatracker.ietf.org/doc/rfc9602/, https://www.ietf.org/archive/id/draft-ek-srv6ops-sidspace-experiment-00.html
             new (IPAddress.Parse("5f00::"), 16)
         ];
+#pragma warning restore S1313 // IP addresses should not be hardcoded
 
     /// <summary>
     /// Evaluates the given <paramref name="uri"/> to determine if it is potentially unsafe for use in server-side requests,

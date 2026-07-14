@@ -1,0 +1,110 @@
+#nullable enable
+idunno.Security.ConnectionStrategy
+idunno.Security.ConnectionStrategy.Ipv4Preferred = 1 -> idunno.Security.ConnectionStrategy
+idunno.Security.ConnectionStrategy.Ipv6Preferred = 2 -> idunno.Security.ConnectionStrategy
+idunno.Security.ConnectionStrategy.None = 0 -> idunno.Security.ConnectionStrategy
+idunno.Security.ConnectionStrategy.Random = 4 -> idunno.Security.ConnectionStrategy
+idunno.Security.IPAddressExtensions
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!)
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!).Is6to4.get -> bool
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!).IsIPv4CompatibleIPv6.get -> bool
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!).IsISATAP.get -> bool
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!).IsNAT64.get -> bool
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!).IsNAT64LocalUse.get -> bool
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!).Map6to4ToIPv4() -> System.Net.IPAddress!
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!).MapIPv6CompatibleToIPv4() -> System.Net.IPAddress!
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!).MapISATAPToIPv4() -> System.Net.IPAddress!
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!).MapNAT64ToIPv4() -> System.Net.IPAddress!
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!).MapTeredoToIPv4() -> System.Net.IPAddress!
+idunno.Security.IPAddressExtensions.extension(System.Net.IPAddress!).NormalizeToIPv4() -> System.Net.IPAddress!
+idunno.Security.ProxiedSsrfDelegatingHandler
+idunno.Security.ProxiedSsrfDelegatingHandler.ProxiedSsrfDelegatingHandler(idunno.Security.ProxiedSsrfOptions! options, Microsoft.Extensions.Logging.ILoggerFactory? loggerFactory = null, System.Diagnostics.Metrics.IMeterFactory? meterFactory = null) -> void
+idunno.Security.ProxiedSsrfDelegatingHandler.ProxiedSsrfDelegatingHandler(System.Net.WebProxy! proxy, idunno.Security.ConnectionStrategy connectionStrategy = idunno.Security.ConnectionStrategy.None, System.Collections.Generic.ICollection<System.Net.IPNetwork>? additionalUnsafeIPNetworks = null, System.Collections.Generic.ICollection<System.Net.IPAddress!>? additionalUnsafeIPAddresses = null, System.Collections.Generic.ICollection<string!>? allowedHostnames = null, System.Collections.Generic.ICollection<System.Net.IPNetwork>? safeIPNetworks = null, System.Collections.Generic.ICollection<System.Net.IPAddress!>? safeIPAddresses = null, System.TimeSpan? connectTimeout = null, System.Collections.Generic.ICollection<string!>? allowedSchemes = null, bool allowLoopback = false, bool failMixedResults = true, bool allowAutoRedirect = false, System.Net.DecompressionMethods? automaticDecompression = null, System.Net.Security.SslClientAuthenticationOptions? sslOptions = null, Microsoft.Extensions.Logging.ILoggerFactory? loggerFactory = null, System.Diagnostics.Metrics.IMeterFactory? meterFactory = null) -> void
+idunno.Security.ProxiedSsrfOptions
+idunno.Security.ProxiedSsrfOptions.ProxiedSsrfOptions() -> void
+idunno.Security.ProxiedSsrfOptions.ProxiedSsrfOptions(idunno.Security.ProxiedSsrfOptions! original) -> void
+idunno.Security.ProxiedSsrfOptions.Proxy.get -> System.Net.WebProxy?
+idunno.Security.ProxiedSsrfOptions.Proxy.set -> void
+idunno.Security.Ssrf
+idunno.Security.SsrfException
+idunno.Security.SsrfException.SsrfException() -> void
+idunno.Security.SsrfException.SsrfException(string? message) -> void
+idunno.Security.SsrfException.SsrfException(string? message, System.Exception? inner) -> void
+idunno.Security.SsrfException.SsrfException(System.Uri? uri) -> void
+idunno.Security.SsrfException.SsrfException(System.Uri? uri, string? message) -> void
+idunno.Security.SsrfException.SsrfException(System.Uri? uri, string? message, System.Exception? inner) -> void
+idunno.Security.SsrfException.Uri.get -> System.Uri?
+idunno.Security.SsrfException.Uri.set -> void
+idunno.Security.SsrfMetrics
+idunno.Security.SsrfMetrics.SsrfMetrics(System.Diagnostics.Metrics.IMeterFactory? meterFactory = null) -> void
+idunno.Security.SsrfOptions
+idunno.Security.SsrfOptions.AdditionalUnsafeIPAddresses.get -> System.Collections.Generic.ICollection<System.Net.IPAddress!>!
+idunno.Security.SsrfOptions.AdditionalUnsafeIPAddresses.init -> void
+idunno.Security.SsrfOptions.AdditionalUnsafeIPNetworks.get -> System.Collections.Generic.ICollection<System.Net.IPNetwork>!
+idunno.Security.SsrfOptions.AdditionalUnsafeIPNetworks.init -> void
+idunno.Security.SsrfOptions.AllowAutoRedirect.get -> bool
+idunno.Security.SsrfOptions.AllowAutoRedirect.set -> void
+idunno.Security.SsrfOptions.AllowedHostnames.get -> System.Collections.Generic.ICollection<string!>?
+idunno.Security.SsrfOptions.AllowedHostnames.init -> void
+idunno.Security.SsrfOptions.AllowedSchemes.get -> System.Collections.Generic.ICollection<string!>?
+idunno.Security.SsrfOptions.AllowedSchemes.init -> void
+idunno.Security.SsrfOptions.AllowLoopback.get -> bool
+idunno.Security.SsrfOptions.AllowLoopback.set -> void
+idunno.Security.SsrfOptions.AutomaticDecompression.get -> System.Net.DecompressionMethods?
+idunno.Security.SsrfOptions.AutomaticDecompression.set -> void
+idunno.Security.SsrfOptions.ConnectionStrategy.get -> idunno.Security.ConnectionStrategy
+idunno.Security.SsrfOptions.ConnectionStrategy.set -> void
+idunno.Security.SsrfOptions.ConnectTimeout.get -> System.TimeSpan?
+idunno.Security.SsrfOptions.ConnectTimeout.set -> void
+idunno.Security.SsrfOptions.FailMixedResults.get -> bool
+idunno.Security.SsrfOptions.FailMixedResults.set -> void
+idunno.Security.SsrfOptions.SafeIPAddresses.get -> System.Collections.Generic.ICollection<System.Net.IPAddress!>?
+idunno.Security.SsrfOptions.SafeIPAddresses.init -> void
+idunno.Security.SsrfOptions.SafeIPNetworks.get -> System.Collections.Generic.ICollection<System.Net.IPNetwork>?
+idunno.Security.SsrfOptions.SafeIPNetworks.init -> void
+idunno.Security.SsrfOptions.SslOptions.get -> System.Net.Security.SslClientAuthenticationOptions?
+idunno.Security.SsrfOptions.SslOptions.set -> void
+idunno.Security.SsrfOptions.SsrfOptions() -> void
+idunno.Security.SsrfOptions.SsrfOptions(idunno.Security.SsrfOptions! original) -> void
+idunno.Security.SsrfSocketsHttpHandlerFactory
+OpenTelemetry.Metrics.SsrfMetricsExtensions
+override idunno.Security.ProxiedSsrfDelegatingHandler.Send(System.Net.Http.HttpRequestMessage! request, System.Threading.CancellationToken cancellationToken) -> System.Net.Http.HttpResponseMessage!
+override idunno.Security.ProxiedSsrfDelegatingHandler.SendAsync(System.Net.Http.HttpRequestMessage! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.Net.Http.HttpResponseMessage!>!
+override idunno.Security.ProxiedSsrfOptions.<Clone>$() -> idunno.Security.ProxiedSsrfOptions!
+override idunno.Security.ProxiedSsrfOptions.EqualityContract.get -> System.Type!
+override idunno.Security.ProxiedSsrfOptions.Equals(object? obj) -> bool
+override idunno.Security.ProxiedSsrfOptions.GetHashCode() -> int
+override idunno.Security.ProxiedSsrfOptions.PrintMembers(System.Text.StringBuilder! builder) -> bool
+override idunno.Security.ProxiedSsrfOptions.ToString() -> string!
+override idunno.Security.SsrfOptions.Equals(object? obj) -> bool
+override idunno.Security.SsrfOptions.GetHashCode() -> int
+override idunno.Security.SsrfOptions.ToString() -> string!
+override sealed idunno.Security.ProxiedSsrfOptions.Equals(idunno.Security.SsrfOptions? other) -> bool
+static idunno.Security.IPAddressExtensions.get_Is6to4(System.Net.IPAddress! ipAddress) -> bool
+static idunno.Security.IPAddressExtensions.get_IsIPv4CompatibleIPv6(System.Net.IPAddress! ipAddress) -> bool
+static idunno.Security.IPAddressExtensions.get_IsISATAP(System.Net.IPAddress! ipAddress) -> bool
+static idunno.Security.IPAddressExtensions.get_IsNAT64(System.Net.IPAddress! ipAddress) -> bool
+static idunno.Security.IPAddressExtensions.get_IsNAT64LocalUse(System.Net.IPAddress! ipAddress) -> bool
+static idunno.Security.IPAddressExtensions.Map6to4ToIPv4(this System.Net.IPAddress! ipAddress) -> System.Net.IPAddress!
+static idunno.Security.IPAddressExtensions.MapIPv6CompatibleToIPv4(this System.Net.IPAddress! ipAddress) -> System.Net.IPAddress!
+static idunno.Security.IPAddressExtensions.MapISATAPToIPv4(this System.Net.IPAddress! ipAddress) -> System.Net.IPAddress!
+static idunno.Security.IPAddressExtensions.MapNAT64ToIPv4(this System.Net.IPAddress! ipAddress) -> System.Net.IPAddress!
+static idunno.Security.IPAddressExtensions.MapTeredoToIPv4(this System.Net.IPAddress! ipAddress) -> System.Net.IPAddress!
+static idunno.Security.IPAddressExtensions.NormalizeToIPv4(this System.Net.IPAddress! ipAddress) -> System.Net.IPAddress!
+static idunno.Security.ProxiedSsrfOptions.operator !=(idunno.Security.ProxiedSsrfOptions? left, idunno.Security.ProxiedSsrfOptions? right) -> bool
+static idunno.Security.ProxiedSsrfOptions.operator ==(idunno.Security.ProxiedSsrfOptions? left, idunno.Security.ProxiedSsrfOptions? right) -> bool
+static idunno.Security.Ssrf.IsUnsafe(System.Uri! uri, System.Collections.Generic.ICollection<string!>? allowedSchemes = null, bool allowLoopback = false, System.Collections.Generic.ICollection<System.Net.IPNetwork>? additionalUnsafeIPNetworks = null, System.Collections.Generic.ICollection<System.Net.IPAddress!>? additionalUnsafeIPAddresses = null, System.Collections.Generic.ICollection<string!>? allowedHostnames = null, System.Collections.Generic.ICollection<System.Net.IPNetwork>? safeIPNetworks = null, System.Collections.Generic.ICollection<System.Net.IPAddress!>? safeIPAddresses = null, idunno.Security.SsrfMetrics? metrics = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+static idunno.Security.Ssrf.IsUnsafeIpAddress(System.Net.IPAddress! ipAddress, System.Collections.Generic.ICollection<System.Net.IPNetwork>? additionalUnsafeIPNetworks = null, System.Collections.Generic.ICollection<System.Net.IPAddress!>? additionalUnsafeIPAddresses = null, System.Collections.Generic.ICollection<System.Net.IPNetwork>? safeIPNetworks = null, System.Collections.Generic.ICollection<System.Net.IPAddress!>? safeIPAddresses = null, bool allowLoopback = false, idunno.Security.SsrfMetrics? metrics = null) -> bool
+static idunno.Security.Ssrf.IsUnsafeUri(System.Uri! uri, System.Collections.Generic.ICollection<string!>? allowedSchemes = null, bool allowLoopback = false, idunno.Security.SsrfMetrics? metrics = null) -> bool
+static idunno.Security.SsrfMetrics.MeterName.get -> string!
+static idunno.Security.SsrfMetrics.MeterVersion.get -> string!
+static idunno.Security.SsrfOptions.operator !=(idunno.Security.SsrfOptions? left, idunno.Security.SsrfOptions? right) -> bool
+static idunno.Security.SsrfOptions.operator ==(idunno.Security.SsrfOptions? left, idunno.Security.SsrfOptions? right) -> bool
+static idunno.Security.SsrfSocketsHttpHandlerFactory.Create(idunno.Security.ConnectionStrategy connectionStrategy = idunno.Security.ConnectionStrategy.None, System.Collections.Generic.ICollection<System.Net.IPNetwork>? additionalUnsafeIPNetworks = null, System.Collections.Generic.ICollection<System.Net.IPAddress!>? additionalUnsafeIPAddresses = null, System.Collections.Generic.ICollection<string!>? allowedHostnames = null, System.Collections.Generic.ICollection<System.Net.IPNetwork>? safeIPNetworks = null, System.Collections.Generic.ICollection<System.Net.IPAddress!>? safeIPAddresses = null, System.TimeSpan? connectTimeout = null, System.Collections.Generic.ICollection<string!>? allowedSchemes = null, bool allowLoopback = false, bool failMixedResults = true, bool allowAutoRedirect = false, System.Net.DecompressionMethods? automaticDecompression = null, System.Net.Security.SslClientAuthenticationOptions? sslOptions = null, Microsoft.Extensions.Logging.ILoggerFactory? loggerFactory = null, System.Diagnostics.Metrics.IMeterFactory? meterFactory = null) -> System.Net.Http.SocketsHttpHandler!
+static idunno.Security.SsrfSocketsHttpHandlerFactory.Create(idunno.Security.SsrfOptions! options, Microsoft.Extensions.Logging.ILoggerFactory? loggerFactory = null, System.Diagnostics.Metrics.IMeterFactory? meterFactory = null) -> System.Net.Http.SocketsHttpHandler!
+static OpenTelemetry.Metrics.SsrfMetricsExtensions.AddSsrfHandlerMetrics(this OpenTelemetry.Metrics.MeterProviderBuilder! builder) -> OpenTelemetry.Metrics.MeterProviderBuilder!
+virtual idunno.Security.ProxiedSsrfOptions.Equals(idunno.Security.ProxiedSsrfOptions? other) -> bool
+virtual idunno.Security.SsrfOptions.<Clone>$() -> idunno.Security.SsrfOptions!
+virtual idunno.Security.SsrfOptions.EqualityContract.get -> System.Type!
+virtual idunno.Security.SsrfOptions.Equals(idunno.Security.SsrfOptions? other) -> bool
+virtual idunno.Security.SsrfOptions.PrintMembers(System.Text.StringBuilder! builder) -> bool
