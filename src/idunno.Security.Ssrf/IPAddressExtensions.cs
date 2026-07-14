@@ -337,13 +337,11 @@ public static class IPAddressExtensions
                 bool succeeded = ipAddress.TryWriteBytes(bytes, out _);
                 Debug.Assert(succeeded);
 
-                ReadOnlySpan<byte> ipV4Bytes =
-                [
-                    (byte)~bytes[12],
-                    (byte)~bytes[13],
-                    (byte)~bytes[14],
-                    (byte)~bytes[15],
-                ];
+                Span<byte> ipV4Bytes = stackalloc byte[4];
+                ipV4Bytes[0] = (byte)~bytes[12];
+                ipV4Bytes[1] = (byte)~bytes[13];
+                ipV4Bytes[2] = (byte)~bytes[14];
+                ipV4Bytes[3] = (byte)~bytes[15];
 
                 return new IPAddress(ipV4Bytes);
             }
