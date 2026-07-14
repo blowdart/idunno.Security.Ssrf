@@ -1,3 +1,13 @@
+## 5.4.0 - 2026-07-14
+
+### Changed
+
+* Various internal refactorings and code cleanups to optimize performance.
+  * Remove redundant re-normalization and double safe-list scan
+  * Avoid an extra array allocation when nothing is filtered.
+  * Slice the embedded IPv4 once in `NormalizeToIPv4`.
+  * Precompute metric counter names.
+
 ## 5.3.0 - 2026-05-09
 
 ### Changed
