@@ -295,50 +295,86 @@ public static class IPAddressExtensions
         /// </remarks>
         public IPAddress NormalizeToIPv4()
         {
-            if (ipAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+            if (ipAddress.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6)
             {
-                // Normalize IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1)
-                if (ipAddress.IsIPv4MappedToIPv6)
-                {
-                    return ipAddress.MapToIPv4();
-                }
+                return ipAddress;
+            }
 
-                // Normalize IPv4-compatible IPv6 addresses (e.g. ::192.0.2.1)
-                if (ipAddress.IsIPv4CompatibleIPv6)
-                {
-                    return ipAddress.MapIPv6CompatibleToIPv4();
-                }
+            // Normalize IPv4-mapped IPv6 addresses (e.g. ::ffff:127.0.0.1)
+            if (ipAddress.IsIPv4MappedToIPv6)
+            {
+                return ipAddress.MapToIPv4();
+            }
 
-                // Normalize 6:4 addresses (e.g. 2002:c000:0201::1)
-                // This may also catch an overlapping ISATAP address (e.g. 2002:c000:022a::5efe:0a00:0001), but that's not a problem since it will normalize to an unsafe IPv4 address anyway.
-                if (ipAddress.Is6to4)
-                {
-                    return ipAddress.Map6to4ToIPv4();
-                }
+            // Detection below uses the authoritative Is* members. Once a form is detected the embedded
+            // IPv4 address is sliced directly from a single byte serialization, rather than calling the
+            // corresponding Map* helper, each of which would re-run its own Is* detection and serialize
+            // the address a second time.
 
-                // Normalize Teredo addresses (e.g. 2001::) before ISATAP, because an attacker-crafted Teredo address
-                // (2001:0000::/32) can coincidentally match the ISATAP byte pattern (bytes 8-11 == 00-00-5E-FE
-                // or 02-00-5E-FE). Checking Teredo first ensures the Teredo-embedded client IPv4 is evaluated
-                // rather than an attacker-controlled ISATAP interpretation of the same bytes.
-                if (ipAddress.IsIPv6Teredo)
-                {
-                    return ipAddress.MapTeredoToIPv4();
-                }
+            // Normalize IPv4-compatible IPv6 addresses (e.g. ::192.0.2.1)
+            if (ipAddress.IsIPv4CompatibleIPv6)
+            {
+                return SliceEmbeddedIPv4(ipAddress, start: 12);
+            }
 
-                // Normalize ISATAP addresses (e.g. 2001:db8::5efe:)
-                if (ipAddress.IsISATAP)
-                {
-                    return ipAddress.MapISATAPToIPv4();
-                }
+            // Normalize 6:4 addresses (e.g. 2002:c000:0201::1)
+            // This may also catch an overlapping ISATAP address (e.g. 2002:c000:022a::5efe:0a00:0001), but that's not a problem since it will normalize to an unsafe IPv4 address anyway.
+            if (ipAddress.Is6to4)
+            {
+                return SliceEmbeddedIPv4(ipAddress, start: 2);
+            }
 
-                // Normalize NAT64 addresses (e.g. 64:ff9b::)
-                if (ipAddress.IsNAT64)
-                {
-                    return ipAddress.MapNAT64ToIPv4();
-                }
+            // Normalize Teredo addresses (e.g. 2001::) before ISATAP, because an attacker-crafted Teredo address
+            // (2001:0000::/32) can coincidentally match the ISATAP byte pattern (bytes 8-11 == 00-00-5E-FE
+            // or 02-00-5E-FE). Checking Teredo first ensures the Teredo-embedded client IPv4 is evaluated
+            // rather than an attacker-controlled ISATAP interpretation of the same bytes.
+            if (ipAddress.IsIPv6Teredo)
+            {
+                Span<byte> bytes = stackalloc byte[16];
+
+                // TryWriteBytes only fails if the buffer is too small, i.e. only if the span passed in is
+                // smaller than 16 bytes, so this will never fail.
+                bool succeeded = ipAddress.TryWriteBytes(bytes, out _);
+                Debug.Assert(succeeded);
+
+                Span<byte> ipV4Bytes = stackalloc byte[4];
+                ipV4Bytes[0] = (byte)~bytes[12];
+                ipV4Bytes[1] = (byte)~bytes[13];
+                ipV4Bytes[2] = (byte)~bytes[14];
+                ipV4Bytes[3] = (byte)~bytes[15];
+
+                return new IPAddress(ipV4Bytes);
+            }
+
+            // Normalize ISATAP addresses (e.g. 2001:db8::5efe:)
+            if (ipAddress.IsISATAP)
+            {
+                return SliceEmbeddedIPv4(ipAddress, start: 12);
+            }
+
+            // Normalize NAT64 addresses (e.g. 64:ff9b::)
+            if (ipAddress.IsNAT64)
+            {
+                return SliceEmbeddedIPv4(ipAddress, start: 12);
             }
 
             return ipAddress;
         }
+    }
+
+    /// <summary>
+    /// Serializes <paramref name="ipAddress"/> once and returns the four embedded IPv4 bytes starting at
+    /// <paramref name="start"/> as an <see cref="IPAddress"/>.
+    /// </summary>
+    private static IPAddress SliceEmbeddedIPv4(IPAddress ipAddress, int start)
+    {
+        Span<byte> bytes = stackalloc byte[16];
+
+        // TryWriteBytes only fails if the buffer is too small, i.e. only if the span passed in is
+        // smaller than 16 bytes, so this will never fail.
+        bool succeeded = ipAddress.TryWriteBytes(bytes, out _);
+        Debug.Assert(succeeded);
+
+        return new IPAddress(bytes.Slice(start, 4));
     }
 }

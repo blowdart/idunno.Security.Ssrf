@@ -18,6 +18,15 @@ public sealed class SsrfMetrics
     private const string ReasonTagName = "reason";
     private const string ValueTagName = "value";
 
+    // Precompute the counter names once. These are derived from the meter name and were previously
+    // recomputed (three ToLowerInvariant calls plus three string interpolations) on every handler
+    // construction inside CreateCounters.
+    [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Guidelines suggest all lower case.")]
+    private static readonly string s_meterNameLowerInvariant = MeterName.ToLowerInvariant();
+    private static readonly string s_blockedRequestsCounterName = $"{s_meterNameLowerInvariant}.blocked.requests.total";
+    private static readonly string s_unsafeUriCounterName = $"{s_meterNameLowerInvariant}.unsafe.uri.total";
+    private static readonly string s_unsafeIPAddressCounterName = $"{s_meterNameLowerInvariant}.unsafe.ip_address.total";
+
     private Counter<long> _blockedRequests;
     private Counter<long> _unsafeUri;
     private Counter<long> _unsafeIPAddress;
@@ -74,21 +83,20 @@ public sealed class SsrfMetrics
     }
 
     [MemberNotNull(nameof(_blockedRequests), nameof(_unsafeUri), nameof(_unsafeIPAddress))]
-    [SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Guidelines suggest all lower case.")]
     private void CreateCounters(Meter meter)
     {
         _blockedRequests = meter.CreateCounter<long>(
-            name: $"{MeterName.ToLowerInvariant()}.blocked.requests.total",
+            name: s_blockedRequestsCounterName,
             description: "Number of requests blocked due to SSRF detection.",
             unit: "{requests}");
 
         _unsafeUri = meter.CreateCounter<long>(
-            name: $"{MeterName.ToLowerInvariant()}.unsafe.uri.total",
+            name: s_unsafeUriCounterName,
             description: "Number of unsafe URIs detected.",
             unit: "{uris}");
 
         _unsafeIPAddress = meter.CreateCounter<long>(
-            name: $"{MeterName.ToLowerInvariant()}.unsafe.ip_address.total",
+            name: s_unsafeIPAddressCounterName,
             description: "Number of unsafe IP addresses detected.",
             unit: "{ip_addresses}");
     }
