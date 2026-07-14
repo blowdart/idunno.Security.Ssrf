@@ -249,6 +249,32 @@ public static class Ssrf
             }
         }
 
+        return IsUnsafeNormalizedIpAddress(
+            ipAddress: ipAddress,
+            additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
+            additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
+            allowLoopback: allowLoopback,
+            metrics: metrics);
+    }
+
+    /// <summary>
+    /// Evaluates an already-normalized <paramref name="ipAddress"/> against the unsafe checks, skipping both the
+    /// <see cref="IPAddressExtensions.NormalizeToIPv4(IPAddress)"/> step and the safe-list checks.
+    /// </summary>
+    /// <remarks>
+    /// <para>Callers must pass an address that has already been normalized via
+    /// <see cref="IPAddressExtensions.NormalizeToIPv4(IPAddress)"/> and must have already confirmed the address is
+    /// not present in any safe address or safe network list. This exists to avoid redundantly re-normalizing and
+    /// re-scanning the safe lists on the per-connection resolution hot path, where those checks have already run.</para>
+    /// </remarks>
+    [SuppressMessage("Minor Code Smell", "S3267:Loops should be simplified with \"LINQ\" expressions", Justification = "Avoids delegate allocation on hot path.")]
+    internal static bool IsUnsafeNormalizedIpAddress(
+        IPAddress ipAddress,
+        ICollection<IPNetwork>? additionalUnsafeIPNetworks,
+        ICollection<IPAddress>? additionalUnsafeIPAddresses,
+        bool allowLoopback,
+        SsrfMetrics? metrics)
+    {
         // Allow override to consider localhost addresses as safe
         if (allowLoopback && IPAddress.IsLoopback(ipAddress))
         {

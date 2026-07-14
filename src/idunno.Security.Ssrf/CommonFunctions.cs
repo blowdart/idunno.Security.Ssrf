@@ -281,12 +281,10 @@ internal static class CommonFunctions
                 Log.CheckBypassedForIPAddressAsItIsInSafeIpAddresses(logger, uri, ipAddress);
                 safeResolvedIPAddresses.Add(ipAddress);
             }
-            else if (!Ssrf.IsUnsafeIpAddress(
+            else if (!Ssrf.IsUnsafeNormalizedIpAddress(
                 ipAddress: normalizedIPAddress,
                 additionalUnsafeIPNetworks: additionalUnsafeIPNetworks,
                 additionalUnsafeIPAddresses: additionalUnsafeIPAddresses,
-                safeIPNetworks: safeIPNetworks,
-                safeIPAddresses: safeIPAddresses,
                 allowLoopback: allowLoopback,
                 metrics: metrics))
             {
@@ -311,6 +309,14 @@ internal static class CommonFunctions
             Log.SomeResolvedIpAddressesUnsafe(logger, uri);
             metrics?.IncrementUnsafeIPAddress(1, "some_resolved_addresses_unsafe");
             throw new SsrfException(uri, $"Connection blocked as some resolved addresses for {uri.Host} are unsafe.");
+        }
+
+        // When every resolved address passed the safety checks no filtering occurred, so the safe list is
+        // identical to the resolved list. Return the original array directly to avoid allocating a second
+        // array from the list.
+        if (safeResolvedIPAddresses.Count == resolvedIpAddresses.Length)
+        {
+            return resolvedIpAddresses;
         }
 
         return [.. safeResolvedIPAddresses];
