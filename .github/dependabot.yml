@@ -6,6 +6,9 @@ updates:
     interval: daily
   cooldown:
     default-days: 7
+  ignore:
+    - dependency-name: "JunitXml.TestLogger"
+      update-types: ["version-update:semver-major"]
   groups:
     TestSdk:
       patterns:
