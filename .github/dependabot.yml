@@ -9,6 +9,14 @@ updates:
   ignore:
     - dependency-name: "JunitXml.TestLogger"
       update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.DependencyInjection"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.Logging"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.Logging.Abstractions"
+      update-types: ["version-update:semver-major"]
+    - dependency-name: "Microsoft.Extensions.Logging.Console"
+      update-types: ["version-update:semver-major"]
   groups:
     TestSdk:
       patterns:
