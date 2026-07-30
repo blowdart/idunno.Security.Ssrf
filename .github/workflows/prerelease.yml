@@ -93,6 +93,11 @@ jobs:
           Copy-Item "$($_.DirectoryName)/$($_.Basename)/_manifest/spdx_2.2/manifest.spdx.json.sha256" -Destination "${env:BUILD_OUTPUT}/$($_.Basename).spdx.json.sha256"
           Remove-Item "$($_.DirectoryName)/$($_.Basename)" -Force -Recurse }
 
+    - name: 'Generate release notes'
+      shell: pwsh
+      run: >
+        dotnet run .build/ExtractReleaseNotes.cs --output-file ${env:BUILD_OUTPUT}/release-notes.md
+
     - name: 'List artifact directory'
       shell: pwsh
       run: >
