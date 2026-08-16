@@ -6,7 +6,7 @@
     <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <IsPublishable>False</IsPublishable>
+    <IsPublishable>false</IsPublishable>
     <IsTestProject>true</IsTestProject>
     <NoWarn>$(NoWarn);SPELL</NoWarn>
     <Nullable>enable</Nullable>
@@ -26,8 +26,8 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.MTP" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Microsoft.CodeCoverage" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
