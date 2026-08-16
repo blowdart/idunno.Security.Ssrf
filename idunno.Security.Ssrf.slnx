@@ -82,7 +82,6 @@
     <File Path=".editorconfig" />
     <File Path=".gitattributes" />
     <File Path=".gitignore" />
-    <File Path=".runsettings" />
     <File Path=".ssh-allowed-signers" />
     <File Path=".ssh-allowed-signers.md" />
     <File Path=".vsconfig" />
@@ -102,6 +101,7 @@
     <File Path="readme.md" />
     <File Path="regeneratePublicApiFiles.ps1" />
     <File Path="SECURITY.md" />
+    <File Path="testconfig.json" />
     <File Path="version.json" />
   </Folder>
   <Folder Name="/src/">
@@ -112,7 +112,6 @@
     <File Path="test/Directory.Build.props" />
     <Project Path="test/idunno.Security.SsrfTests/idunno.Security.SsrfTests.csproj">
       <Build Solution="CodeQL|*" Project="false" />
-      <Build Solution="Release|*" Project="false" />
     </Project>
   </Folder>
 </Solution>
