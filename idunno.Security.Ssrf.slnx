@@ -112,7 +112,6 @@
     <File Path="test/Directory.Build.props" />
     <Project Path="test/idunno.Security.SsrfTests/idunno.Security.SsrfTests.csproj">
       <Build Solution="CodeQL|*" Project="false" />
-      <Build Solution="Release|*" Project="false" />
     </Project>
   </Folder>
 </Solution>
