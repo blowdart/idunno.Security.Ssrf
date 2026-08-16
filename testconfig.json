@@ -2,7 +2,7 @@
     "platformOptions": {
         "Coverlet": {
             "exclude": "[*.Test]",
-            "excludeByAttribute": "Obsolete,GeneratedCode,ExcludeFromCodeCoverage,ExcludeFromCodeCoverageAttribute,CompilerGeneratedAttribute,DebuggerNonUserCodeAttribute,DebuggerNonUserCodeAttribute",
+            "excludeByAttribute": "Obsolete,GeneratedCode,ExcludeFromCodeCoverage,ExcludeFromCodeCoverageAttribute,CompilerGeneratedAttribute,DebuggerNonUserCodeAttribute",
             "excludeByFile": "**/Migrations/*.cs,**/SourceGenerationContext.cs,**/*.g.cs",
             "format": "cobertura",
             "useSourceLink": false,
